@@ -1,3 +1,5 @@
+import Dispatch
+
 /// A type that provides operations on the Player database
 enum Players {
     static func deletePlayers() {
@@ -29,6 +31,14 @@ enum Players {
                     player.score = Player.randomScore()
                     try player.update(db)
                 }
+            }
+        }
+    }
+    
+    static func stressTest() {
+        for _ in 0..<50 {
+            DispatchQueue.global().async {
+                refreshPlayers()
             }
         }
     }

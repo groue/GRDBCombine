@@ -63,10 +63,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     @IBAction func stressTest() {
-        for _ in 0..<50 {
-            DispatchQueue.global().async {
-                Players.refreshPlayers()
-            }
-        }
+        Players.stressTest()
     }
 }

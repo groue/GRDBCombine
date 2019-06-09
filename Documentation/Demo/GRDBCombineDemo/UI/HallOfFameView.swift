@@ -6,24 +6,34 @@ struct HallOfFameView: View {
     
     var body: some View {
         VStack {
-            NavigationView {
-                List(viewModel.bestPlayers.identified(by: \.id)) {
-                    PlayerRow(player: $0)
-                    }
-                    .navigationBarTitle(Text(viewModel.title))
+            list
+            toolbar
             }
-            Spacer()
-            HStack {
-                Button(
-                    action: { Players.deletePlayers() },
-                    label: { Text("Delete All") })
-                Spacer()
-                Button(
-                    action: { Players.refreshPlayers() },
-                    label: { Text("Refresh") })
-                }
-                .padding()
+            .navigationBarTitle(Text(viewModel.title))
+    }
+    
+    var list: some View {
+        List(viewModel.bestPlayers.identified(by: \.id)) {
+            PlayerRow(player: $0)
         }
+    }
+    
+    var toolbar: some View {
+        HStack {
+            Button(
+                action: { Players.deletePlayers() },
+                label: { Image(systemName: "trash")})
+            Spacer()
+            Button(
+                action: { Players.refreshPlayers() },
+                label: { Image(systemName: "arrow.clockwise")})
+            Spacer()
+            Button(
+                action: { Players.stressTest() },
+                label: { Text("💣") })
+            }
+            .padding()
+        
     }
 }
 
