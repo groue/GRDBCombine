@@ -1,8 +1,8 @@
 import GRDB
 
 // A plain Player struct
-struct Player: Equatable {
-    // Prefer Int64 for auto-incremented database ids
+struct Player {
+    // Use Int64 for auto-incremented database ids
     var id: Int64?
     var name: String
     var score: Int

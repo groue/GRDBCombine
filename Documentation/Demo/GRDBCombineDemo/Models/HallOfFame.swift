@@ -2,9 +2,14 @@ import GRDB
 import GRDBCombine
 
 struct HallOfFame {
+    /// Total number of players
     var playerCount: Int
-    var bestPlayers: [Player]
     
+    /// The best ones
+    var bestPlayers: [Player]
+}
+
+extension HallOfFame {
     /// A database observation for the current HallOfFame,
     /// with guarantee of database consistency.
     static var current = ValueObservation
