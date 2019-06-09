@@ -4,7 +4,7 @@ import SwiftUI
 
 /// A view controller that uses a @DatabasePublished property wrapper, and
 /// feeds both HallOfFameViewController, and the SwiftUI HallOfFameView.
-class HallOfFameViewModel: BindableObject {
+class HallOfFameViewModel {
     /// @DatabasePublished automatically updates the hallOfFame
     /// property whenever the database changes.
     ///
@@ -12,33 +12,55 @@ class HallOfFameViewModel: BindableObject {
     /// eventually fail.
     @DatabasePublished(HallOfFame.current, in: Current.database())
     private var hallOfFame: Result<HallOfFame, Error>
+
+    // MARK: - Publishers
     
     /// A publisher for the title of the Hall of Fame
     var titlePublisher: AnyPublisher<String, Never> {
         return $hallOfFame
-            .playerCount // AnyPublisher<Int, Error>
-            .map { "Best of \($0) players" }
-            .replaceError(with: "An error occured")
+            .playerCount
+            .map(Self.title)
+            .replaceError(with: Self.errorTitle)
             .eraseToAnyPublisher()
-    }
-    
-    /// The current title
-    var title: String {
-        (try? "Best of \(hallOfFame.get().playerCount) players") ?? "An error occured"
     }
 
     /// A publisher for the best players
     var bestPlayersPublisher: AnyPublisher<[Player], Never> {
-        return $hallOfFame
-            .bestPlayers // AnyPublisher<[Player], Error>
+        $hallOfFame
+            .bestPlayers
             .replaceError(with: [])
             .eraseToAnyPublisher()
     }
     
-    /// The current best players
+    // MARK: - Current Values
+    
+    /// The title of the Hall of Fame
+    var title: String {
+        do {
+            return try Self.title(hallOfFame.get().playerCount)
+        } catch {
+            return Self.errorTitle
+        }
+    }
+
+    /// The best players
     var bestPlayers: [Player] {
-        (try? hallOfFame.get().bestPlayers) ?? []
+        do {
+            return try hallOfFame.get().bestPlayers
+        } catch {
+            return []
+        }
     }
     
+    // MARK: - Helpers
+    
+    private static let errorTitle = "An error occured"
+    private static func title(_ playerCount: Int) -> String { "Best of \(playerCount) players" }
+}
+
+// MARK: - SwiftUI Support
+
+extension HallOfFameViewModel: BindableObject {
     var didChange: DatabasePublished<HallOfFame> { $hallOfFame }
 }
+
