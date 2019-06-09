@@ -44,12 +44,12 @@ Xcode 11 beta required.
     }
     ```
 
-### Controllers
+### User Interface
 
-- [CountViewController.swift](Documentation/Demo/GRDBCombineDemo/Controllers/CountViewController.swift)
+- [CountViewController.swift](Documentation/Demo/GRDBCombineDemo/UI/CountViewController.swift)
     
     CountViewController uses a DatabasePublisher in order to update a UILabel with the number of players
 
-- [HallOfFameViewModel.swift](Documentation/Demo/GRDBCombineDemo/Controllers/HallOfFameViewModel.swift)
+- [HallOfFameViewModel.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameViewModel.swift)
     
-    HallOfFameViewModel uses a `@DatabasePublished` property wrapper in order to keep its `hallOfFame` property in sync with the database content, and expose publishers to [HallOfFameViewController.swift](Documentation/Demo/GRDBCombineDemo/Controllers/HallOfFameViewController.swift).
+    HallOfFameViewModel uses a `@DatabasePublished` property wrapper in order to keep its content in sync with the database content, and expose it to both [HallOfFameViewController.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameViewController.swift) and the SwiftUI [HallOfFameView.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameView.swift).

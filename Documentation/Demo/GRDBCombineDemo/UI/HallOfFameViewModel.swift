@@ -1,8 +1,10 @@
 import Combine
 import GRDBCombine
+import SwiftUI
 
-/// A view controller that uses a @DatabasePublished property wrapper
-class HallOfFameViewModel {
+/// A view controller that uses a @DatabasePublished property wrapper, and
+/// feeds both HallOfFameViewController, and the SwiftUI HallOfFameView.
+class HallOfFameViewModel: BindableObject {
     /// @DatabasePublished automatically updates the hallOfFame
     /// property whenever the database changes.
     ///
@@ -20,6 +22,11 @@ class HallOfFameViewModel {
             .eraseToAnyPublisher()
     }
     
+    /// The current title
+    var title: String {
+        (try? "Best of \(hallOfFame.get().playerCount) players") ?? "An error occured"
+    }
+
     /// A publisher for the best players
     var bestPlayersPublisher: AnyPublisher<[Player], Never> {
         return $hallOfFame
@@ -32,4 +39,6 @@ class HallOfFameViewModel {
     var bestPlayers: [Player] {
         (try? hallOfFame.get().bestPlayers) ?? []
     }
+    
+    var didChange: DatabasePublished<HallOfFame> { $hallOfFame }
 }

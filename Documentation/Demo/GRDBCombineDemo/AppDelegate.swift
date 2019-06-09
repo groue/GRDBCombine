@@ -55,46 +55,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: - IBActions
     
     @IBAction func deletePlayers() {
-        try! Current.database().write { db in
-            _ = try Player.deleteAll(db)
-        }
+        Players.deletePlayers()
     }
     
     @IBAction func refreshPlayers() {
-        _refreshPlayers()
+        Players.refreshPlayers()
     }
     
     @IBAction func stressTest() {
         for _ in 0..<50 {
             DispatchQueue.global().async {
-                self._refreshPlayers()
-            }
-        }
-    }
-    
-    private func _refreshPlayers() {
-        try! Current.database().write { db in
-            if try Player.fetchCount(db) == 0 {
-                // Insert new random players
-                for _ in 0..<8 {
-                    var player = Player(id: nil, name: Player.randomName(), score: Player.randomScore())
-                    try player.insert(db)
-                }
-            } else {
-                // Insert a player
-                if Bool.random() {
-                    var player = Player(id: nil, name: Player.randomName(), score: Player.randomScore())
-                    try player.insert(db)
-                }
-                // Delete a random player
-                if Bool.random() {
-                    try Player.order(sql: "RANDOM()").limit(1).deleteAll(db)
-                }
-                // Update some players
-                for var player in try Player.fetchAll(db) where Bool.random() {
-                    player.score = Player.randomScore()
-                    try player.update(db)
-                }
+                Players.refreshPlayers()
             }
         }
     }
