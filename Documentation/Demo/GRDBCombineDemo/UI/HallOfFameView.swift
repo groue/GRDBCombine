@@ -1,5 +1,4 @@
 import SwiftUI
-import GRDBCombine
 
 struct HallOfFameView: View {
     @EnvironmentObject var viewModel: HallOfFameViewModel
