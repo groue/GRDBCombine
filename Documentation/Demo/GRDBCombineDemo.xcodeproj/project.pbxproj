@@ -1,0 +1,571 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 52;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		56284AFC22AD19CC00048746 /* GRDBCombine in Frameworks */ = {isa = PBXBuildFile; productRef = 56284AFB22AD19CC00048746 /* GRDBCombine */; };
+		56284AFE22AD1FC800048746 /* World.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56284AFD22AD1FC700048746 /* World.swift */; };
+		56284B0022AD215200048746 /* Combine+App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56284AFF22AD215200048746 /* Combine+App.swift */; };
+		566FA87822AD25A80036C2D8 /* MenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566FA87722AD25A80036C2D8 /* MenuViewController.swift */; };
+		56AACA9322AC04A000A40F2A /* HallOfFameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */; };
+		56AACA9D22AC2C7C00A40F2A /* HallOfFameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */; };
+		56AACA9F22AC2CD400A40F2A /* HallOfFame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9E22AC2CD400A40F2A /* HallOfFame.swift */; };
+		56DF376922A992DB00166718 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF376822A992DB00166718 /* AppDelegate.swift */; };
+		56DF376B22A992DB00166718 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF376A22A992DB00166718 /* SceneDelegate.swift */; };
+		56DF376D22A992DB00166718 /* CountViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF376C22A992DB00166718 /* CountViewController.swift */; };
+		56DF377022A992DB00166718 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 56DF376E22A992DB00166718 /* Main.storyboard */; };
+		56DF377222A992DC00166718 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 56DF377122A992DC00166718 /* Assets.xcassets */; };
+		56DF377522A992DC00166718 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 56DF377322A992DC00166718 /* LaunchScreen.storyboard */; };
+		56DF378022A992DC00166718 /* GRDBCombineDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF377F22A992DC00166718 /* GRDBCombineDemoTests.swift */; };
+		56DF378E22A9964900166718 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 56DF378D22A9964900166718 /* GRDB */; };
+		56DF379022A9969900166718 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF378F22A9969900166718 /* AppDatabase.swift */; };
+		56DF379422A9A73300166718 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF379322A9A73300166718 /* Player.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		56DF377C22A992DC00166718 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 56DF375D22A992DB00166718 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 56DF376422A992DB00166718;
+			remoteInfo = GRDBCombineDemo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		56284AFD22AD1FC700048746 /* World.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = World.swift; sourceTree = "<group>"; };
+		56284AFF22AD215200048746 /* Combine+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Combine+App.swift"; sourceTree = "<group>"; };
+		566FA87722AD25A80036C2D8 /* MenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuViewController.swift; sourceTree = "<group>"; };
+		56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameViewController.swift; sourceTree = "<group>"; };
+		56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameViewModel.swift; sourceTree = "<group>"; };
+		56AACA9E22AC2CD400A40F2A /* HallOfFame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFame.swift; sourceTree = "<group>"; };
+		56DF376522A992DB00166718 /* GRDBCombineDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GRDBCombineDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		56DF376822A992DB00166718 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		56DF376A22A992DB00166718 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		56DF376C22A992DB00166718 /* CountViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountViewController.swift; sourceTree = "<group>"; };
+		56DF376F22A992DB00166718 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		56DF377122A992DC00166718 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		56DF377422A992DC00166718 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		56DF377622A992DC00166718 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		56DF377B22A992DC00166718 /* GRDBCombineDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GRDBCombineDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		56DF377F22A992DC00166718 /* GRDBCombineDemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBCombineDemoTests.swift; sourceTree = "<group>"; };
+		56DF378122A992DC00166718 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		56DF378F22A9969900166718 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
+		56DF379322A9A73300166718 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		56DF376222A992DB00166718 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				56DF378E22A9964900166718 /* GRDB in Frameworks */,
+				56284AFC22AD19CC00048746 /* GRDBCombine in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		56DF377822A992DC00166718 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		56284AFA22AD19CC00048746 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		56AACA9822AC16D500A40F2A /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				56DF376C22A992DB00166718 /* CountViewController.swift */,
+				56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */,
+				56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */,
+				566FA87722AD25A80036C2D8 /* MenuViewController.swift */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
+		56AACA9922AC16EC00A40F2A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				56DF378F22A9969900166718 /* AppDatabase.swift */,
+				56AACA9E22AC2CD400A40F2A /* HallOfFame.swift */,
+				56DF379322A9A73300166718 /* Player.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		56AACA9A22AC172000A40F2A /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				56DF377122A992DC00166718 /* Assets.xcassets */,
+				56DF377322A992DC00166718 /* LaunchScreen.storyboard */,
+				56DF376E22A992DB00166718 /* Main.storyboard */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		56DF375C22A992DB00166718 = {
+			isa = PBXGroup;
+			children = (
+				56DF376722A992DB00166718 /* GRDBCombineDemo */,
+				56DF377E22A992DC00166718 /* GRDBCombineDemoTests */,
+				56DF376622A992DB00166718 /* Products */,
+				56284AFA22AD19CC00048746 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		56DF376622A992DB00166718 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				56DF376522A992DB00166718 /* GRDBCombineDemo.app */,
+				56DF377B22A992DC00166718 /* GRDBCombineDemoTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		56DF376722A992DB00166718 /* GRDBCombineDemo */ = {
+			isa = PBXGroup;
+			children = (
+				56DF377622A992DC00166718 /* Info.plist */,
+				56DF376822A992DB00166718 /* AppDelegate.swift */,
+				56DF376A22A992DB00166718 /* SceneDelegate.swift */,
+				56284AFD22AD1FC700048746 /* World.swift */,
+				56284AFF22AD215200048746 /* Combine+App.swift */,
+				56AACA9822AC16D500A40F2A /* Controllers */,
+				56AACA9922AC16EC00A40F2A /* Models */,
+				56AACA9A22AC172000A40F2A /* Resources */,
+			);
+			path = GRDBCombineDemo;
+			sourceTree = "<group>";
+		};
+		56DF377E22A992DC00166718 /* GRDBCombineDemoTests */ = {
+			isa = PBXGroup;
+			children = (
+				56DF377F22A992DC00166718 /* GRDBCombineDemoTests.swift */,
+				56DF378122A992DC00166718 /* Info.plist */,
+			);
+			path = GRDBCombineDemoTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		56DF376422A992DB00166718 /* GRDBCombineDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56DF378422A992DC00166718 /* Build configuration list for PBXNativeTarget "GRDBCombineDemo" */;
+			buildPhases = (
+				56DF376122A992DB00166718 /* Sources */,
+				56DF376222A992DB00166718 /* Frameworks */,
+				56DF376322A992DB00166718 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GRDBCombineDemo;
+			packageProductDependencies = (
+				56DF378D22A9964900166718 /* GRDB */,
+				56284AFB22AD19CC00048746 /* GRDBCombine */,
+			);
+			productName = GRDBCombineDemo;
+			productReference = 56DF376522A992DB00166718 /* GRDBCombineDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		56DF377A22A992DC00166718 /* GRDBCombineDemoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 56DF378722A992DC00166718 /* Build configuration list for PBXNativeTarget "GRDBCombineDemoTests" */;
+			buildPhases = (
+				56DF377722A992DC00166718 /* Sources */,
+				56DF377822A992DC00166718 /* Frameworks */,
+				56DF377922A992DC00166718 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				56DF377D22A992DC00166718 /* PBXTargetDependency */,
+			);
+			name = GRDBCombineDemoTests;
+			productName = GRDBCombineDemoTests;
+			productReference = 56DF377B22A992DC00166718 /* GRDBCombineDemoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		56DF375D22A992DB00166718 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1100;
+				LastUpgradeCheck = 1100;
+				ORGANIZATIONNAME = "Gwendal Roué";
+				TargetAttributes = {
+					56DF376422A992DB00166718 = {
+						CreatedOnToolsVersion = 11.0;
+					};
+					56DF377A22A992DC00166718 = {
+						CreatedOnToolsVersion = 11.0;
+						TestTargetID = 56DF376422A992DB00166718;
+					};
+				};
+			};
+			buildConfigurationList = 56DF376022A992DB00166718 /* Build configuration list for PBXProject "GRDBCombineDemo" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 56DF375C22A992DB00166718;
+			packageReferences = (
+				56DF378C22A9964900166718 /* XCRemoteSwiftPackageReference "GRDBCombine" */,
+			);
+			productRefGroup = 56DF376622A992DB00166718 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				56DF376422A992DB00166718 /* GRDBCombineDemo */,
+				56DF377A22A992DC00166718 /* GRDBCombineDemoTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		56DF376322A992DB00166718 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				56DF377522A992DC00166718 /* LaunchScreen.storyboard in Resources */,
+				56DF377222A992DC00166718 /* Assets.xcassets in Resources */,
+				56DF377022A992DB00166718 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		56DF377922A992DC00166718 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		56DF376122A992DB00166718 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				56284AFE22AD1FC800048746 /* World.swift in Sources */,
+				56DF376D22A992DB00166718 /* CountViewController.swift in Sources */,
+				56DF376922A992DB00166718 /* AppDelegate.swift in Sources */,
+				56284B0022AD215200048746 /* Combine+App.swift in Sources */,
+				566FA87822AD25A80036C2D8 /* MenuViewController.swift in Sources */,
+				56DF379022A9969900166718 /* AppDatabase.swift in Sources */,
+				56AACA9F22AC2CD400A40F2A /* HallOfFame.swift in Sources */,
+				56DF379422A9A73300166718 /* Player.swift in Sources */,
+				56DF376B22A992DB00166718 /* SceneDelegate.swift in Sources */,
+				56AACA9322AC04A000A40F2A /* HallOfFameViewController.swift in Sources */,
+				56AACA9D22AC2C7C00A40F2A /* HallOfFameViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		56DF377722A992DC00166718 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				56DF378022A992DC00166718 /* GRDBCombineDemoTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		56DF377D22A992DC00166718 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 56DF376422A992DB00166718 /* GRDBCombineDemo */;
+			targetProxy = 56DF377C22A992DC00166718 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		56DF376E22A992DB00166718 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				56DF376F22A992DB00166718 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		56DF377322A992DC00166718 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				56DF377422A992DC00166718 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		56DF378222A992DC00166718 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		56DF378322A992DC00166718 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		56DF378522A992DC00166718 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = AMD8W895CT;
+				INFOPLIST_FILE = GRDBCombineDemo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBCombineDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		56DF378622A992DC00166718 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = AMD8W895CT;
+				INFOPLIST_FILE = GRDBCombineDemo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBCombineDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		56DF378822A992DC00166718 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = AMD8W895CT;
+				INFOPLIST_FILE = GRDBCombineDemoTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBCombineDemoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GRDBCombineDemo.app/GRDBCombineDemo";
+			};
+			name = Debug;
+		};
+		56DF378922A992DC00166718 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = AMD8W895CT;
+				INFOPLIST_FILE = GRDBCombineDemoTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBCombineDemoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GRDBCombineDemo.app/GRDBCombineDemo";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		56DF376022A992DB00166718 /* Build configuration list for PBXProject "GRDBCombineDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				56DF378222A992DC00166718 /* Debug */,
+				56DF378322A992DC00166718 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		56DF378422A992DC00166718 /* Build configuration list for PBXNativeTarget "GRDBCombineDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				56DF378522A992DC00166718 /* Debug */,
+				56DF378622A992DC00166718 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		56DF378722A992DC00166718 /* Build configuration list for PBXNativeTarget "GRDBCombineDemoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				56DF378822A992DC00166718 /* Debug */,
+				56DF378922A992DC00166718 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		56DF378C22A9964900166718 /* XCRemoteSwiftPackageReference "GRDBCombine" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDBCombine";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		56284AFB22AD19CC00048746 /* GRDBCombine */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 56DF378C22A9964900166718 /* XCRemoteSwiftPackageReference "GRDBCombine" */;
+			productName = GRDBCombine;
+		};
+		56DF378D22A9964900166718 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 56DF378C22A9964900166718 /* XCRemoteSwiftPackageReference "GRDBCombine" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 56DF375D22A992DB00166718 /* Project object */;
+}
