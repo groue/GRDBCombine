@@ -7,7 +7,7 @@ class HallOfFameViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        toolbarItems = Current.playerEditionToolbarItems
+        toolbarItems = playerEditionToolbarItems
 
         // Reload table view whenever the players change.
         cancellers += viewModel.bestPlayersPublisher.sink { [unowned self] _ in

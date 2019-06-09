@@ -9,13 +9,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Setup the Current worldd
         let dbPool = try! setupDatabase(application)
         Current.database = { dbPool }
-        Current.playerEditionToolbarItems = [
-            UIBarButtonItem(barButtonSystemItem: .trash, target: nil, action: #selector(deletePlayers)),
-            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-            UIBarButtonItem(barButtonSystemItem: .refresh, target: nil, action: #selector(refreshPlayers)),
-            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-            UIBarButtonItem(title: "💣", style: .plain, target: nil, action: #selector(stressTest)),
-        ]
         return true
     }
 
@@ -66,3 +59,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Players.stressTest()
     }
 }
+
+/// Convenience of view controllers
+let playerEditionToolbarItems = [
+    UIBarButtonItem(barButtonSystemItem: .trash, target: nil, action: #selector(AppDelegate.deletePlayers)),
+    UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+    UIBarButtonItem(barButtonSystemItem: .refresh, target: nil, action: #selector(AppDelegate.refreshPlayers)),
+    UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+    UIBarButtonItem(title: "💣", style: .plain, target: nil, action: #selector(AppDelegate.stressTest)),
+]
