@@ -19,7 +19,10 @@ let package = Package(
     targets: [
         .target(
             name: "GRDBCombine",
-            dependencies: ["GRDB"])
+            dependencies: ["GRDB"]),
+        .testTarget(
+            name: "GRDBCombineTests",
+            dependencies: ["GRDBCombine", "GRDB"])
     ],
     swiftLanguageVersions: [.v4_2, .v5]
 )
