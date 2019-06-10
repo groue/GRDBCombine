@@ -22,8 +22,14 @@ public class DatabasePublished<Value>: Publisher {
         self.init(DatabasePublishers.Value(observation, in: reader))
     }
     
+    public convenience init<Reducer>(_ publisher: DatabasePublishers.Value<Reducer>)
+        where Reducer: ValueReducer, Reducer.Value == Value
+    {
+        self.init(publisher: publisher)
+    }
+
     /// Intializer from any publisher that MUST emit its first element synchronously.
-    private init<P>(_ publisher: P)
+    private init<P>(publisher: P)
         where P: Publisher, P.Output == Value, P.Failure == Error
     {
         canceller = AnyCancellable(publisher.sink(
@@ -65,6 +71,6 @@ public class DatabasePublished<Value>: Publisher {
     }
     
     public subscript<T>(dynamicMember keyPath: KeyPath<Value, T>) -> DatabasePublished<T> {
-        DatabasePublished<T>(currentValuePublisher.map { $0[keyPath: keyPath] })
+        DatabasePublished<T>(publisher: currentValuePublisher.map { $0[keyPath: keyPath] })
     }
 }
