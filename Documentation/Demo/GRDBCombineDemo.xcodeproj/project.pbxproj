@@ -15,7 +15,6 @@
 		566FA87C22AD51DA0036C2D8 /* Players.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566FA87B22AD51DA0036C2D8 /* Players.swift */; };
 		56AACA9322AC04A000A40F2A /* HallOfFameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */; };
 		56AACA9D22AC2C7C00A40F2A /* HallOfFameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */; };
-		56AACA9F22AC2CD400A40F2A /* HallOfFame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9E22AC2CD400A40F2A /* HallOfFame.swift */; };
 		56DF376922A992DB00166718 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF376822A992DB00166718 /* AppDelegate.swift */; };
 		56DF376B22A992DB00166718 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF376A22A992DB00166718 /* SceneDelegate.swift */; };
 		56DF376D22A992DB00166718 /* CountViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF376C22A992DB00166718 /* CountViewController.swift */; };
@@ -46,7 +45,6 @@
 		566FA87B22AD51DA0036C2D8 /* Players.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Players.swift; sourceTree = "<group>"; };
 		56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameViewController.swift; sourceTree = "<group>"; };
 		56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameViewModel.swift; sourceTree = "<group>"; };
-		56AACA9E22AC2CD400A40F2A /* HallOfFame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFame.swift; sourceTree = "<group>"; };
 		56DF376522A992DB00166718 /* GRDBCombineDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GRDBCombineDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		56DF376822A992DB00166718 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		56DF376A22A992DB00166718 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -106,7 +104,6 @@
 			children = (
 				56DF378F22A9969900166718 /* AppDatabase.swift */,
 				566FA87B22AD51DA0036C2D8 /* Players.swift */,
-				56AACA9E22AC2CD400A40F2A /* HallOfFame.swift */,
 				56DF379322A9A73300166718 /* Player.swift */,
 			);
 			path = Models;
@@ -280,7 +277,6 @@
 				56284B0022AD215200048746 /* Combine+App.swift in Sources */,
 				566FA87822AD25A80036C2D8 /* MenuViewController.swift in Sources */,
 				56DF379022A9969900166718 /* AppDatabase.swift in Sources */,
-				56AACA9F22AC2CD400A40F2A /* HallOfFame.swift in Sources */,
 				56DF379422A9A73300166718 /* Player.swift in Sources */,
 				56DF376B22A992DB00166718 /* SceneDelegate.swift in Sources */,
 				56AACA9322AC04A000A40F2A /* HallOfFameViewController.swift in Sources */,

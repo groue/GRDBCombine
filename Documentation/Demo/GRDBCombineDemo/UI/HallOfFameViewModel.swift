@@ -10,9 +10,9 @@ class HallOfFameViewModel {
     ///
     /// The property is a Result because database access may
     /// eventually fail.
-    @DatabasePublished(HallOfFame.current, in: Current.database())
-    private var hallOfFame: Result<HallOfFame, Error>
-
+    @DatabasePublished(Players.hallOfFame(maxPlayerCount: 10))
+    private var hallOfFame: Result<Players.HallOfFame, Error>
+    
     // MARK: - Publishers
     
     /// A publisher for the title of the Hall of Fame
@@ -23,7 +23,7 @@ class HallOfFameViewModel {
             .replaceError(with: Self.errorTitle)
             .eraseToAnyPublisher()
     }
-
+    
     /// A publisher for the best players
     var bestPlayersPublisher: AnyPublisher<[Player], Never> {
         $hallOfFame
@@ -42,7 +42,7 @@ class HallOfFameViewModel {
             return Self.errorTitle
         }
     }
-
+    
     /// The best players
     var bestPlayers: [Player] {
         do {
@@ -61,6 +61,19 @@ class HallOfFameViewModel {
 // MARK: - SwiftUI Support
 
 extension HallOfFameViewModel: BindableObject {
-    var didChange: DatabasePublished<HallOfFame> { $hallOfFame }
+    // TODO: this is not nice at all
+    var didChange: AnyPublisher<Result<Players.HallOfFame, Error>, Never> {
+        $hallOfFame
+            .map { Result.success($0) }
+            .catch { Publishers.Just(.failure($0)) }
+            .map {
+                print($0)
+                return $0
+            }
+            .eraseToAnyPublisher()
+//            .map { _ in }
+//            .replaceError(with: ())
+//            .eraseToAnyPublisher()
+    }
 }
 

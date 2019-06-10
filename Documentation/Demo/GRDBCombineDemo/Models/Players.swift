@@ -1,18 +1,20 @@
 import Combine
+import GRDB
+import GRDBCombine
 import Dispatch
 
 /// A type that provides operations on the Player database
 enum Players {
     // MARK: - Modify Players
     
-    static func deletePlayers() {
-        try! Current.database().write { db in
+    static func deletePlayers() throws {
+        try Current.database().write { db in
             _ = try Player.deleteAll(db)
         }
     }
     
-    static func refreshPlayers() {
-        try! Current.database().write { db in
+    static func refreshPlayers() throws {
+        try Current.database().write { db in
             if try Player.fetchCount(db) == 0 {
                 // Insert new random players
                 for _ in 0..<8 {
@@ -41,7 +43,7 @@ enum Players {
     static func stressTest() {
         for _ in 0..<50 {
             DispatchQueue.global().async {
-                refreshPlayers()
+                try? refreshPlayers()
             }
         }
     }
@@ -55,13 +57,15 @@ enum Players {
         /// The best ones
         var bestPlayers: [Player]
     }
-
-    func hallOfFamePublisher(maxPlayerCount: Int) -> AnyPublisher<Players.HallOfFame, Error> {
-        let count = Player.count(in: Current.database())
-        let bestPlayers = Player.limit(maxPlayerCount).orderedByScore().all(in: Current.database())
-        // TODO: reader must be shared
-        return count
-            .combineLatest(bestPlayers) { HallOfFame(playerCount: $0, bestPlayers: $1) }
-            .eraseToAnyPublisher()
+    
+    // TODO: erase this awful type
+    static func hallOfFame(maxPlayerCount: Int) -> DatabasePublishers.Value<ValueReducers.Map<ValueReducers.Combine2<ValueReducers.RemoveDuplicates<ValueReducers.Passthrough<Int>>, FetchableRecordsReducer<Player>>, Players.HallOfFame>> {
+        let count = Player.observationForCount()
+        let bestPlayers = Player.limit(maxPlayerCount).orderedByScore().observationForAll()
+        // TODO: count.combine(...) { ... }
+        let hallOfFame = ValueObservation
+            .combine(count, bestPlayers)
+            .map { HallOfFame(playerCount: $0, bestPlayers: $1) }
+        return DatabasePublishers.Value(hallOfFame, in: Current.database())
     }
 }

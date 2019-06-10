@@ -20,11 +20,11 @@ struct HallOfFameView: View {
     var toolbar: some View {
         HStack {
             Button(
-                action: { Players.deletePlayers() },
+                action: { try! Players.deletePlayers() },
                 label: { Image(systemName: "trash")})
             Spacer()
             Button(
-                action: { Players.refreshPlayers() },
+                action: { try! Players.refreshPlayers() },
                 label: { Image(systemName: "arrow.clockwise")})
             Spacer()
             Button(
