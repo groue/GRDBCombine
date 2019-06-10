@@ -18,7 +18,7 @@ public class DatabasePublished<Value>: Publisher {
     public init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
         where Reducer: ValueReducer, Reducer.Value == Value
     {
-        canceller = AnyCancellable(DatabasePublisher(for: observation, in: reader)
+        canceller = AnyCancellable(DatabasePublishers.Value(observation, in: reader)
             .map { Result.success($0) }
             .catch { Publishers.Just(.failure($0)) }
             .sink { [unowned self] value in
