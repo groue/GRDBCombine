@@ -1,7 +1,10 @@
+import Combine
 import Dispatch
 
 /// A type that provides operations on the Player database
 enum Players {
+    // MARK: - Modify Players
+    
     static func deletePlayers() {
         try! Current.database().write { db in
             _ = try Player.deleteAll(db)
@@ -41,5 +44,24 @@ enum Players {
                 refreshPlayers()
             }
         }
+    }
+    
+    // MARK: - Hall of Fame
+    
+    struct HallOfFame {
+        /// Total number of players
+        var playerCount: Int
+        
+        /// The best ones
+        var bestPlayers: [Player]
+    }
+
+    func hallOfFamePublisher(maxPlayerCount: Int) -> AnyPublisher<Players.HallOfFame, Error> {
+        let count = Player.count(in: Current.database())
+        let bestPlayers = Player.limit(maxPlayerCount).orderedByScore().all(in: Current.database())
+        // TODO: reader must be shared
+        return count
+            .combineLatest(bestPlayers) { HallOfFame(playerCount: $0, bestPlayers: $1) }
+            .eraseToAnyPublisher()
     }
 }
