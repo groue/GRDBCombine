@@ -59,13 +59,10 @@ enum Players {
     }
     
     // TODO: erase this awful type
-    static func hallOfFame(maxPlayerCount: Int) -> DatabasePublishers.Value<ValueReducers.Map<ValueReducers.Combine2<ValueReducers.RemoveDuplicates<ValueReducers.Passthrough<Int>>, FetchableRecordsReducer<Player>>, Players.HallOfFame>> {
+    static func hallOfFame(maxPlayerCount: Int) -> DatabasePublishers.Value<ValueReducers.Map<ValueReducers.Combine2<ValueReducers.RemoveDuplicates<ValueReducers.Fetch<Int>>, FetchableRecordsReducer<Player>>, Players.HallOfFame>> {
         let count = Player.observationForCount()
         let bestPlayers = Player.limit(maxPlayerCount).orderedByScore().observationForAll()
-        // TODO: count.combine(...) { ... }
-        let hallOfFame = ValueObservation
-            .combine(count, bestPlayers)
-            .map { HallOfFame(playerCount: $0, bestPlayers: $1) }
+        let hallOfFame = count.combine(bestPlayers) { HallOfFame(playerCount: $0, bestPlayers: $1) }
         return DatabasePublishers.Value(hallOfFame, in: Current.database())
     }
 }
