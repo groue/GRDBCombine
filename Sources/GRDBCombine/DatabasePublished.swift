@@ -2,30 +2,46 @@ import Combine
 import Foundation
 import GRDB
 
+// TODO: It basically is a CurrentValueSubject. What can we learn from this?
 @propertyDelegate
 @dynamicMemberLookup
 public class DatabasePublished<Value>: Publisher {
-    public typealias Output = Result<Value, Error>
-    public typealias Failure = Never
+    public typealias Output = Value
+    public typealias Failure = Error
     
     // TODO: replace with CurrentValueSubject when it is fixed.
-    public var value: Output { _value! }
-    private var _value: Output?
-    private var subject = PassthroughSubject<Output, Failure>()
+    public var value: Result<Value, Error> { _value! }
+    private var _value: Result<Value, Error>?
+    private var subject = PassthroughSubject<Value, Error>()
     
     private var canceller: AnyCancellable!
     
-    public init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
+    public convenience init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
         where Reducer: ValueReducer, Reducer.Value == Value
     {
-        canceller = AnyCancellable(DatabasePublishers.Value(observation, in: reader)
-            .map { Result.success($0) }
-            .catch { Publishers.Just(.failure($0)) }
-            .sink { [unowned self] value in
+        self.init(DatabasePublishers.Value(observation, in: reader))
+    }
+    
+    /// Intializer from any publisher that MUST emit its first element synchronously.
+    private init<P>(_ publisher: P)
+        where P: Publisher, P.Output == Value, P.Failure == Error
+    {
+        canceller = AnyCancellable(publisher.sink(
+            receiveCompletion: { completion in
+                switch completion {
+                case let .failure(error):
+                    // Make sure self.value is set before publishing
+                    self._value = .failure(error)
+                    self.subject.send(completion: completion)
+                case .finished:
+                    self.subject.send(completion: completion)
+                }
+        },
+            receiveValue: { value in
                 // Make sure self.value is set before publishing
-                self._value = value
+                self._value = .success(value)
                 self.subject.send(value)
-        })
+        }))
         
         // TODO: can we avoid this check at compile time?
         if _value == nil {
@@ -34,17 +50,21 @@ public class DatabasePublished<Value>: Publisher {
     }
     
     public func receive<S>(subscriber: S)
-        where S : Subscriber, S.Failure == Failure, S.Input == Output
+        where S : Subscriber, S.Input == Value, S.Failure == Error
     {
-        subject
-            .prepend(Publishers.Just(value))
-            .receive(subscriber: subscriber)
+        currentValuePublisher.receive(subscriber: subscriber)
     }
     
-    public subscript<T>(dynamicMember keyPath: KeyPath<Value, T>) -> AnyPublisher<T, Error> {
-        return subject
-            .prepend(Publishers.Just(value))
-            .tryMap { try $0.get()[keyPath: keyPath ] }
-            .eraseToAnyPublisher()
+    private var currentValuePublisher: AnyPublisher<Value, Error> {
+        do {
+            let value = try self.value.get()
+            return subject.prepend(value).eraseToAnyPublisher()
+        } catch {
+            return Publishers.Fail(error: error).eraseToAnyPublisher()
+        }
+    }
+    
+    public subscript<T>(dynamicMember keyPath: KeyPath<Value, T>) -> DatabasePublished<T> {
+        DatabasePublished<T>(currentValuePublisher.map { $0[keyPath: keyPath] })
     }
 }
