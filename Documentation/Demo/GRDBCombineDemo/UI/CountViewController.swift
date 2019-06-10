@@ -12,7 +12,7 @@ class CountViewController: UIViewController {
         toolbarItems = playerEditionToolbarItems
         
         let playerCount = Player.all().observeCount
-        cancellers += DatabasePublisher(for: playerCount, in: Current.database())
+        cancellers += DatabasePublishers.Value(playerCount, in: Current.database())
             .map { "\($0)" }
             .catch { _ in Publishers.Just("An error occurred") }
             .assign(to: \.text, on: countLabel)
