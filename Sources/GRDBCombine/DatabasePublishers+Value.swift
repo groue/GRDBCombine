@@ -9,18 +9,26 @@ extension DatabasePublishers {
         
         let reader: DatabaseReader
         let observation: ValueObservation<Reducer>
+        var fetchOnRequest: Bool
         
-        // TODO
-        // - From a request
         public init(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader) {
             self.reader = reader
             self.observation = observation
+            self.fetchOnRequest = false
+        }
+        
+        public func fetchOnSubscription() -> Self {
+            var publisher = self
+            publisher.fetchOnRequest = true
+            return publisher
         }
         
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
             let subscription = ValueSubscription<Reducer>(
                 reader: reader,
                 observation: observation,
+                queue: DispatchQueue.main,
+                fetchOnRequest: fetchOnRequest,
                 receiveCompletion: subscriber.receive(completion:),
                 receive: subscriber.receive(_:))
             subscriber.receive(subscription: subscription)
@@ -30,12 +38,14 @@ extension DatabasePublishers {
     private class ValueSubscription<Reducer: ValueReducer>: Subscription {
         private enum State {
             case waitingForDemand
-            case observing(Subscribers.Demand)
+            case observing(demand: Subscribers.Demand, sync: Bool)
             case completed
             case cancelled
         }
         private let reader: DatabaseReader
         private let observation: ValueObservation<Reducer>
+        private let queue: DispatchQueue
+        private let fetchOnRequest: Bool
         private let _receiveCompletion: (Subscribers.Completion<Error>) -> Void
         private let _receive: (Reducer.Value) -> Subscribers.Demand
         private var observer: TransactionObserver?
@@ -45,11 +55,15 @@ extension DatabasePublishers {
         init(
             reader: DatabaseReader,
             observation: ValueObservation<Reducer>,
+            queue: DispatchQueue,
+            fetchOnRequest: Bool,
             receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
             receive: @escaping (Reducer.Value) -> Subscribers.Demand)
         {
             self.reader = reader
             self.observation = observation
+            self.queue = queue
+            self.fetchOnRequest = fetchOnRequest
             self._receiveCompletion = receiveCompletion
             self._receive = receive
         }
@@ -63,8 +77,21 @@ extension DatabasePublishers {
                 guard demand > 0 else {
                     return
                 }
-                state = .observing(demand)
                 do {
+                    var observation = self.observation
+                    if fetchOnRequest {
+                        // Deal with unsafe GRDB scheduling: we can only
+                        // guarantee correct ordering of values if observation
+                        // starts on the same queue as the queue values are
+                        // dispatched on.
+                        dispatchPrecondition(condition: .onQueue(queue))
+                        state = .observing(demand: demand, sync: true)
+                        observation.scheduling = .unsafe(startImmediately: true)
+                    } else {
+                        state = .observing(demand: demand, sync: false)
+                        observation.scheduling = .async(onQueue: queue, startImmediately: true)
+                    }
+
                     observer = try reader.add(
                         observation: observation,
                         onError: { [unowned self] in self.receiveCompletion(.failure($0)) },
@@ -72,14 +99,11 @@ extension DatabasePublishers {
                 } catch {
                     receiveCompletion(.failure(error))
                 }
+
+            case let .observing(demand: currentDemand, sync: sync):
+                state = .observing(demand: currentDemand + demand, sync: sync)
             
-            case let .observing(currentDemand):
-                state = .observing(currentDemand + demand)
-            
-            case .completed:
-                break
-            
-            case .cancelled:
+            case .completed, .cancelled:
                 break
             }
         }
@@ -96,19 +120,36 @@ extension DatabasePublishers {
             lock.lock()
             defer { lock.unlock() }
             
-            guard case .observing = state else {
+            guard case let .observing(demand: _, sync: sync) = state else {
                 return
             }
             
+            if sync {
+                receiveSync(value)
+            } else {
+                queue.async {
+                    self.receiveSync(value)
+                }
+            }
+        }
+        
+        private func receiveSync(_ value: Reducer.Value) {
+            lock.lock()
+            defer { lock.unlock() }
+
+            guard case .observing = state else {
+                return
+            }
+
             let additionalDemand = _receive(value)
             
-            if case let .observing(demand) = state {
+            if case let .observing(demand: demand, sync: _) = state {
                 let newDemand = demand + additionalDemand - 1
                 if newDemand == .none {
                     observer = nil
                     state = .waitingForDemand
                 } else {
-                    state = .observing(newDemand)
+                    state = .observing(demand: newDemand, sync: false)
                 }
             }
         }

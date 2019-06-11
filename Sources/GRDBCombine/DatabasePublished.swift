@@ -11,23 +11,27 @@ public class DatabasePublished<Output, Failure: Error>: Publisher {
     
     private var canceller: AnyCancellable!
     
-    public convenience init<P>(_ publisher: P)
-        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never, Output: ExpressibleByNilLiteral
-    {
-        self.init(publisher, initial: .success(nil))
-    }
+//    // TODO: useful?
+//    public convenience init<P>(_ publisher: P)
+//        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never, Output: ExpressibleByNilLiteral
+//    {
+//        self.init(publisher, initial: nil)
+//    }
+//
+//    // TODO: useful?
+//    convenience init<P>(_ publisher: P, initial: Output)
+//        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never
+//    {
+//        // Safe because initial is not nil
+//        self.init(unsafe: publisher, initialResult: .success(initial))
+//    }
     
-    public convenience init<P>(_ publisher: P, initial: Result<Output, Failure>)
+    /// Unsafe initializer which fatalError if initial is nil and publisher
+    /// does not emit its first value synchronously.
+    init<P>(unsafe publisher: P, initialResult: Result<Output, Failure>?)
         where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never
     {
-        // Safe because initial is not nil
-        self.init(unsafe: publisher, initial: initial)
-    }
-
-    init<P>(unsafe publisher: P, initial: Result<Output, Failure>?)
-        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never
-    {
-        _result = initial
+        _result = initialResult
         
         canceller = AnyCancellable(publisher.sink(
             receiveCompletion: { completion in
@@ -68,23 +72,53 @@ public class DatabasePublished<Output, Failure: Error>: Publisher {
     }
     
     public subscript<T>(dynamicMember keyPath: KeyPath<Output, T>) -> DatabasePublished<T, Failure> {
+        // Safe because initialResult is not nil
         DatabasePublished<T, Failure>(
-            currentValuePublisher.map { $0[keyPath: keyPath] }.eraseToResult(),
-            initial: value.map { $0[keyPath: keyPath] })
+            unsafe: currentValuePublisher.map { $0[keyPath: keyPath] }.eraseToResult(),
+            initialResult: value.map { $0[keyPath: keyPath] })
     }
 }
 
 extension DatabasePublished where Failure == Error {
-    public convenience init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
-        where Reducer: ValueReducer, Reducer.Value == Output, Output: ExpressibleByNilLiteral
-    {
-        self.init(DatabasePublishers.Value(observation, in: reader))
-    }
+//    // TODO: useful?
+//    public convenience init<Reducer>(
+//        _ observation: ValueObservation<Reducer>,
+//        in reader: DatabaseReader,
+//        initial: Output)
+//        where Reducer: ValueReducer, Reducer.Value == Output, Output: ExpressibleByNilLiteral
+//    {
+//        self.init(
+//            DatabasePublishers.Value(observation, in: reader),
+//            initial: initial)
+//    }
+//    
+//    // TODO: useful?
+//    public convenience init<Reducer>(
+//        _ observation: ValueObservation<Reducer>,
+//        in reader: DatabaseReader)
+//        where Reducer: ValueReducer, Reducer.Value == Output, Output: ExpressibleByNilLiteral
+//    {
+//        self.init(DatabasePublishers.Value(observation, in: reader))
+//    }
     
-    public convenience init<Reducer>(_ publisher: DatabasePublishers.Value<Reducer>)
+    public convenience init<Reducer>(
+        _ publisher: DatabasePublishers.Value<Reducer>)
         where Reducer: ValueReducer, Reducer.Value == Output
     {
-        // TODO: make it safe by forcing it to publish its first element synchronously
-        self.init(unsafe: publisher.eraseToResult(), initial: nil)
+        // Safe because publisher fetches on subscription
+        self.init(
+            unsafe: publisher.fetchOnSubscription().eraseToResult(),
+            initialResult: nil)
+    }
+    
+    public convenience init<Reducer>(
+        _ publisher: DatabasePublishers.Value<Reducer>,
+        initial: Output)
+        where Reducer: ValueReducer, Reducer.Value == Output
+    {
+        // Safe because initialResult is not nil
+        self.init(
+            unsafe: publisher.eraseToResult(),
+            initialResult: .success(initial))
     }
 }
