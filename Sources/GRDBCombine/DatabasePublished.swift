@@ -101,9 +101,8 @@ extension DatabasePublished where Failure == Error {
 //        self.init(DatabasePublishers.Value(observation, in: reader))
 //    }
     
-    public convenience init<Reducer>(
-        _ publisher: DatabasePublishers.Value<Reducer>)
-        where Reducer: ValueReducer, Reducer.Value == Output
+    public convenience init(
+        _ publisher: DatabasePublishers.Value<Output>)
     {
         // Safe because publisher fetches on subscription
         self.init(
@@ -111,10 +110,9 @@ extension DatabasePublished where Failure == Error {
             initialResult: nil)
     }
     
-    public convenience init<Reducer>(
-        _ publisher: DatabasePublishers.Value<Reducer>,
+    public convenience init(
+        _ publisher: DatabasePublishers.Value<Output>,
         initial: Output)
-        where Reducer: ValueReducer, Reducer.Value == Output
     {
         // Safe because initialResult is not nil
         self.init(
