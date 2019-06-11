@@ -3,7 +3,11 @@ import Foundation
 import GRDB
 
 extension DatabasePublishers {
-    /// A publisher that tracks changes in a database region
+    /// A publisher that tracks changes in a database region.
+    ///
+    /// It emits database connections on a protected dispatch queue.
+    ///
+    /// Error completion, if any, is emitted synchronously on subscription.
     public struct DatabaseRegion: Publisher {
         public typealias Output = Database
         public typealias Failure = Error
@@ -11,8 +15,6 @@ extension DatabasePublishers {
         let writer: DatabaseWriter
         let observation: DatabaseRegionObservation
         
-        // TODO
-        // - initializer from multiple regions
         public init(_ observation: DatabaseRegionObservation, in writer: DatabaseWriter) {
             self.writer = writer
             self.observation = observation
@@ -30,11 +32,17 @@ extension DatabasePublishers {
     
     private class DatabaseRegionSubscription: Subscription {
         private enum State {
+            // Waiting for demand, not observing the database.
             case waitingForDemand
+            
+            // Observing the database. Self.observer is not nil.
+            // Demand is the remaining demand.
             case observing(Subscribers.Demand)
-            case completed
-            case cancelled
+            
+            // Completed or cancelled, not observing the database.
+            case finished
         }
+        
         private let writer: DatabaseWriter
         private let observation: DatabaseRegionObservation
         private let _receiveCompletion: (Subscribers.Completion<Error>) -> Void
@@ -76,10 +84,7 @@ extension DatabasePublishers {
             case let .observing(currentDemand):
                 state = .observing(currentDemand + demand)
             
-            case .completed:
-                break
-            
-            case .cancelled:
+            case .finished:
                 break
             }
         }
@@ -89,7 +94,7 @@ extension DatabasePublishers {
             defer { lock.unlock() }
             
             observer = nil
-            state = .cancelled
+            state = .finished
         }
         
         private func receive(_ value: Database) {
@@ -122,7 +127,7 @@ extension DatabasePublishers {
             }
             
             observer = nil
-            state = .completed
+            state = .finished
             _receiveCompletion(completion)
         }
     }

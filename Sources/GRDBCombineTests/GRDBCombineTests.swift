@@ -18,7 +18,7 @@ class GRDBCombineTests: XCTest {
         let players = Player.observationForAll()
         let publisher = DatabasePublishers.Value(players, in: dbQueue)
         let published = DatabasePublished(publisher)
-        let players: [Player] = try published.value.get()
+        let fetchedPlayers: [Player] = try published.value.get()
     }
     func testFailure() {
         XCTAssert(false, "failure")

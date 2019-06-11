@@ -3,11 +3,22 @@ import Foundation
 import GRDB
 
 extension DatabasePublishers {
-    fileprivate typealias SubscribeFunction<Output> = (DatabaseReader, DispatchQueue, (Bool) -> Void, @escaping (Subscribers.Completion<Error>) -> Void, @escaping (Output) -> Void) throws -> TransactionObserver
+    /// SubscribeFunction erases the Reducer type of ValueObservation.
+    fileprivate typealias SubscribeFunction<Output> = (DatabaseReader, DispatchQueue, (Bool) -> Void, @escaping (Subscribers.Completion<Error>) -> Void, @escaping (Output) -> Void) -> TransactionObserver
     
+    /// A publisher that tracks changes in the database.
+    ///
+    /// It emits all fresh values, and its eventual error completion, on the
+    /// main queue.
+    ///
+    /// By default, DatabasePublishers.Value can be subscribed from any dispatch
+    /// queue, and emits its first value asynchronously.
+    ///
+    /// You can force the puublisher to start synchronously with the
+    /// `fetchOnSubscription()` method. Subscription must then happen from the
+    /// main queue, or you will get a fatal error.
     public struct Value<Output>: Publisher {
         public typealias Failure = Error
-        
         let reader: DatabaseReader
         var fetchOnRequest: Bool
         private let subscribeSync: SubscribeFunction<Output>
@@ -22,6 +33,9 @@ extension DatabasePublishers {
             self.subscribeASync = observation.subscribeSync(in:queue:willSubscribeSync:receiveCompletion:receive:)
         }
         
+        /// Returns a new publisher which fetches initial values on
+        /// subscription. Subscription must happen from the main queue, or you
+        /// will get a fatal error.
         public func fetchOnSubscription() -> Self {
             var publisher = self
             publisher.fetchOnRequest = true
@@ -41,10 +55,23 @@ extension DatabasePublishers {
     
     private class ValueSubscription<Output>: Subscription {
         private enum State {
+            // Waiting for demand, not observing the database.
             case waitingForDemand
+            
+            // Observing the database. Self.observer is not nil.
+            //
+            // Demand is the remaining demand.
+            //
+            // If sync is true, then the next database event (value or
+            // completion) will be assumed to be emitted on self.queue, and
+            // handled synchronously. If sync is false, the event will be
+            // dispatched asynchronously on self.queue.
+            //
+            // Sync may be true only once, when the subscription starts.
             case observing(demand: Subscribers.Demand, sync: Bool)
-            case completed
-            case cancelled
+            
+            // Completed or cancelled, not observing the database.
+            case finished
         }
         private let subscribe: SubscribeFunction<Output>
         private let reader: DatabaseReader
@@ -79,18 +106,17 @@ extension DatabasePublishers {
                 guard demand > 0 else {
                     return
                 }
-                do {
-                    observer = try subscribe(reader, queue, { sync in
-                        self.state = .observing(demand: demand, sync: true)
-                    }, receiveCompletion, receive)
-                } catch {
-                    receiveCompletion(.failure(error))
-                }
+                observer = subscribe(
+                    reader,
+                    queue,
+                    { self.state = .observing(demand: demand, sync: $0) },
+                    receiveCompletion,
+                    receive)
 
             case let .observing(demand: currentDemand, sync: sync):
                 state = .observing(demand: currentDemand + demand, sync: sync)
             
-            case .completed, .cancelled:
+            case .finished:
                 break
             }
         }
@@ -100,7 +126,7 @@ extension DatabasePublishers {
             defer { lock.unlock() }
             
             observer = nil
-            state = .cancelled
+            state = .finished
         }
         
         private func receive(_ value: Output) {
@@ -147,12 +173,31 @@ extension DatabasePublishers {
             lock.lock()
             defer { lock.unlock() }
             
+            guard case let .observing(demand: _, sync: sync) = state else {
+                return
+            }
+            
+            if sync {
+                receiveCompletionSync(completion)
+            } else {
+                queue.async {
+                    self.receiveCompletionSync(completion)
+                }
+            }
+        }
+
+        private func receiveCompletionSync(_ completion: Subscribers.Completion<Error>) {
+            dispatchPrecondition(condition: .onQueue(queue))
+            
+            lock.lock()
+            defer { lock.unlock() }
+            
             guard case .observing = state else {
                 return
             }
             
             observer = nil
-            state = .completed
+            state = .finished
             _receiveCompletion(completion)
         }
     }
@@ -166,7 +211,7 @@ extension ValueObservation where Reducer: ValueReducer {
         willSubscribeSync: (Bool) -> Void,
         receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
         receive: @escaping (Reducer.Value) -> Void)
-        throws -> TransactionObserver
+        -> TransactionObserver
     {
         // Deal with unsafe GRDB scheduling: we can only
         // guarantee correct ordering of values if observation
@@ -178,7 +223,7 @@ extension ValueObservation where Reducer: ValueReducer {
         
         willSubscribeSync(true)
         
-        return try reader.add(
+        return reader.add(
             observation: observation,
             onError: { receiveCompletion(.failure($0)) },
             onChange: receive)
@@ -190,14 +235,14 @@ extension ValueObservation where Reducer: ValueReducer {
         willSubscribeSync: (Bool) -> Void,
         receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
         receive: @escaping (Reducer.Value) -> Void)
-        throws -> TransactionObserver
+        -> TransactionObserver
     {
         var observation = self
         observation.scheduling = .async(onQueue: queue, startImmediately: true)
         
         willSubscribeSync(false)
         
-        return try reader.add(
+        return reader.add(
             observation: observation,
             onError: { receiveCompletion(.failure($0)) },
             onChange: receive)
