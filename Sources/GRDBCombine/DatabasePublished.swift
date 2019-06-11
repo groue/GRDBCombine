@@ -2,75 +2,89 @@ import Combine
 import Foundation
 import GRDB
 
-// TODO: It basically is a CurrentValueSubject. What can we learn from this?
 @propertyDelegate
 @dynamicMemberLookup
-public class DatabasePublished<Value>: Publisher {
-    public typealias Output = Value
-    public typealias Failure = Error
-    
-    // TODO: replace with CurrentValueSubject when it is fixed.
-    public var value: Result<Value, Error> { _value! }
-    private var _value: Result<Value, Error>?
-    private var subject = PassthroughSubject<Value, Error>()
+public class DatabasePublished<Output, Failure: Error>: Publisher {
+    public var value: Result<Output, Failure> { _result! }
+    private var _result: Result<Output, Failure>?
+    private var subject = PassthroughSubject<Output, Failure>()
     
     private var canceller: AnyCancellable!
     
-    public convenience init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
-        where Reducer: ValueReducer, Reducer.Value == Value
+    public convenience init<P>(_ publisher: P)
+        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never, Output: ExpressibleByNilLiteral
     {
-        self.init(DatabasePublishers.Value(observation, in: reader))
+        self.init(publisher, initial: .success(nil))
     }
     
-    public convenience init<Reducer>(_ publisher: DatabasePublishers.Value<Reducer>)
-        where Reducer: ValueReducer, Reducer.Value == Value
+    public convenience init<P>(_ publisher: P, initial: Result<Output, Failure>)
+        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never
     {
-        self.init(publisher: publisher)
+        // Safe because initial is not nil
+        self.init(unsafe: publisher, initial: initial)
     }
 
-    /// Intializer from any publisher that MUST emit its first element synchronously.
-    private init<P>(publisher: P)
-        where P: Publisher, P.Output == Value, P.Failure == Error
+    init<P>(unsafe publisher: P, initial: Result<Output, Failure>?)
+        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never
     {
+        _result = initial
+        
         canceller = AnyCancellable(publisher.sink(
             receiveCompletion: { completion in
                 switch completion {
-                case let .failure(error):
-                    // Make sure self.value is set before publishing
-                    self._value = .failure(error)
-                    self.subject.send(completion: completion)
                 case .finished:
-                    self.subject.send(completion: completion)
+                    self.subject.send(completion: .finished)
                 }
         },
-            receiveValue: { value in
+            receiveValue: { result in
                 // Make sure self.value is set before publishing
-                self._value = .success(value)
-                self.subject.send(value)
+                self._result = result
+                switch result {
+                case let .success(value):
+                    self.subject.send(value)
+                case let .failure(error):
+                    self.subject.send(completion: .failure(error))
+                }
         }))
         
-        // TODO: can we avoid this check at compile time?
-        if _value == nil {
+        if _result == nil {
             fatalError("Contract broken: observation did not emit its first element")
         }
     }
     
     public func receive<S>(subscriber: S)
-        where S : Subscriber, S.Input == Value, S.Failure == Error
+        where S : Subscriber, S.Input == Output, S.Failure == Failure
     {
         currentValuePublisher.receive(subscriber: subscriber)
     }
     
-    private var currentValuePublisher: AnyPublisher<Value, Error> {
-        do {
-            let value = try self.value.get()
+    private var currentValuePublisher: AnyPublisher<Output, Failure> {
+        switch value {
+        case let .success(value):
             return subject.prepend(value).eraseToAnyPublisher()
-        } catch {
-            return Publishers.Fail(error: error).eraseToAnyPublisher()
+        case let .failure(error):
+            return Publishers.Fail<Output, Failure>(error: error).eraseToAnyPublisher()
         }
     }
     
-    public subscript<T>(dynamicMember keyPath: KeyPath<Value, T>) -> DatabasePublished<T> {
-        DatabasePublished<T>(publisher: currentValuePublisher.map { $0[keyPath: keyPath] })
+    public subscript<T>(dynamicMember keyPath: KeyPath<Output, T>) -> DatabasePublished<T, Failure> {
+        DatabasePublished<T, Failure>(
+            currentValuePublisher.map { $0[keyPath: keyPath] }.eraseToResult(),
+            initial: value.map { $0[keyPath: keyPath] })
+    }
+}
+
+extension DatabasePublished where Failure == Error {
+    public convenience init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
+        where Reducer: ValueReducer, Reducer.Value == Output, Output: ExpressibleByNilLiteral
+    {
+        self.init(DatabasePublishers.Value(observation, in: reader))
+    }
+    
+    public convenience init<Reducer>(_ publisher: DatabasePublishers.Value<Reducer>)
+        where Reducer: ValueReducer, Reducer.Value == Output
+    {
+        // TODO: make it safe by forcing it to publish its first element synchronously
+        self.init(unsafe: publisher.eraseToResult(), initial: nil)
     }
 }
