@@ -15,7 +15,7 @@
         "repositoryURL": "https://github.com/groue/GRDB.swift.git",
         "state": {
           "branch": "dev/CombineSupport",
-          "revision": "085fd13ef62d4faf872cff83cf6f102e8409a800",
+          "revision": "44138c433fe2f26d025c559407bb44007512bb64",
           "version": null
         }
       },
@@ -24,7 +24,7 @@
         "repositoryURL": "https://github.com/groue/GRDBCombine",
         "state": {
           "branch": "development",
-          "revision": "14a7030fc6dede60f0cae738eea4261c320760fb",
+          "revision": "0607f1e860be74e510df600e811a0d69b7a0a0b7",
           "version": null
         }
       }
