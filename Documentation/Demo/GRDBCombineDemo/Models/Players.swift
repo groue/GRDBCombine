@@ -59,9 +59,17 @@ enum Players {
     }
     
     static func hallOfFame(maxPlayerCount: Int) -> DatabasePublishers.Value<HallOfFame> {
-        let count = Player.observationForCount()
-        let bestPlayers = Player.limit(maxPlayerCount).orderedByScore().observationForAll()
-        let hallOfFame = count.combine(bestPlayers) { HallOfFame(playerCount: $0, bestPlayers: $1) }
+        let playerCount = Player.observationForCount()
+        
+        let bestPlayers = Player
+            .limit(maxPlayerCount)
+            .orderedByScore()
+            .observationForAll()
+        
+        let hallOfFame = playerCount.combine(bestPlayers) {
+            HallOfFame(playerCount: $0, bestPlayers: $1)
+        }
+        
         return DatabasePublishers.Value(hallOfFame, in: Current.database())
     }
 }
