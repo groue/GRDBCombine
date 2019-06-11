@@ -61,19 +61,8 @@ class HallOfFameViewModel {
 // MARK: - SwiftUI Support
 
 extension HallOfFameViewModel: BindableObject {
-    // TODO: this is not nice at all
-    var didChange: AnyPublisher<Result<Players.HallOfFame, Error>, Never> {
-        $hallOfFame
-            .map { Result.success($0) }
-            .catch { Publishers.Just(.failure($0)) }
-            .map {
-                print($0)
-                return $0
-            }
-            .eraseToAnyPublisher()
-//            .map { _ in }
-//            .replaceError(with: ())
-//            .eraseToAnyPublisher()
+    var didChange: AnyPublisher<Int, Never> {
+        return $hallOfFame.didChange
     }
 }
 

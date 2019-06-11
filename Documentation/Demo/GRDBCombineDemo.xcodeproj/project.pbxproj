@@ -13,6 +13,7 @@
 		566FA87822AD25A80036C2D8 /* MenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566FA87722AD25A80036C2D8 /* MenuViewController.swift */; };
 		566FA87A22AD48A20036C2D8 /* HallOfFameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566FA87922AD48A20036C2D8 /* HallOfFameView.swift */; };
 		566FA87C22AD51DA0036C2D8 /* Players.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566FA87B22AD51DA0036C2D8 /* Players.swift */; };
+		5694A2EC22B04F45001C24E2 /* GRDBCombine+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5694A2EB22B04F45001C24E2 /* GRDBCombine+SwiftUI.swift */; };
 		56AACA9322AC04A000A40F2A /* HallOfFameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */; };
 		56AACA9D22AC2C7C00A40F2A /* HallOfFameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */; };
 		56DF376922A992DB00166718 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DF376822A992DB00166718 /* AppDelegate.swift */; };
@@ -43,6 +44,7 @@
 		566FA87722AD25A80036C2D8 /* MenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuViewController.swift; sourceTree = "<group>"; };
 		566FA87922AD48A20036C2D8 /* HallOfFameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameView.swift; sourceTree = "<group>"; };
 		566FA87B22AD51DA0036C2D8 /* Players.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Players.swift; sourceTree = "<group>"; };
+		5694A2EB22B04F45001C24E2 /* GRDBCombine+SwiftUI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "GRDBCombine+SwiftUI.swift"; sourceTree = "<group>"; };
 		56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameViewController.swift; sourceTree = "<group>"; };
 		56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameViewModel.swift; sourceTree = "<group>"; };
 		56DF376522A992DB00166718 /* GRDBCombineDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GRDBCombineDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -146,6 +148,7 @@
 				56DF376A22A992DB00166718 /* SceneDelegate.swift */,
 				56284AFD22AD1FC700048746 /* World.swift */,
 				56284AFF22AD215200048746 /* Combine+App.swift */,
+				5694A2EB22B04F45001C24E2 /* GRDBCombine+SwiftUI.swift */,
 				56AACA9822AC16D500A40F2A /* UI */,
 				56AACA9922AC16EC00A40F2A /* Models */,
 				56AACA9A22AC172000A40F2A /* Resources */,
@@ -278,6 +281,7 @@
 				566FA87822AD25A80036C2D8 /* MenuViewController.swift in Sources */,
 				56DF379022A9969900166718 /* AppDatabase.swift in Sources */,
 				56DF379422A9A73300166718 /* Player.swift in Sources */,
+				5694A2EC22B04F45001C24E2 /* GRDBCombine+SwiftUI.swift in Sources */,
 				56DF376B22A992DB00166718 /* SceneDelegate.swift in Sources */,
 				56AACA9322AC04A000A40F2A /* HallOfFameViewController.swift in Sources */,
 				566FA87A22AD48A20036C2D8 /* HallOfFameView.swift in Sources */,
