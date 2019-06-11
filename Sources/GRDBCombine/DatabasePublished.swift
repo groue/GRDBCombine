@@ -28,7 +28,7 @@ public class DatabasePublished<Output, Failure: Error>: Publisher {
     
     /// Unsafe initializer which fatalError if initial is nil and publisher
     /// does not emit its first value synchronously.
-    init<P>(unsafe publisher: P, initialResult: Result<Output, Failure>?)
+    init<P>(initialResult: Result<Output, Failure>?, unsafePublisher publisher: P)
         where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never
     {
         _result = initialResult
@@ -74,8 +74,8 @@ public class DatabasePublished<Output, Failure: Error>: Publisher {
     public subscript<T>(dynamicMember keyPath: KeyPath<Output, T>) -> DatabasePublished<T, Failure> {
         // Safe because initialResult is not nil
         DatabasePublished<T, Failure>(
-            unsafe: currentValuePublisher.map { $0[keyPath: keyPath] }.eraseToResult(),
-            initialResult: value.map { $0[keyPath: keyPath] })
+            initialResult: value.map { $0[keyPath: keyPath] },
+            unsafePublisher: currentValuePublisher.map { $0[keyPath: keyPath] }.eraseToResult())
     }
 }
 
@@ -106,17 +106,17 @@ extension DatabasePublished where Failure == Error {
     {
         // Safe because publisher fetches on subscription
         self.init(
-            unsafe: publisher.fetchOnSubscription().eraseToResult(),
-            initialResult: nil)
+            initialResult: nil,
+            unsafePublisher: publisher.fetchOnSubscription().eraseToResult())
     }
     
     public convenience init(
-        _ publisher: DatabasePublishers.Value<Output>,
-        initial: Output)
+        initialValue: Output,
+        _ publisher: DatabasePublishers.Value<Output>)
     {
         // Safe because initialResult is not nil
         self.init(
-            unsafe: publisher.eraseToResult(),
-            initialResult: .success(initial))
+            initialResult: .success(initialValue),
+            unsafePublisher: publisher.eraseToResult())
     }
 }
