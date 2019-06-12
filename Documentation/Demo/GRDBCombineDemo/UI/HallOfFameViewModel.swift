@@ -19,7 +19,7 @@ class HallOfFameViewModel {
     var titlePublisher: AnyPublisher<String, Never> {
         return $hallOfFame
             .playerCount
-            .map(Self.title)
+            .map(Self.title(playerCount:))
             .replaceError(with: Self.errorTitle)
             .eraseToAnyPublisher()
     }
@@ -28,7 +28,7 @@ class HallOfFameViewModel {
     var bestPlayersPublisher: AnyPublisher<[Player], Never> {
         $hallOfFame
             .bestPlayers
-            .replaceError(with: [])
+            .replaceError(with: Self.errorBestPlayers)
             .eraseToAnyPublisher()
     }
     
@@ -37,7 +37,7 @@ class HallOfFameViewModel {
     /// The title of the Hall of Fame
     var title: String {
         do {
-            return try Self.title(hallOfFame.get().playerCount)
+            return try Self.title(playerCount: hallOfFame.get().playerCount)
         } catch {
             return Self.errorTitle
         }
@@ -48,14 +48,15 @@ class HallOfFameViewModel {
         do {
             return try hallOfFame.get().bestPlayers
         } catch {
-            return []
+            return Self.errorBestPlayers
         }
     }
     
     // MARK: - Helpers
     
     private static let errorTitle = "An error occured"
-    private static func title(_ playerCount: Int) -> String { "Best of \(playerCount) players" }
+    private static let errorBestPlayers: [Player] = []
+    private static func title(playerCount: Int) -> String { "Best of \(playerCount) players" }
 }
 
 // MARK: - SwiftUI Support
