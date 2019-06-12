@@ -5,12 +5,6 @@ GRDBCombine
 
 Xcode 11 beta required.
 
-**Known issues**
-
-- Only use it from the main thread
-- The API for defining ValueObservations needs some love.
-
-
 
 ## Demo Application
 
