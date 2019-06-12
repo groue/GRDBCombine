@@ -4,10 +4,13 @@ import GRDB
 
 @propertyDelegate
 @dynamicMemberLookup
-public class DatabasePublished<Output, Failure: Error>: Publisher {
-    public var value: Result<Output, Failure> { _result! }
-    private var _result: Result<Output, Failure>?
-    private var subject = PassthroughSubject<Output, Failure>()
+public class DatabasePublished<Output>: Publisher {
+    public typealias Output = Output
+    public typealias Failure = Error
+    
+    public var value: Result<Output, Error> { _result! }
+    private var _result: Result<Output, Error>?
+    private var subject = PassthroughSubject<Output, Error>()
     
     private var canceller: AnyCancellable!
     
@@ -28,8 +31,8 @@ public class DatabasePublished<Output, Failure: Error>: Publisher {
     
     /// Unsafe initializer which fatalError if initial is nil and publisher
     /// does not emit its first value synchronously.
-    init<P>(initialResult: Result<Output, Failure>?, unsafePublisher publisher: P)
-        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never
+    init<P>(initialResult: Result<Output, Error>?, unsafePublisher publisher: P)
+        where P: Publisher, P.Output == Result<Output, Error>, P.Failure == Never
     {
         _result = initialResult
         
@@ -57,29 +60,29 @@ public class DatabasePublished<Output, Failure: Error>: Publisher {
     }
     
     public func receive<S>(subscriber: S)
-        where S : Subscriber, S.Input == Output, S.Failure == Failure
+        where S : Subscriber, S.Input == Output, S.Failure == Error
     {
         currentValuePublisher.receive(subscriber: subscriber)
     }
     
-    private var currentValuePublisher: AnyPublisher<Output, Failure> {
+    private var currentValuePublisher: AnyPublisher<Output, Error> {
         switch value {
         case let .success(value):
             return subject.prepend(value).eraseToAnyPublisher()
         case let .failure(error):
-            return Publishers.Fail<Output, Failure>(error: error).eraseToAnyPublisher()
+            return Publishers.Fail<Output, Error>(error: error).eraseToAnyPublisher()
         }
     }
     
-    public subscript<T>(dynamicMember keyPath: KeyPath<Output, T>) -> DatabasePublished<T, Failure> {
+    public subscript<T>(dynamicMember keyPath: KeyPath<Output, T>) -> DatabasePublished<T> {
         // Safe because initialResult is not nil
-        DatabasePublished<T, Failure>(
+        DatabasePublished<T>(
             initialResult: value.map { $0[keyPath: keyPath] },
             unsafePublisher: currentValuePublisher.map { $0[keyPath: keyPath] }.eraseToResult())
     }
 }
 
-extension DatabasePublished where Failure == Error {
+extension DatabasePublished {
 //    // TODO: useful?
 //    public convenience init<Reducer>(
 //        _ observation: ValueObservation<Reducer>,
