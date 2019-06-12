@@ -61,8 +61,7 @@ class HallOfFameViewModel {
 // MARK: - SwiftUI Support
 
 extension HallOfFameViewModel: BindableObject {
-    var didChange: AnyPublisher<Int, Never> {
+    var didChange: PassthroughSubject<Void, Never> {
         return $hallOfFame.didChange
     }
 }
-
