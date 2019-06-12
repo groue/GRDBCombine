@@ -3,9 +3,6 @@ import Foundation
 import GRDB
 
 extension DatabasePublishers {
-    /// SubscribeFunction erases the Reducer type of ValueObservation.
-    fileprivate typealias SubscribeFunction<Output> = (DatabaseReader, DispatchQueue, (Bool) -> Void, @escaping (Subscribers.Completion<Error>) -> Void, @escaping (Output) -> Void) -> TransactionObserver
-    
     /// A publisher that tracks changes in the database.
     ///
     /// It emits all fresh values, and its eventual error completion, on the
@@ -14,39 +11,41 @@ extension DatabasePublishers {
     /// By default, DatabasePublishers.Value can be subscribed from any dispatch
     /// queue, and emits its first value asynchronously.
     ///
-    /// You can force the puublisher to start synchronously with the
+    /// You can force the publisher to start synchronously with the
     /// `fetchOnSubscription()` method. Subscription must then happen from the
     /// main queue, or you will get a fatal error.
     public struct Value<Output>: Publisher {
         public typealias Failure = Error
         let reader: DatabaseReader
-        var fetchOnRequest: Bool
-        private let subscribeSync: SubscribeFunction<Output>
-        private let subscribeASync: SubscribeFunction<Output>
-
+        private var subscribe: SubscribeFunction<Output>
+        private let subscribeWithFetchOnSubscription: SubscribeFunction<Output>
+        private let subscribeWithAsyncFetch: SubscribeFunction<Output>
+        
         public init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
             where Reducer: ValueReducer, Reducer.Value == Output
         {
             self.reader = reader
-            self.fetchOnRequest = false
-            self.subscribeSync = observation.subscribeSync(in:queue:willSubscribeSync:receiveCompletion:receive:)
-            self.subscribeASync = observation.subscribeSync(in:queue:willSubscribeSync:receiveCompletion:receive:)
+            self.subscribeWithFetchOnSubscription = observation.subscribeWithFetchOnSubscription
+            self.subscribeWithAsyncFetch = observation.subscribeWithAsyncFetch(in:queue:willSubscribeSync:receiveCompletion:receive:)
+            
+            // Default to async fetch of initial value
+            self.subscribe = subscribeWithAsyncFetch
         }
         
-        /// Returns a new publisher which fetches initial values on
-        /// subscription. Subscription must happen from the main queue, or you
-        /// will get a fatal error.
+        /// Returns a new publisher which synchronously fetches its initial
+        /// value on subscription. Subscription must happen from the main queue,
+        /// or you will get a fatal error.
         public func fetchOnSubscription() -> Self {
             var publisher = self
-            publisher.fetchOnRequest = true
+            publisher.subscribe = subscribeWithFetchOnSubscription
             return publisher
         }
         
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
             let subscription = ValueSubscription<Output>(
-                subscribe: fetchOnRequest ? subscribeSync : subscribeASync,
+                subscribe: subscribe,
                 reader: reader,
-                queue: DispatchQueue.main,
+                queue: DispatchQueue.main, // Wait for Combine Schedulers to be ready before we attempt at doing more
                 receiveCompletion: subscriber.receive(completion:),
                 receive: subscriber.receive(_:))
             subscriber.receive(subscription: subscription)
@@ -98,50 +97,48 @@ extension DatabasePublishers {
         }
         
         func request(_ demand: Subscribers.Demand) {
-            lock.lock()
-            defer { lock.unlock() }
-            
-            switch state {
-            case .waitingForDemand:
-                guard demand > 0 else {
-                    return
+            lock.synchronized {
+                
+                switch state {
+                case .waitingForDemand:
+                    guard demand > 0 else {
+                        return
+                    }
+                    observer = subscribe(
+                        reader,
+                        queue,
+                        { self.state = .observing(demand: demand, sync: $0) },
+                        receiveCompletion,
+                        receive)
+                    
+                case let .observing(demand: currentDemand, sync: sync):
+                    state = .observing(demand: currentDemand + demand, sync: sync)
+                    
+                case .finished:
+                    break
                 }
-                observer = subscribe(
-                    reader,
-                    queue,
-                    { self.state = .observing(demand: demand, sync: $0) },
-                    receiveCompletion,
-                    receive)
-
-            case let .observing(demand: currentDemand, sync: sync):
-                state = .observing(demand: currentDemand + demand, sync: sync)
-            
-            case .finished:
-                break
             }
         }
         
         func cancel() {
-            lock.lock()
-            defer { lock.unlock() }
-            
-            observer = nil
-            state = .finished
+            lock.synchronized {
+                observer = nil
+                state = .finished
+            }
         }
         
         private func receive(_ value: Output) {
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard case let .observing(demand: _, sync: sync) = state else {
-                return
-            }
-            
-            if sync {
-                receiveSync(value)
-            } else {
-                queue.async {
-                    self.receiveSync(value)
+            lock.synchronized {
+                guard case let .observing(demand: _, sync: sync) = state else {
+                    return
+                }
+                
+                if sync {
+                    receiveSync(value)
+                } else {
+                    queue.async {
+                        self.receiveSync(value)
+                    }
                 }
             }
         }
@@ -149,63 +146,63 @@ extension DatabasePublishers {
         private func receiveSync(_ value: Output) {
             dispatchPrecondition(condition: .onQueue(queue))
             
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard case .observing = state else {
-                return
-            }
-
-            let additionalDemand = _receive(value)
-            
-            if case let .observing(demand: demand, sync: _) = state {
-                let newDemand = demand + additionalDemand - 1
-                if newDemand == .none {
-                    observer = nil
-                    state = .waitingForDemand
-                } else {
-                    state = .observing(demand: newDemand, sync: false)
+            lock.synchronized {
+                guard case .observing = state else {
+                    return
+                }
+                
+                let additionalDemand = _receive(value)
+                
+                if case let .observing(demand: demand, sync: _) = state {
+                    let newDemand = demand + additionalDemand - 1
+                    if newDemand == .none {
+                        observer = nil
+                        state = .waitingForDemand
+                    } else {
+                        state = .observing(demand: newDemand, sync: false)
+                    }
                 }
             }
         }
         
         private func receiveCompletion(_ completion: Subscribers.Completion<Error>) {
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard case let .observing(demand: _, sync: sync) = state else {
-                return
-            }
-            
-            if sync {
-                receiveCompletionSync(completion)
-            } else {
-                queue.async {
-                    self.receiveCompletionSync(completion)
+            lock.synchronized {
+                guard case let .observing(demand: _, sync: sync) = state else {
+                    return
+                }
+                
+                if sync {
+                    receiveCompletionSync(completion)
+                } else {
+                    queue.async {
+                        self.receiveCompletionSync(completion)
+                    }
                 }
             }
         }
-
+        
         private func receiveCompletionSync(_ completion: Subscribers.Completion<Error>) {
             dispatchPrecondition(condition: .onQueue(queue))
             
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard case .observing = state else {
-                return
+            lock.synchronized {
+                guard case .observing = state else {
+                    return
+                }
+                
+                observer = nil
+                state = .finished
+                _receiveCompletion(completion)
             }
-            
-            observer = nil
-            state = .finished
-            _receiveCompletion(completion)
         }
     }
 }
 
-// Erase ValueReducer
+// MARK: - Erase ValueObservation.Reducer
+
+private typealias SubscribeFunction<Output> = (DatabaseReader, DispatchQueue, (Bool) -> Void, @escaping (Subscribers.Completion<Error>) -> Void, @escaping (Output) -> Void) -> TransactionObserver
+
 extension ValueObservation where Reducer: ValueReducer {
-    fileprivate func subscribeSync(
+    fileprivate func subscribeWithFetchOnSubscription(
         in reader: DatabaseReader,
         queue: DispatchQueue,
         willSubscribeSync: (Bool) -> Void,
@@ -228,8 +225,8 @@ extension ValueObservation where Reducer: ValueReducer {
             onError: { receiveCompletion(.failure($0)) },
             onChange: receive)
     }
-
-    fileprivate func subscribeAsync(
+    
+    fileprivate func subscribeWithAsyncFetch(
         in reader: DatabaseReader,
         queue: DispatchQueue,
         willSubscribeSync: (Bool) -> Void,

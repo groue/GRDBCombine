@@ -15,21 +15,6 @@ public class DatabasePublished<Output>: Publisher {
     
     private var canceller: AnyCancellable!
     
-//    // TODO: useful?
-//    public convenience init<P>(_ publisher: P)
-//        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never, Output: ExpressibleByNilLiteral
-//    {
-//        self.init(publisher, initial: nil)
-//    }
-//
-//    // TODO: useful?
-//    convenience init<P>(_ publisher: P, initial: Output)
-//        where P: Publisher, P.Output == Result<Output, Failure>, P.Failure == Never
-//    {
-//        // Safe because initial is not nil
-//        self.init(unsafe: publisher, initialResult: .success(initial))
-//    }
-    
     /// Unsafe initializer which fatalError if initial is nil and publisher
     /// does not emit its first value synchronously.
     init<P>(initialResult: Result<Output, Error>?, unsafePublisher publisher: P)
@@ -87,27 +72,6 @@ public class DatabasePublished<Output>: Publisher {
 }
 
 extension DatabasePublished {
-//    // TODO: useful?
-//    public convenience init<Reducer>(
-//        _ observation: ValueObservation<Reducer>,
-//        in reader: DatabaseReader,
-//        initial: Output)
-//        where Reducer: ValueReducer, Reducer.Value == Output, Output: ExpressibleByNilLiteral
-//    {
-//        self.init(
-//            DatabasePublishers.Value(observation, in: reader),
-//            initial: initial)
-//    }
-//    
-//    // TODO: useful?
-//    public convenience init<Reducer>(
-//        _ observation: ValueObservation<Reducer>,
-//        in reader: DatabaseReader)
-//        where Reducer: ValueReducer, Reducer.Value == Output, Output: ExpressibleByNilLiteral
-//    {
-//        self.init(DatabasePublishers.Value(observation, in: reader))
-//    }
-    
     public convenience init(
         _ publisher: DatabasePublishers.Value<Output>)
     {

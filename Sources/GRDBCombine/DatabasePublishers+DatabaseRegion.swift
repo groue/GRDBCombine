@@ -7,7 +7,8 @@ extension DatabasePublishers {
     ///
     /// It emits database connections on a protected dispatch queue.
     ///
-    /// Error completion, if any, is emitted synchronously on subscription.
+    /// Error completion, if any, is only emitted, synchronously,
+    /// on subscription.
     public struct DatabaseRegion: Publisher {
         public typealias Output = Database
         public typealias Failure = Error
@@ -64,71 +65,67 @@ extension DatabasePublishers {
         }
         
         func request(_ demand: Subscribers.Demand) {
-            lock.lock()
-            defer { lock.unlock() }
-            
-            switch state {
-            case .waitingForDemand:
-                guard demand > 0 else {
-                    return
+            lock.synchronized {
+                switch state {
+                case .waitingForDemand:
+                    guard demand > 0 else {
+                        return
+                    }
+                    state = .observing(demand)
+                    do {
+                        observer = try observation.start(
+                            in: writer,
+                            onChange: { [unowned self] in self.receive($0) })
+                    } catch {
+                        receiveCompletion(.failure(error))
+                    }
+                    
+                case let .observing(currentDemand):
+                    state = .observing(currentDemand + demand)
+                    
+                case .finished:
+                    break
                 }
-                state = .observing(demand)
-                do {
-                    observer = try observation.start(
-                        in: writer,
-                        onChange: { [unowned self] in self.receive($0) })
-                } catch {
-                    receiveCompletion(.failure(error))
-                }
-            
-            case let .observing(currentDemand):
-                state = .observing(currentDemand + demand)
-            
-            case .finished:
-                break
             }
         }
         
         func cancel() {
-            lock.lock()
-            defer { lock.unlock() }
-            
-            observer = nil
-            state = .finished
+            lock.synchronized {
+                observer = nil
+                state = .finished
+            }
         }
         
         private func receive(_ value: Database) {
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard case .observing = state else {
-                return
-            }
-            
-            let additionalDemand = _receive(value)
-            
-            if case let .observing(demand) = state {
-                let newDemand = demand + additionalDemand - 1
-                if newDemand == .none {
-                    observer = nil
-                    state = .waitingForDemand
-                } else {
-                    state = .observing(newDemand)
+            lock.synchronized {
+                guard case .observing = state else {
+                    return
+                }
+                
+                let additionalDemand = _receive(value)
+                
+                if case let .observing(demand) = state {
+                    let newDemand = demand + additionalDemand - 1
+                    if newDemand == .none {
+                        observer = nil
+                        state = .waitingForDemand
+                    } else {
+                        state = .observing(newDemand)
+                    }
                 }
             }
         }
         
         private func receiveCompletion(_ completion: Subscribers.Completion<Error>) {
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard case .observing = state else {
-                return
+            lock.synchronized {
+                guard case .observing = state else {
+                    return
+                }
+                
+                observer = nil
+                state = .finished
+                _receiveCompletion(completion)
             }
-            
-            observer = nil
-            state = .finished
-            _receiveCompletion(completion)
         }
     }
 }
