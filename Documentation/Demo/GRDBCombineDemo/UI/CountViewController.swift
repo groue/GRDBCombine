@@ -15,7 +15,7 @@ class CountViewController: UIViewController {
         let countPublisher = DatabasePublishers.Value(Player.observationForCount(), in: Current.database())
         cancellers += countPublisher
             .map { "\($0)" }
-            .catch { _ in Publishers.Just("An error occurred") }
+            .replaceError(with: "An error occurred")
             .assign(to: \.text, on: countLabel)
     }
     

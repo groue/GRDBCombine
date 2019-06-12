@@ -32,7 +32,6 @@ struct HallOfFameView: View {
                 label: { Text("💣") })
             }
             .padding()
-        
     }
 }
 
