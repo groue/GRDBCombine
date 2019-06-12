@@ -48,11 +48,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: - IBActions
     
     @IBAction func deletePlayers() {
-        Players.deletePlayers()
+        try! Players.deletePlayers()
     }
     
     @IBAction func refreshPlayers() {
-        Players.refreshPlayers()
+        try! Players.refreshPlayers()
     }
     
     @IBAction func stressTest() {

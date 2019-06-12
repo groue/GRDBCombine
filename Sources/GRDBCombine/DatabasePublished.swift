@@ -4,47 +4,95 @@ import GRDB
 
 @propertyDelegate
 @dynamicMemberLookup
-public class DatabasePublished<Value>: Publisher {
-    public typealias Output = Result<Value, Error>
-    public typealias Failure = Never
+public class DatabasePublished<Output>: Publisher {
+    public typealias Output = Output
+    public typealias Failure = Error
     
-    // TODO: replace with CurrentValueSubject when it is fixed.
-    public var value: Output { _value! }
-    private var _value: Output?
-    private var subject = PassthroughSubject<Output, Failure>()
+    public var value: Result<Output, Error> { _result! }
+    private var _result: Result<Output, Error>?
+    private var subject = PassthroughSubject<Output, Error>()
+    public var didChange = PassthroughSubject<Void, Never>() // Support for SwiftUI
     
     private var canceller: AnyCancellable!
     
-    public init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
-        where Reducer: ValueReducer, Reducer.Value == Value
+    /// Unsafe initializer which fatalError if initial is nil and publisher
+    /// does not emit its first value synchronously.
+    init<P>(initialResult: Result<Output, Error>?, unsafePublisher publisher: P)
+        where P: Publisher, P.Output == Result<Output, Error>, P.Failure == Never
     {
-        canceller = AnyCancellable(DatabasePublisher(for: observation, in: reader)
-            .map { Result.success($0) }
-            .catch { Publishers.Just(.failure($0)) }
-            .sink { [unowned self] value in
-                // Make sure self.value is set before publishing
-                self._value = value
-                self.subject.send(value)
-        })
+        _result = initialResult
         
-        // TODO: can we avoid this check at compile time?
-        if _value == nil {
+        canceller = AnyCancellable(publisher.sink(
+            receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    self.didChange.send(())
+                    self.subject.send(completion: .finished)
+                }
+        },
+            receiveValue: { result in
+                // Make sure self.value is set before publishing
+                self._result = result
+                switch result {
+                case let .success(value):
+                    self.didChange.send(())
+                    self.subject.send(value)
+                case let .failure(error):
+                    self.didChange.send(())
+                    self.subject.send(completion: .failure(error))
+                }
+        }))
+        
+        if _result == nil {
             fatalError("Contract broken: observation did not emit its first element")
         }
     }
     
     public func receive<S>(subscriber: S)
-        where S : Subscriber, S.Failure == Failure, S.Input == Output
+        where S : Subscriber, S.Input == Output, S.Failure == Error
     {
-        subject
-            .prepend(Publishers.Just(value))
-            .receive(subscriber: subscriber)
+        currentValuePublisher.receive(subscriber: subscriber)
     }
     
-    public subscript<T>(dynamicMember keyPath: KeyPath<Value, T>) -> AnyPublisher<T, Error> {
-        return subject
-            .prepend(Publishers.Just(value))
-            .tryMap { try $0.get()[keyPath: keyPath ] }
-            .eraseToAnyPublisher()
+    private var currentValuePublisher: AnyPublisher<Output, Error> {
+        switch value {
+        case let .success(value):
+            return subject.prepend(value).eraseToAnyPublisher()
+        case let .failure(error):
+            return Publishers.Fail<Output, Error>(error: error).eraseToAnyPublisher()
+        }
+    }
+    
+    public subscript<T>(dynamicMember keyPath: KeyPath<Output, T>) -> DatabasePublished<T> {
+        // Safe because initialResult is not nil
+        DatabasePublished<T>(
+            initialResult: value.map { $0[keyPath: keyPath] },
+            unsafePublisher: currentValuePublisher.map { $0[keyPath: keyPath] }.eraseToResult())
     }
 }
+
+extension DatabasePublished {
+    public convenience init(
+        _ publisher: DatabasePublishers.Value<Output>)
+    {
+        // Safe because publisher fetches on subscription
+        self.init(
+            initialResult: nil,
+            unsafePublisher: publisher.fetchOnSubscription().eraseToResult())
+    }
+    
+    public convenience init(
+        initialValue: Output,
+        _ publisher: DatabasePublishers.Value<Output>)
+    {
+        // Safe because initialResult is not nil
+        self.init(
+            initialResult: .success(initialValue),
+            unsafePublisher: publisher.eraseToResult())
+    }
+}
+
+#if canImport(SwiftUI)
+import SwiftUI
+extension DatabasePublished: BindableObject { }
+#endif

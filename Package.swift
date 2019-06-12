@@ -14,12 +14,15 @@ let package = Package(
         .library(name: "GRDBCombine", targets: ["GRDBCombine"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/groue/GRDB.swift.git", .branch("development")),
+        .package(url: "https://github.com/groue/GRDB.swift.git", .branch("dev/CombineSupport")),
     ],
     targets: [
         .target(
             name: "GRDBCombine",
-            dependencies: ["GRDB"])
+            dependencies: ["GRDB"]),
+        .testTarget(
+            name: "GRDBCombineTests",
+            dependencies: ["GRDBCombine", "GRDB"])
     ],
     swiftLanguageVersions: [.v4_2, .v5]
 )

@@ -1,4 +1,6 @@
 .DS_Store
 .build
-Package.resolved
-*xcuserdata
+.swiftpm
+/Package.resolved
+/GRDBCombine.xcodeproj
+xcuserdata

@@ -34,6 +34,7 @@ class HallOfFameViewController: UITableViewController {
         let player = viewModel.bestPlayers[indexPath.row]
         cell.textLabel?.text = player.name
         cell.detailTextLabel?.text = "\(player.score)"
+        cell.selectionStyle = .none
         return cell
     }
 }

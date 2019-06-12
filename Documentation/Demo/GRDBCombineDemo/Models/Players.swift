@@ -1,15 +1,21 @@
+import Combine
+import GRDB
+import GRDBCombine
 import Dispatch
 
-/// A type that provides operations on the Player database
+/// A namespace that provides operations on the Player database
 enum Players {
-    static func deletePlayers() {
-        try! Current.database().write { db in
+    
+    // MARK: - Modify Players
+    
+    static func deletePlayers() throws {
+        try Current.database().write { db in
             _ = try Player.deleteAll(db)
         }
     }
     
-    static func refreshPlayers() {
-        try! Current.database().write { db in
+    static func refreshPlayers() throws {
+        try Current.database().write { db in
             if try Player.fetchCount(db) == 0 {
                 // Insert new random players
                 for _ in 0..<8 {
@@ -38,8 +44,43 @@ enum Players {
     static func stressTest() {
         for _ in 0..<50 {
             DispatchQueue.global().async {
-                refreshPlayers()
+                try? refreshPlayers()
             }
         }
+    }
+    
+    // MARK: - Hall of Fame
+    
+    struct HallOfFame {
+        /// Total number of players
+        var playerCount: Int
+        
+        /// The best ones
+        var bestPlayers: [Player]
+        
+        init(playerCount: Int, bestPlayers: [Player]) {
+            // Safety check
+            assert(playerCount >= bestPlayers.count, "inconsistent HallOfFame")
+            self.playerCount = playerCount
+            self.bestPlayers = bestPlayers
+        }
+    }
+    
+    static func hallOfFame(maxPlayerCount: Int) -> DatabasePublishers.Value<HallOfFame> {
+        let playerCount = Player.observationForCount()
+        
+        let bestPlayers = Player
+            .limit(maxPlayerCount)
+            .orderedByScore()
+            .observationForAll()
+        
+        // We combine database observations instead of combining publishers
+        // with the combineLatest method. This is because we care about data
+        // consistency. See the HallOfFame initializer.
+        let hallOfFame = playerCount.combine(bestPlayers) {
+            HallOfFame(playerCount: $0, bestPlayers: $1)
+        }
+        
+        return DatabasePublishers.Value(hallOfFame, in: Current.database())
     }
 }

@@ -10,25 +10,25 @@ class HallOfFameViewModel {
     ///
     /// The property is a Result because database access may
     /// eventually fail.
-    @DatabasePublished(HallOfFame.current, in: Current.database())
-    private var hallOfFame: Result<HallOfFame, Error>
-
+    @DatabasePublished(Players.hallOfFame(maxPlayerCount: 10))
+    private var hallOfFame: Result<Players.HallOfFame, Error>
+    
     // MARK: - Publishers
     
     /// A publisher for the title of the Hall of Fame
     var titlePublisher: AnyPublisher<String, Never> {
         return $hallOfFame
             .playerCount
-            .map(Self.title)
+            .map(Self.title(playerCount:))
             .replaceError(with: Self.errorTitle)
             .eraseToAnyPublisher()
     }
-
+    
     /// A publisher for the best players
     var bestPlayersPublisher: AnyPublisher<[Player], Never> {
         $hallOfFame
             .bestPlayers
-            .replaceError(with: [])
+            .replaceError(with: Self.errorBestPlayers)
             .eraseToAnyPublisher()
     }
     
@@ -37,30 +37,32 @@ class HallOfFameViewModel {
     /// The title of the Hall of Fame
     var title: String {
         do {
-            return try Self.title(hallOfFame.get().playerCount)
+            return try Self.title(playerCount: hallOfFame.get().playerCount)
         } catch {
             return Self.errorTitle
         }
     }
-
+    
     /// The best players
     var bestPlayers: [Player] {
         do {
             return try hallOfFame.get().bestPlayers
         } catch {
-            return []
+            return Self.errorBestPlayers
         }
     }
     
     // MARK: - Helpers
     
     private static let errorTitle = "An error occured"
-    private static func title(_ playerCount: Int) -> String { "Best of \(playerCount) players" }
+    private static let errorBestPlayers: [Player] = []
+    private static func title(playerCount: Int) -> String { "Best of \(playerCount) players" }
 }
 
 // MARK: - SwiftUI Support
 
 extension HallOfFameViewModel: BindableObject {
-    var didChange: DatabasePublished<HallOfFame> { $hallOfFame }
+    var didChange: PassthroughSubject<Void, Never> {
+        return $hallOfFame.didChange
+    }
 }
-

@@ -14,7 +14,7 @@ class MenuViewController: UITableViewController {
         case 1:
             performSegue(withIdentifier: "hallOfFame", sender: self)
         case 2:
-            let view = HallOfFameView().environmentObject(HallOfFameViewModel())
+            let view = HallOfFameView(viewModel: HallOfFameViewModel())
             let viewController = UIHostingController(rootView: view)
             show(viewController, sender: self)
         default:
