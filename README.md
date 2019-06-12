@@ -36,9 +36,11 @@ Xcode 11 beta required.
     ```
 
 
-- [HallOfFame.swift](Documentation/Demo/GRDBCombineDemo/Models/HallOfFame.swift)
+- [Players.swift](Documentation/Demo/GRDBCombineDemo/Models/Players.swift)
     
-    HallOfFame defines a [ValueObservation](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation) which is able to track changes in the best players.
+    Players provides defines read and write operations on the players database.
+    
+    It exposes a [publisher](Sources/GRDBCombine/DatabasePublishers+Value.swift) of HallOfFame, that change everytime the database is modified.
     
     ```swift
     struct HallOfFame {
@@ -58,4 +60,4 @@ Xcode 11 beta required.
 
 - [HallOfFameViewModel.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameViewModel.swift)
     
-    HallOfFameViewModel uses a `@DatabasePublished` property wrapper in order to keep its content in sync with the database content, and expose it to both [HallOfFameViewController.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameViewController.swift) and the SwiftUI [HallOfFameView.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameView.swift).
+    HallOfFameViewModel uses a [@DatabasePublished](Sources/GRDBCombine/DatabasePublished.swift) property wrapper in order to keep its content in sync with the database content, and expose it to both [HallOfFameViewController.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameViewController.swift) and the SwiftUI [HallOfFameView.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameView.swift).
