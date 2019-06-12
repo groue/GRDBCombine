@@ -3,8 +3,9 @@ import GRDB
 import GRDBCombine
 import Dispatch
 
-/// A type that provides operations on the Player database
+/// A namespace that provides operations on the Player database
 enum Players {
+    
     // MARK: - Modify Players
     
     static func deletePlayers() throws {
@@ -56,6 +57,13 @@ enum Players {
         
         /// The best ones
         var bestPlayers: [Player]
+        
+        init(playerCount: Int, bestPlayers: [Player]) {
+            // Safety check
+            assert(playerCount >= bestPlayers.count, "inconsistent HallOfFame")
+            self.playerCount = playerCount
+            self.bestPlayers = bestPlayers
+        }
     }
     
     static func hallOfFame(maxPlayerCount: Int) -> DatabasePublishers.Value<HallOfFame> {
@@ -66,6 +74,9 @@ enum Players {
             .orderedByScore()
             .observationForAll()
         
+        // We combine database observations instead of combining publishers
+        // with the combineLatest method. This is because we care about data
+        // consistency. See the HallOfFame initializer.
         let hallOfFame = playerCount.combine(bestPlayers) {
             HallOfFame(playerCount: $0, bestPlayers: $1)
         }
