@@ -11,6 +11,7 @@ public class DatabasePublished<Output>: Publisher {
     public var value: Result<Output, Error> { _result! }
     private var _result: Result<Output, Error>?
     private var subject = PassthroughSubject<Output, Error>()
+    public var didChange = PassthroughSubject<Void, Never>() // Support for SwiftUI
     
     private var canceller: AnyCancellable!
     
@@ -40,6 +41,7 @@ public class DatabasePublished<Output>: Publisher {
             receiveCompletion: { completion in
                 switch completion {
                 case .finished:
+                    self.didChange.send(())
                     self.subject.send(completion: .finished)
                 }
         },
@@ -48,8 +50,10 @@ public class DatabasePublished<Output>: Publisher {
                 self._result = result
                 switch result {
                 case let .success(value):
+                    self.didChange.send(())
                     self.subject.send(value)
                 case let .failure(error):
+                    self.didChange.send(())
                     self.subject.send(completion: .failure(error))
                 }
         }))
@@ -123,3 +127,8 @@ extension DatabasePublished {
             unsafePublisher: publisher.eraseToResult())
     }
 }
+
+#if canImport(SwiftUI)
+import SwiftUI
+extension DatabasePublished: BindableObject { }
+#endif
