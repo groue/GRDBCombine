@@ -552,7 +552,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDBCombine";
 			requirement = {
-				branch = development;
+				branch = master;
 				kind = branch;
 			};
 		};

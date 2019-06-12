@@ -23,7 +23,7 @@
         "package": "GRDBCombine",
         "repositoryURL": "https://github.com/groue/GRDBCombine",
         "state": {
-          "branch": "development",
+          "branch": "master",
           "revision": "7478069f43bb73d49a4b3aee1bced6342013a5f9",
           "version": null
         }
