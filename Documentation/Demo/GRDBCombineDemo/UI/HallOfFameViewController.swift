@@ -3,21 +3,22 @@ import UIKit
 
 class HallOfFameViewController: UITableViewController {
     var viewModel = HallOfFameViewModel()
-    private var cancellers = Cancellers()
+    private var bestPlayersCanceller: AnyCancellable?
+    private var navigationItemCanceller: AnyCancellable?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         toolbarItems = playerEditionToolbarItems
-
-        // Reload table view whenever the players change.
-        cancellers += viewModel.bestPlayersPublisher.sink { [unowned self] _ in
-            self.tableView.reloadData()
-        }
         
-        // Update navigationItem title (assign won't work?)
-        cancellers += viewModel.titlePublisher.sink { [unowned self] in
-            self.navigationItem.title = $0
-        }
+        // Reload table view whenever the players change.
+        bestPlayersCanceller = AnyCancellable(viewModel
+            .bestPlayersPublisher
+            .sink { [unowned self] _ in self.tableView.reloadData() })
+        
+        // Update navigationItem title
+        navigationItemCanceller = viewModel
+            .titlePublisher
+            .assign(to: \.title, on: navigationItem)
     }
     
     override func viewWillAppear(_ animated: Bool) {

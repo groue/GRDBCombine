@@ -5,15 +5,14 @@ import UIKit
 /// A view controller that uses a raw DatabasePublisher
 class CountViewController: UIViewController {
     @IBOutlet private weak var countLabel: UILabel!
-    private var cancellers = Cancellers()
+    private var countCanceller: AnyCancellable?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         toolbarItems = playerEditionToolbarItems
         
-        // TODO: consider exposing a convenience method
-        let countPublisher = DatabasePublishers.Value(Player.observationForCount(), in: Current.database())
-        cancellers += countPublisher
+        let countPublisher = Player.observationForCount().publisher(in: Current.database())
+        countCanceller = countPublisher
             .map { "\($0)" }
             .replaceError(with: "An error occurred")
             .assign(to: \.text, on: countLabel)

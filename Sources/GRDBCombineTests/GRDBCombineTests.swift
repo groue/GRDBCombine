@@ -16,7 +16,7 @@ class GRDBCombineTests: XCTest {
             }
         }
         let players = Player.observationForAll()
-        let publisher = DatabasePublishers.Value(players, in: dbQueue)
+        let publisher = players.publisher(in: dbQueue)
         let published = DatabasePublished(publisher)
         let fetchedPlayers: [Player] = try published.value.get()
     }

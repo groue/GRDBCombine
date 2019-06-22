@@ -2,13 +2,23 @@ import Combine
 import Foundation
 import GRDB
 
-extension DatabasePublishers {
-    /// A publisher that tracks changes in a database region.
+/// Combine extensions on [DatabaseRegionObservation](https://github.com/groue/GRDB.swift/blob/master/README.md#databaseregionobservation).
+extension DatabaseRegionObservation {
+    /// Returns a publisher that tracks changes in a database region.
     ///
     /// It emits database connections on a protected dispatch queue.
     ///
     /// Error completion, if any, is only emitted, synchronously,
     /// on subscription.
+    public func publisher(in writer: DatabaseWriter) -> DatabasePublishers.DatabaseRegion {
+        return DatabasePublishers.DatabaseRegion(self, in: writer)
+    }
+}
+
+extension DatabasePublishers {
+    /// A publisher that tracks changes in a database region.
+    ///
+    /// See `DatabaseRegionObservation.publisher(in:)`.
     public struct DatabaseRegion: Publisher {
         public typealias Output = Database
         public typealias Failure = Error
@@ -16,11 +26,12 @@ extension DatabasePublishers {
         let writer: DatabaseWriter
         let observation: DatabaseRegionObservation
         
-        public init(_ observation: DatabaseRegionObservation, in writer: DatabaseWriter) {
+        init(_ observation: DatabaseRegionObservation, in writer: DatabaseWriter) {
             self.writer = writer
             self.observation = observation
         }
         
+        /// :nodoc:
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
             let subscription = DatabaseRegionSubscription(
                 writer: writer,

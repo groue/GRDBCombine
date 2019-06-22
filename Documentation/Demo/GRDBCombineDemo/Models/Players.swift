@@ -81,6 +81,6 @@ enum Players {
             HallOfFame(playerCount: $0, bestPlayers: $1)
         }
         
-        return DatabasePublishers.Value(hallOfFame, in: Current.database())
+        return hallOfFame.publisher(in: Current.database())
     }
 }

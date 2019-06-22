@@ -2,34 +2,44 @@ import Combine
 import Foundation
 import GRDB
 
-extension DatabasePublishers {
-    /// A publisher that tracks changes in the database.
+/// Combine extensions on [ValueObservation](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation).
+extension ValueObservation where Reducer: ValueReducer {
+    /// Returns a publisher that tracks changes in the database.
     ///
     /// It emits all fresh values, and its eventual error completion, on the
     /// main queue.
     ///
-    /// By default, DatabasePublishers.Value can be subscribed from any dispatch
-    /// queue, and emits its first value asynchronously.
+    /// By default, the publisher can be subscribed from any dispatch
+    /// queue, and emits a first value asynchronously.
     ///
     /// You can force the publisher to start synchronously with the
     /// `fetchOnSubscription()` method. Subscription must then happen from the
     /// main queue, or you will get a fatal error.
+    public func publisher(in reader: DatabaseReader) -> DatabasePublishers.Value<Reducer.Value> {
+        return DatabasePublishers.Value(self, in: reader)
+    }
+}
+
+extension DatabasePublishers {
+    /// A publisher that tracks changes in the database.
+    ///
+    /// See `ValueObservation.publisher(in:)`.
     public struct Value<Output>: Publisher {
         public typealias Failure = Error
         let reader: DatabaseReader
-        private var subscribe: SubscribeFunction<Output>
-        private let subscribeWithFetchOnSubscription: SubscribeFunction<Output>
-        private let subscribeWithAsyncFetch: SubscribeFunction<Output>
+        private var startObservation: StartObservationFunction<Output>
+        private let startObservationSync: StartObservationFunction<Output>
+        private let startObservationAsync: StartObservationFunction<Output>
         
-        public init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
+        init<Reducer>(_ observation: ValueObservation<Reducer>, in reader: DatabaseReader)
             where Reducer: ValueReducer, Reducer.Value == Output
         {
             self.reader = reader
-            self.subscribeWithFetchOnSubscription = observation.subscribeWithFetchOnSubscription
-            self.subscribeWithAsyncFetch = observation.subscribeWithAsyncFetch(in:queue:willSubscribeSync:receiveCompletion:receive:)
+            self.startObservationSync = observation.startSync(in:queue:willSubscribeSync:onError:onChange:)
+            self.startObservationAsync = observation.startAsync(in:queue:willSubscribeSync:onError:onChange:)
             
             // Default to async fetch of initial value
-            self.subscribe = subscribeWithAsyncFetch
+            self.startObservation = startObservationAsync
         }
         
         /// Returns a new publisher which synchronously fetches its initial
@@ -37,13 +47,14 @@ extension DatabasePublishers {
         /// or you will get a fatal error.
         public func fetchOnSubscription() -> Self {
             var publisher = self
-            publisher.subscribe = subscribeWithFetchOnSubscription
+            publisher.startObservation = startObservationSync
             return publisher
         }
         
+        /// :nodoc:
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
             let subscription = ValueSubscription<Output>(
-                subscribe: subscribe,
+                startObservation: startObservation,
                 reader: reader,
                 queue: DispatchQueue.main, // Wait for Combine Schedulers to be ready before we attempt at doing more
                 receiveCompletion: subscriber.receive(completion:),
@@ -72,7 +83,7 @@ extension DatabasePublishers {
             // Completed or cancelled, not observing the database.
             case finished
         }
-        private let subscribe: SubscribeFunction<Output>
+        private let startObservation: StartObservationFunction<Output>
         private let reader: DatabaseReader
         private let queue: DispatchQueue
         private let _receiveCompletion: (Subscribers.Completion<Error>) -> Void
@@ -82,14 +93,14 @@ extension DatabasePublishers {
         private var lock = NSRecursiveLock() // Allow re-entrancy
         
         init(
-            subscribe: @escaping SubscribeFunction<Output>,
+            startObservation: @escaping StartObservationFunction<Output>,
             reader: DatabaseReader,
             queue: DispatchQueue,
             receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
             receive: @escaping (Output) -> Subscribers.Demand
             )
         {
-            self.subscribe = subscribe
+            self.startObservation = startObservation
             self.reader = reader
             self.queue = queue
             self._receiveCompletion = receiveCompletion
@@ -104,12 +115,12 @@ extension DatabasePublishers {
                     guard demand > 0 else {
                         return
                     }
-                    observer = subscribe(
+                    observer = startObservation(
                         reader,
                         queue,
-                        { self.state = .observing(demand: demand, sync: $0) },
-                        receiveCompletion,
-                        receive)
+                        { sync in self.state = .observing(demand: demand, sync: sync) },
+                        { error in self.receiveCompletion(.failure(error)) },
+                        { value in self.receive(value) })
                     
                 case let .observing(demand: currentDemand, sync: sync):
                     state = .observing(demand: currentDemand + demand, sync: sync)
@@ -199,17 +210,23 @@ extension DatabasePublishers {
 
 // MARK: - Erase ValueObservation.Reducer
 
-private typealias SubscribeFunction<Output> = (DatabaseReader, DispatchQueue, (Bool) -> Void, @escaping (Subscribers.Completion<Error>) -> Void, @escaping (Output) -> Void) -> TransactionObserver
+private typealias StartObservationFunction<Output> = (DatabaseReader, DispatchQueue, (Bool) -> Void, @escaping (Error) -> Void, @escaping (Output) -> Void) -> TransactionObserver
 
 extension ValueObservation where Reducer: ValueReducer {
-    fileprivate func subscribeWithFetchOnSubscription(
+    /// Support for DatabasePublishers.Value.
+    ///
+    /// Start observation and emit values asynchronously on queue, but the first
+    /// one which is emitted synchronously.
+    fileprivate func startSync(
         in reader: DatabaseReader,
         queue: DispatchQueue,
         willSubscribeSync: (Bool) -> Void,
-        receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
-        receive: @escaping (Reducer.Value) -> Void)
+        onError: @escaping (Error) -> Void,
+        onChange: @escaping (Reducer.Value) -> Void)
         -> TransactionObserver
     {
+        willSubscribeSync(true)
+        
         // Deal with unsafe GRDB scheduling: we can only
         // guarantee correct ordering of values if observation
         // starts on the same queue as the queue values are
@@ -217,31 +234,24 @@ extension ValueObservation where Reducer: ValueReducer {
         dispatchPrecondition(condition: .onQueue(queue))
         var observation = self
         observation.scheduling = .unsafe(startImmediately: true)
-        
-        willSubscribeSync(true)
-        
-        return reader.add(
-            observation: observation,
-            onError: { receiveCompletion(.failure($0)) },
-            onChange: receive)
+        return start(in: reader, onError: onError, onChange: onChange)
     }
     
-    fileprivate func subscribeWithAsyncFetch(
+    /// Support for DatabasePublishers.Value.
+    ///
+    /// Start observation and emit values asynchronously on queue.
+    fileprivate func startAsync(
         in reader: DatabaseReader,
         queue: DispatchQueue,
         willSubscribeSync: (Bool) -> Void,
-        receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
-        receive: @escaping (Reducer.Value) -> Void)
+        onError: @escaping (Error) -> Void,
+        onChange: @escaping (Reducer.Value) -> Void)
         -> TransactionObserver
     {
-        var observation = self
-        observation.scheduling = .async(onQueue: queue, startImmediately: true)
-        
         willSubscribeSync(false)
         
-        return reader.add(
-            observation: observation,
-            onError: { receiveCompletion(.failure($0)) },
-            onChange: receive)
+        var observation = self
+        observation.scheduling = .async(onQueue: queue, startImmediately: true)
+        return start(in: reader, onError: onError, onChange: onChange)
     }
 }
