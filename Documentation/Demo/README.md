@@ -6,11 +6,11 @@ Demo Application
 
 ## Models
 
-- [AppDatabase.swift](Documentation/Demo/GRDBCombineDemo/Models/AppDatabase.swift)
+- [AppDatabase.swift](GRDBCombineDemo/Models/AppDatabase.swift)
     
     AppDatabase defines the database for the whole application. It uses [DatabaseMigrator](https://github.com/groue/GRDB.swift/blob/master/README.md#migrations) in order to setup the database schema, and a [DatabasePool](https://github.com/groue/GRDB.swift/blob/master/README.md#database-pools) for efficient multi-threading.
 
-- [Player.swift](Documentation/Demo/GRDBCombineDemo/Models/Player.swift)
+- [Player.swift](GRDBCombineDemo/Models/Player.swift)
     
     Player is a [Record](https://github.com/groue/GRDB.swift/blob/master/README.md#records) type, able to read and write in the database. It conforms to the standard Codable protocol in order to gain all advantages of [Codable Records](https://github.com/groue/GRDB.swift/blob/master/README.md#codable-records).
     
@@ -23,11 +23,11 @@ Demo Application
     ```
 
 
-- [Players.swift](Documentation/Demo/GRDBCombineDemo/Models/Players.swift)
+- [Players.swift](GRDBCombineDemo/Models/Players.swift)
     
     Players provides defines read and write operations on the players database.
     
-    It exposes a [publisher](Sources/GRDBCombine/DatabasePublishers+Value.swift) of HallOfFame, that change everytime the database is modified.
+    It exposes a [publisher](../../Sources/GRDBCombine/DatabasePublishersValue.swift) of HallOfFame, that change everytime the database is modified.
     
     ```swift
     struct HallOfFame {
@@ -41,10 +41,10 @@ Demo Application
 
 ## User Interface
 
-- [CountViewController.swift](Documentation/Demo/GRDBCombineDemo/UI/CountViewController.swift)
+- [CountViewController.swift](GRDBCombineDemo/UI/CountViewController.swift)
     
     CountViewController uses a DatabasePublisher in order to update a UILabel with the number of players
 
-- [HallOfFameViewModel.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameViewModel.swift)
+- [HallOfFameViewModel.swift](GRDBCombineDemo/UI/HallOfFameViewModel.swift)
     
-    HallOfFameViewModel uses a [@DatabasePublished](Sources/GRDBCombine/DatabasePublished.swift) property wrapper in order to keep its content in sync with the database content, and expose it to both [HallOfFameViewController.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameViewController.swift) and the SwiftUI [HallOfFameView.swift](Documentation/Demo/GRDBCombineDemo/UI/HallOfFameView.swift).
+    HallOfFameViewModel uses a [@DatabasePublished](../../Sources/GRDBCombine/DatabasePublished.swift) property wrapper in order to keep its content in sync with the database content, and expose it to both [HallOfFameViewController.swift](GRDBCombineDemo/UI/HallOfFameViewController.swift) and the SwiftUI [HallOfFameView.swift](GRDBCombineDemo/UI/HallOfFameView.swift).
