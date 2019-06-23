@@ -13,7 +13,7 @@ ifdef SOURCEKITTEN
 	  --author 'Gwendal Roué' \
 	  --author_url https://github.com/groue \
 	  --github_url https://github.com/groue/GRDBCombine \
-	  --github-file-prefix https://github.com/groue/GRDBCombine/tree/v0.1.0 \
+	  --github-file-prefix https://github.com/groue/GRDBCombine/tree/v0.1.1 \
 	  --module-version 0.1 \
 	  --module GRDBCombine \
 	  --root-url https://groue.github.io/GRDBCombine/docs/0.1/ \
