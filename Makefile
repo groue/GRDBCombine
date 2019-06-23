@@ -5,6 +5,7 @@ SWIFT := $(shell command -v xcrun swift)
 doc:
 ifdef JAZZY
 ifdef SOURCEKITTEN
+	$(SWIFT) build
 	$(SOURCEKITTEN) doc --spm-module GRDBCombine > Documentation/GRDBCombine.json
 	$(JAZZY) \
 	  --clean \
