@@ -66,8 +66,16 @@ extension Cancellable {
     }
 }
 
-public func XCTAssertNoFailure<Failure>(_ completion: Subscribers.Completion<Failure>, file: StaticString = #file, line: UInt = #line) {
+public func XCTAssertNoFailure<Failure>(_ completion: Subscribers.Completion<Failure>, label: String, file: StaticString = #file, line: UInt = #line) {
     if case let .failure(error) = completion {
-        XCTFail("Unexpected completion failure: \(error)", file: file, line: line)
+        XCTFail("\(label): unexpected completion failure: \(error)", file: file, line: line)
+    }
+}
+
+public func XCTAssertError<Failure, ExpectedFailure>(_ completion: Subscribers.Completion<Failure>, label: String, file: StaticString = #file, line: UInt = #line, test: (ExpectedFailure) -> Void) {
+    if case let .failure(error) = completion, let failure = error as? ExpectedFailure {
+        test(failure)
+    } else {
+        XCTFail("\(label): unexpected \(ExpectedFailure.self), got \(completion)", file: file, line: line)
     }
 }

@@ -28,44 +28,45 @@ class DatabasePublishersValueTests : XCTestCase {
             }
             return writer
         }
-        try Test(testDatabasePublishersValue)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+            let expectation = self.expectation(description: label)
+            let testSubject = PassthroughSubject<Int, Error>()
+            testSubject
+                .collect(3)
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertNoFailure(completion, label: label)
+                },
+                    receiveValue: { value in
+                        XCTAssertEqual(value, [0, 1, 3])
+                        expectation.fulfill()
+                })
+                .add(to: cancelBag)
+            
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .subscribe(testSubject)
+                .add(to: cancelBag)
+            
+            try writer.writeWithoutTransaction { db in
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                
+                try db.inTransaction {
+                    try Player(id: 2, name: "Barbara", score: 750).insert(db)
+                    try Player(id: 3, name: "Craig", score: 500).insert(db)
+                    return .commit
+                }
+            }
+            
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testDatabasePublishersValue(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
-        let expectation = self.expectation(description: label)
-        let testSubject = PassthroughSubject<Int, Error>()
-        testSubject
-            .collect(3)
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-            },
-                receiveValue: { value in
-                    XCTAssertEqual(value, [0, 1, 3])
-                    expectation.fulfill()
-            })
-            .add(to: cancelBag)
-        
-        Player
-            .observationForCount()
-            .publisher(in: writer as DatabaseReader)
-            .subscribe(testSubject)
-            .add(to: cancelBag)
-        
-        try writer.writeWithoutTransaction { db in
-            try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            
-            try db.inTransaction {
-                try Player(id: 2, name: "Barbara", score: 750).insert(db)
-                try Player(id: 3, name: "Craig", score: 500).insert(db)
-                return .commit
-            }
-        }
-        
-        waitForExpectations(timeout: 1, handler: nil)
     }
 
     // MARK: -
@@ -77,43 +78,44 @@ class DatabasePublishersValueTests : XCTestCase {
             }
             return writer
         }
-        try Test(testDatabasePublishersValueDefaultScheduler)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+            let expectation = self.expectation(description: label)
+            let testSubject = PassthroughSubject<Int, Error>()
+            testSubject
+                .handleEvents(receiveOutput: { _ in
+                    dispatchPrecondition(condition: .onQueue(.main))
+                })
+                .collect(2)
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertNoFailure(completion, label: label)
+                        dispatchPrecondition(condition: .onQueue(.main))
+                },
+                    receiveValue: { value in
+                        // 2 = test for initial value + changed value
+                        XCTAssertEqual(value.count, 2)
+                        expectation.fulfill()
+                })
+                .add(to: cancelBag)
+            
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .subscribe(testSubject)
+                .add(to: cancelBag)
+            
+            try writer.writeWithoutTransaction { db in
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+            }
+            
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testDatabasePublishersValueDefaultScheduler(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
-        let expectation = self.expectation(description: label)
-        let testSubject = PassthroughSubject<Int, Error>()
-        testSubject
-            .handleEvents(receiveOutput: { _ in
-                dispatchPrecondition(condition: .onQueue(.main))
-            })
-            .collect(2)
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-                    dispatchPrecondition(condition: .onQueue(.main))
-            },
-                receiveValue: { value in
-                    // 2 = test for initial value + changed value
-                    XCTAssertEqual(value.count, 2)
-                    expectation.fulfill()
-            })
-            .add(to: cancelBag)
-        
-        Player
-            .observationForCount()
-            .publisher(in: writer as DatabaseReader)
-            .subscribe(testSubject)
-            .add(to: cancelBag)
-        
-        try writer.writeWithoutTransaction { db in
-            try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-        }
-        
-        waitForExpectations(timeout: 1, handler: nil)
     }
     
     // MARK: -
@@ -125,30 +127,31 @@ class DatabasePublishersValueTests : XCTestCase {
             }
             return writer
         }
-        try Test(testDatabasePublishersValueEmitsFirstValueAsynchronously)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+            let expectation = self.expectation(description: label)
+            let semaphore = DispatchSemaphore(value: 0)
+            let testSubject = PassthroughSubject<Int, Error>()
+            testSubject
+                .sink { _ in
+                    semaphore.wait()
+                    expectation.fulfill()
+                }
+                .add(to: cancelBag)
+            
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .subscribe(testSubject)
+                .add(to: cancelBag)
+            semaphore.signal()
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testDatabasePublishersValueEmitsFirstValueAsynchronously(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
-        let expectation = self.expectation(description: label)
-        let semaphore = DispatchSemaphore(value: 0)
-        let testSubject = PassthroughSubject<Int, Error>()
-        testSubject
-            .sink { _ in
-                semaphore.wait()
-                expectation.fulfill()
-            }
-            .add(to: cancelBag)
-        
-        Player
-            .observationForCount()
-            .publisher(in: writer as DatabaseReader)
-            .subscribe(testSubject)
-            .add(to: cancelBag)
-        semaphore.signal()
-        waitForExpectations(timeout: 1, handler: nil)
     }
     
     // MARK: - FetchOnSubscription
@@ -160,45 +163,46 @@ class DatabasePublishersValueTests : XCTestCase {
             }
             return writer
         }
-        try Test(testDatabasePublishersValueFetchOnSubscription)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+            let expectation = self.expectation(description: label)
+            let testSubject = PassthroughSubject<Int, Error>()
+            testSubject
+                .collect(3)
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertNoFailure(completion, label: label)
+                },
+                    receiveValue: { value in
+                        XCTAssertEqual(value, [0, 1, 3])
+                        expectation.fulfill()
+                })
+                .add(to: cancelBag)
+            
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .fetchOnSubscription()
+                .subscribe(testSubject)
+                .add(to: cancelBag)
+            
+            try writer.writeWithoutTransaction { db in
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                
+                try db.inTransaction {
+                    try Player(id: 2, name: "Barbara", score: 750).insert(db)
+                    try Player(id: 3, name: "Craig", score: 500).insert(db)
+                    return .commit
+                }
+            }
+            
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testDatabasePublishersValueFetchOnSubscription(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
-        let expectation = self.expectation(description: label)
-        let testSubject = PassthroughSubject<Int, Error>()
-        testSubject
-            .collect(3)
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-            },
-                receiveValue: { value in
-                    XCTAssertEqual(value, [0, 1, 3])
-                    expectation.fulfill()
-            })
-            .add(to: cancelBag)
-        
-        Player
-            .observationForCount()
-            .publisher(in: writer as DatabaseReader)
-            .fetchOnSubscription()
-            .subscribe(testSubject)
-            .add(to: cancelBag)
-        
-        try writer.writeWithoutTransaction { db in
-            try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            
-            try db.inTransaction {
-                try Player(id: 2, name: "Barbara", score: 750).insert(db)
-                try Player(id: 3, name: "Craig", score: 500).insert(db)
-                return .commit
-            }
-        }
-        
-        waitForExpectations(timeout: 1, handler: nil)
     }
     
     // MARK: -
@@ -210,44 +214,45 @@ class DatabasePublishersValueTests : XCTestCase {
             }
             return writer
         }
-        try Test(testDatabasePublishersValueFetchOnSubscriptionDefaultScheduler)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+            let expectation = self.expectation(description: label)
+            let testSubject = PassthroughSubject<Int, Error>()
+            testSubject
+                .handleEvents(receiveOutput: { _ in
+                    dispatchPrecondition(condition: .onQueue(.main))
+                })
+                .collect(2)
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertNoFailure(completion, label: label)
+                        dispatchPrecondition(condition: .onQueue(.main))
+                },
+                    receiveValue: { value in
+                        // 2 = test for initial value + changed value
+                        XCTAssertEqual(value.count, 2)
+                        expectation.fulfill()
+                })
+                .add(to: cancelBag)
+            
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .fetchOnSubscription()
+                .subscribe(testSubject)
+                .add(to: cancelBag)
+            
+            try writer.writeWithoutTransaction { db in
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+            }
+            
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testDatabasePublishersValueFetchOnSubscriptionDefaultScheduler(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
-        let expectation = self.expectation(description: label)
-        let testSubject = PassthroughSubject<Int, Error>()
-        testSubject
-            .handleEvents(receiveOutput: { _ in
-                dispatchPrecondition(condition: .onQueue(.main))
-            })
-            .collect(2)
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-                    dispatchPrecondition(condition: .onQueue(.main))
-            },
-                receiveValue: { value in
-                    // 2 = test for initial value + changed value
-                    XCTAssertEqual(value.count, 2)
-                    expectation.fulfill()
-            })
-            .add(to: cancelBag)
-        
-        Player
-            .observationForCount()
-            .publisher(in: writer as DatabaseReader)
-            .fetchOnSubscription()
-            .subscribe(testSubject)
-            .add(to: cancelBag)
-        
-        try writer.writeWithoutTransaction { db in
-            try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-        }
-        
-        waitForExpectations(timeout: 1, handler: nil)
     }
     
     // MARK: -
@@ -259,28 +264,29 @@ class DatabasePublishersValueTests : XCTestCase {
             }
             return writer
         }
-        try Test(testDatabasePublishersValueFetchOnSubscriptionEmitsFirstValueSynchronously)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+            let semaphore = DispatchSemaphore(value: 0)
+            let testSubject = PassthroughSubject<Int, Error>()
+            testSubject
+                .sink { _ in
+                    dispatchPrecondition(condition: .onQueue(.main))
+                    semaphore.signal()
+                }
+                .add(to: cancelBag)
+            
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .fetchOnSubscription()
+                .subscribe(testSubject)
+                .add(to: cancelBag)
+            semaphore.wait()
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testDatabasePublishersValueFetchOnSubscriptionEmitsFirstValueSynchronously(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
-        let semaphore = DispatchSemaphore(value: 0)
-        let testSubject = PassthroughSubject<Int, Error>()
-        testSubject
-            .sink { _ in
-                dispatchPrecondition(condition: .onQueue(.main))
-                semaphore.signal()
-            }
-            .add(to: cancelBag)
-        
-        Player
-            .observationForCount()
-            .publisher(in: writer as DatabaseReader)
-            .fetchOnSubscription()
-            .subscribe(testSubject)
-            .add(to: cancelBag)
-        semaphore.wait()
     }
 }

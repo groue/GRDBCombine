@@ -28,28 +28,29 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             }
             return writer
         }
-        try Test(testWritePublisher)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
+            try XCTAssertEqual(writer.read(Player.fetchCount), 0)
+            let expectation = self.expectation(description: label)
+            writer
+                .writePublisher { db in
+                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                }
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertNoFailure(completion, label: label)
+                        expectation.fulfill()
+                },
+                    receiveValue: { _ in })
+                .add(to: cancelBag)
+            waitForExpectations(timeout: 1, handler: nil)
+            try XCTAssertEqual(writer.read(Player.fetchCount), 1)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testWritePublisher(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
-        try XCTAssertEqual(writer.read(Player.fetchCount), 0)
-        let expectation = self.expectation(description: label)
-        writer
-            .writePublisher { db in
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            }
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-                    expectation.fulfill()
-            },
-                receiveValue: { _ in })
-            .add(to: cancelBag)
-        waitForExpectations(timeout: 1, handler: nil)
-        try XCTAssertEqual(writer.read(Player.fetchCount), 1)
     }
     
     // MARK: -
@@ -61,29 +62,64 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             }
             return writer
         }
-        try Test(testWritePublisherValue)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
+            let expectation = self.expectation(description: label)
+            writer
+                .writePublisher { db -> Int in
+                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                    return try Player.fetchCount(db)
+                }
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertNoFailure(completion, label: label)
+                        expectation.fulfill()
+                },
+                    receiveValue: { count in
+                        XCTAssertEqual(count, 1)
+                })
+                .add(to: cancelBag)
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
     
-    func testWritePublisherValue(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
-        let expectation = self.expectation(description: label)
-        writer
-            .writePublisher { db -> Int in
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-                return try Player.fetchCount(db)
-            }
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-                    expectation.fulfill()
-            },
-                receiveValue: { count in
-                    XCTAssertEqual(count, 1)
-            })
-            .add(to: cancelBag)
-        waitForExpectations(timeout: 1, handler: nil)
+    // MARK: -
+    
+    func testWritePublisherError() throws {
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
+            let expectation = self.expectation(description: label)
+            writer
+                .writePublisher { db in
+                    try db.execute(sql: "THIS IS NOT SQL")
+                }
+                .handleEvents(
+                    receiveSubscription: { Swift.print("\(label): receiveSubscription \($0)") },
+                    receiveOutput: { Swift.print("\(label): receiveOutput \($0)") },
+                    receiveCompletion: { Swift.print("\(label): receiveCompletion \($0)") },
+                    receiveCancel: { Swift.print("\(label): receiveCancel") },
+                    receiveRequest: { Swift.print("\(label): receiveRequest \($0)") })
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertError(completion, label: label) { (error: DatabaseError) in
+                            XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                            XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+                        }
+                        expectation.fulfill()
+                },
+                    receiveValue: { _ in })
+                .add(to: cancelBag)
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
+            .run("InMemoryDatabaseQueue") { DatabaseQueue() }
+            .runInTemporaryDirectory("DatabaseQueue") { try DatabaseQueue(path: $0) }
+            .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
     }
     
     // MARK: -
@@ -95,29 +131,29 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             }
             return writer
         }
-        try Test(testWritePublisherDefaultScheduler)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
+            let expectation = self.expectation(description: label)
+            writer
+                .writePublisher { db in
+                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                }
+                .sink(
+                    receiveCompletion: { completion in
+                        dispatchPrecondition(condition: .onQueue(.main))
+                        expectation.fulfill()
+                },
+                    receiveValue: { _ in
+                        dispatchPrecondition(condition: .onQueue(.main))
+                })
+                .add(to: cancelBag)
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testWritePublisherDefaultScheduler(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
-        let expectation = self.expectation(description: label)
-        writer
-            .writePublisher { db in
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            }
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-                    dispatchPrecondition(condition: .onQueue(.main))
-                    expectation.fulfill()
-            },
-                receiveValue: { _ in
-                    dispatchPrecondition(condition: .onQueue(.main))
-            })
-            .add(to: cancelBag)
-        waitForExpectations(timeout: 1, handler: nil)
     }
     
     // MARK: -
@@ -129,30 +165,30 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             }
             return writer
         }
-        try Test(testWritePublisherCustomScheduler)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
+            let queue = DispatchQueue(label: "test")
+            let expectation = self.expectation(description: label)
+            writer
+                .writePublisher(receiveOn: queue) { db in
+                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                }
+                .sink(
+                    receiveCompletion: { completion in
+                        dispatchPrecondition(condition: .onQueue(queue))
+                        expectation.fulfill()
+                },
+                    receiveValue: { _ in
+                        dispatchPrecondition(condition: .onQueue(queue))
+                })
+                .add(to: cancelBag)
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-    }
-    
-    func testWritePublisherCustomScheduler(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
-        let queue = DispatchQueue(label: "test")
-        let expectation = self.expectation(description: label)
-        writer
-            .writePublisher(receiveOn: queue) { db in
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            }
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-                    dispatchPrecondition(condition: .onQueue(queue))
-                    expectation.fulfill()
-            },
-                receiveValue: { _ in
-                    dispatchPrecondition(condition: .onQueue(queue))
-            })
-            .add(to: cancelBag)
-        waitForExpectations(timeout: 1, handler: nil)
     }
     
     // MARK: -
@@ -164,27 +200,84 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             }
             return writer
         }
-        try Test(testWriteThenReadPublisher)
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
+            let expectation = self.expectation(description: label)
+            writer
+                .writePublisher(
+                    updates: { db in try Player(id: 1, name: "Arthur", score: 1000).insert(db) },
+                    thenRead: { db, _ in try Player.fetchCount(db) })
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertNoFailure(completion, label: label)
+                        expectation.fulfill()
+                },
+                    receiveValue: { count in
+                        XCTAssertEqual(count, 1)
+                })
+                .add(to: cancelBag)
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
     
-    func testWriteThenReadPublisher(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
-        let expectation = self.expectation(description: label)
-        writer
-            .writePublisher(
-                updates: { db in try Player(id: 1, name: "Arthur", score: 1000).insert(db) },
-                thenRead: { db, _ in try Player.fetchCount(db) })
-            .sink(
-                receiveCompletion: { completion in
-                    XCTAssertNoFailure(completion)
-                    expectation.fulfill()
-            },
-                receiveValue: { count in
-                    XCTAssertEqual(count, 1)
-            })
-            .add(to: cancelBag)
-        waitForExpectations(timeout: 1, handler: nil)
+    // MARK: -
+    
+    func testWriteThenReadPublisherWriteError() throws {
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
+            let expectation = self.expectation(description: label)
+            writer
+                .writePublisher(
+                    updates: { db in try db.execute(sql: "THIS IS NOT SQL") },
+                    thenRead: { _, _ in XCTFail("Should not read") })
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertError(completion, label: label) { (error: DatabaseError) in
+                            XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                            XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+                        }
+                        expectation.fulfill()
+                },
+                    receiveValue: { _ in })
+                .add(to: cancelBag)
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
+            .run("InMemoryDatabaseQueue") { DatabaseQueue() }
+            .runInTemporaryDirectory("DatabaseQueue") { try DatabaseQueue(path: $0) }
+            .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
+    }
+    
+    // MARK: -
+    
+    func testWriteThenReadPublisherReadError() throws {
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
+            let expectation = self.expectation(description: label)
+            writer
+                .writePublisher(
+                    updates: { _ in },
+                    thenRead: { db, _ in try Row.fetchAll(db, sql: "THIS IS NOT SQL") })
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertError(completion, label: label) { (error: DatabaseError) in
+                            XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                            XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+                        }
+                        expectation.fulfill()
+                },
+                    receiveValue: { _ in })
+                .add(to: cancelBag)
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
+            .run("InMemoryDatabaseQueue") { DatabaseQueue() }
+            .runInTemporaryDirectory("DatabaseQueue") { try DatabaseQueue(path: $0) }
+            .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
     }
 }

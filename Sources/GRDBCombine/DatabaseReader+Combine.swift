@@ -1,5 +1,6 @@
 import Combine
 import Dispatch
+import Foundation
 import GRDB
 
 /// Combine extensions on [DatabaseReader](https://github.com/groue/GRDB.swift/blob/master/README.md#databasewriter-and-databasereader-protocols).
@@ -38,13 +39,15 @@ extension DatabaseReader {
         -> AnyPublisher<Output, Error>
         where S : Scheduler
     {
-        Publishers.Deferred {
-            Publishers.Future { fulfill in
-                self.asyncRead { db in
-                    fulfill(Result { try value(db.get()) })
+        DatabasePublishers.DeferredFuture({ fulfill in
+            self.asyncRead { db in
+                do {
+                    try fulfill(Result.success(value(db.get())))
+                } catch {
+                    fulfill(Result.failure(error))
                 }
             }
-            }
+        })
             .receive(on: scheduler)
             .eraseToAnyPublisher()
     }
