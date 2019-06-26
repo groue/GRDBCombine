@@ -65,7 +65,7 @@ struct Players {
         var bestPlayers: [Player]
         
         init(playerCount: Int, bestPlayers: [Player]) {
-            // Safety check
+            // Safety check: assert consistency
             assert(playerCount >= bestPlayers.count, "inconsistent HallOfFame")
             self.playerCount = playerCount
             self.bestPlayers = bestPlayers
