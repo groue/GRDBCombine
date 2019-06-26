@@ -3,7 +3,7 @@ import GRDB
 import GRDBCombine
 import Dispatch
 
-/// A namespace that provides operations on the Player database
+/// Players is responsible for high-level operations on the players database.
 struct Players {
     private let database: DatabaseWriter
     
