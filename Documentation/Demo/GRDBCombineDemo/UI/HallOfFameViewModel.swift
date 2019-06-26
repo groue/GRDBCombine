@@ -18,8 +18,7 @@ class HallOfFameViewModel {
     /// A publisher for the title of the Hall of Fame
     var titlePublisher: AnyPublisher<String, Never> {
         return $hallOfFame
-            .playerCount
-            .map(Self.title(playerCount:))
+            .map { Self.title(playerCount: $0.playerCount) }
             .replaceError(with: Self.errorTitle)
             .eraseToAnyPublisher()
     }
@@ -27,7 +26,7 @@ class HallOfFameViewModel {
     /// A publisher for the best players
     var bestPlayersPublisher: AnyPublisher<[Player], Never> {
         $hallOfFame
-            .bestPlayers
+            .map { $0.bestPlayers }
             .replaceError(with: Self.errorBestPlayers)
             .eraseToAnyPublisher()
     }

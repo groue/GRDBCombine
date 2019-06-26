@@ -46,6 +46,7 @@
 /* Begin PBXFileReference section */
 		56284AFD22AD1FC700048746 /* World.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = World.swift; sourceTree = "<group>"; };
 		56284AFF22AD215200048746 /* Combine+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Combine+App.swift"; sourceTree = "<group>"; };
+		563CCE2422C3278200A11C56 /* GRDBCombine */ = {isa = PBXFileReference; lastKnownFileType = folder; name = GRDBCombine; path = ../..; sourceTree = "<group>"; };
 		565D3CD222BE64F500DE5688 /* DatabasePublishersValueTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabasePublishersValueTests.swift; sourceTree = "<group>"; };
 		566FA87722AD25A80036C2D8 /* MenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuViewController.swift; sourceTree = "<group>"; };
 		566FA87922AD48A20036C2D8 /* HallOfFameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameView.swift; sourceTree = "<group>"; };
@@ -148,6 +149,7 @@
 		56DF375C22A992DB00166718 = {
 			isa = PBXGroup;
 			children = (
+				563CCE2422C3278200A11C56 /* GRDBCombine */,
 				56DF376722A992DB00166718 /* GRDBCombineDemo */,
 				56B28CEC22BA09CB00E65640 /* GRDBCombineTests */,
 				56DF376622A992DB00166718 /* Products */,
