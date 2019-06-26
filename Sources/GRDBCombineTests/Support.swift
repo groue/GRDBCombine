@@ -14,25 +14,21 @@ final class Test<Context> {
         try executeTest(label: label, context: makeContext())
         return self
     }
-
+    
     @discardableResult
     func runInTemporaryDirectory(_ label: String = "", makeContext: (_ path: String) throws -> Context) throws -> Self {
-        // Create temp directory
-        let fm = FileManager.default
         let directoryURL = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("RxGRDBTests", isDirectory: true)
+            .appendingPathComponent("GRDBCombine", isDirectory: true)
             .appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString, isDirectory: true)
-        try fm.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
         
-        do {
-            // Run test inside temp directory
-            let databasePath = directoryURL.appendingPathComponent("db.sqlite").path
-            let context = try makeContext(databasePath)
-            try executeTest(label: label, context: context)
+        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+        defer {
+            try! FileManager.default.removeItem(at: directoryURL)
         }
         
-        // Destroy temp directory
-        try! FileManager.default.removeItem(at: directoryURL)
+        let databasePath = directoryURL.appendingPathComponent("db.sqlite").path
+        let context = try makeContext(databasePath)
+        try executeTest(label: label, context: context)
         return self
     }
     

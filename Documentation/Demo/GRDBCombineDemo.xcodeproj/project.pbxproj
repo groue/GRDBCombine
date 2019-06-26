@@ -149,11 +149,11 @@
 		56DF375C22A992DB00166718 = {
 			isa = PBXGroup;
 			children = (
-				563CCE2422C3278200A11C56 /* GRDBCombine */,
 				56DF376722A992DB00166718 /* GRDBCombineDemo */,
 				56B28CEC22BA09CB00E65640 /* GRDBCombineTests */,
 				56DF376622A992DB00166718 /* Products */,
 				56284AFA22AD19CC00048746 /* Frameworks */,
+				563CCE2422C3278200A11C56 /* GRDBCombine */,
 			);
 			sourceTree = "<group>";
 		};
