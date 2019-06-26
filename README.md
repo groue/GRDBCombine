@@ -5,19 +5,18 @@ GRDBCombine
 
 ---
 
-GRDBCombine provides Combine publishers for database observation, asynchronous reads, and writes.
+**Latest release**: June 26, 2019 • version 0.2.0 • [Release Notes]
 
 **DON'T USE IN PRODUCTION** - Xcode 11 beta 2 required
 
----
+GRDBCombine provides Combine publishers for database observation, asynchronous reads, and writes.
 
-<p align="center">
-    <a href="https://groue.github.io/GRDBCombine/docs/0.1/index.html">Documentation</a> &bull;
-    <a href="https://github.com/groue/GRDBCombine/tree/master/Documentation/Demo/README.md">Demo Application</a>
-</p>
-
----
+- [Reference]
+- [Demo Application]
 
 [SQLite]: http://sqlite.org
 [GRDB.swift]: https://github.com/groue/GRDB.swift
 [Combine]: https://developer.apple.com/documentation/combine
+[Release Notes]: CHANGELOG.md
+[Reference]: https://groue.github.io/GRDBCombine/docs/0.2/index.html
+[Demo Application]: Documentation/Demo/README.md
