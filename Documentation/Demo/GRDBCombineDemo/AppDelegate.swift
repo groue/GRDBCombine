@@ -8,7 +8,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Setup the Current worldd
         let dbPool = try! setupDatabase(application)
-        Current.database = { dbPool }
+        Current = World(database: { dbPool })
         return true
     }
 
@@ -48,15 +48,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: - IBActions
     
     @IBAction func deletePlayers() {
-        try! Players.deletePlayers()
+        try! Current.players().deleteAll()
     }
     
     @IBAction func refreshPlayers() {
-        try! Players.refreshPlayers()
+        try! Current.players().refresh()
     }
     
     @IBAction func stressTest() {
-        Players.stressTest()
+        Current.players().stressTest()
     }
 }
 

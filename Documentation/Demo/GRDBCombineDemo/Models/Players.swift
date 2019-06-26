@@ -4,18 +4,23 @@ import GRDBCombine
 import Dispatch
 
 /// A namespace that provides operations on the Player database
-enum Players {
+struct Players {
+    private let database: DatabaseWriter
+    
+    init(database: DatabaseWriter) {
+        self.database = database
+    }
     
     // MARK: - Modify Players
     
-    static func deletePlayers() throws {
-        try Current.database().write { db in
+    func deleteAll() throws {
+        try database.write { db in
             _ = try Player.deleteAll(db)
         }
     }
     
-    static func refreshPlayers() throws {
-        try Current.database().write { db in
+    func refresh() throws {
+        try database.write { db in
             if try Player.fetchCount(db) == 0 {
                 // Insert new random players
                 for _ in 0..<8 {
@@ -41,16 +46,17 @@ enum Players {
         }
     }
     
-    static func stressTest() {
+    func stressTest() {
         for _ in 0..<50 {
             DispatchQueue.global().async {
-                try? refreshPlayers()
+                try? self.refresh()
             }
         }
     }
     
-    // MARK: - Hall of Fame
+    // MARK: - Access Players
     
+    /// A Hole of Fame
     struct HallOfFame {
         /// Total number of players
         var playerCount: Int
@@ -66,7 +72,8 @@ enum Players {
         }
     }
     
-    static func hallOfFame(maxPlayerCount: Int) -> DatabasePublishers.Value<HallOfFame> {
+    /// A publisher that tracks changes in the Hall of Fame
+    func hallOfFamePublisher(maxPlayerCount: Int) -> DatabasePublishers.Value<HallOfFame> {
         let playerCount = Player.observationForCount()
         
         let bestPlayers = Player
@@ -81,6 +88,11 @@ enum Players {
             HallOfFame(playerCount: $0, bestPlayers: $1)
         }
         
-        return hallOfFame.publisher(in: Current.database())
+        return hallOfFame.publisher(in: database)
+    }
+    
+    /// A publisher that tracks changes in the number of players
+    func playerCountPublisher() -> DatabasePublishers.Value<Int> {
+        Player.observationForCount().publisher(in: database)
     }
 }

@@ -10,7 +10,7 @@ class HallOfFameViewModel {
     ///
     /// The property is a Result because database access may
     /// eventually fail.
-    @DatabasePublished(Players.hallOfFame(maxPlayerCount: 10))
+    @DatabasePublished(Current.players().hallOfFamePublisher(maxPlayerCount: 10))
     private var hallOfFame: Result<Players.HallOfFame, Error>
     
     // MARK: - Publishers
