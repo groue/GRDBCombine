@@ -39,7 +39,6 @@ import GRDB
 /// which tracks changes the database during its whole life time. It is not
 /// advised to use it in a value type such as a struct.
 @propertyDelegate
-@dynamicMemberLookup
 public class DatabasePublished<Output>: Publisher {
     public typealias Output = Output
     public typealias Failure = Error
@@ -134,13 +133,6 @@ public class DatabasePublished<Output>: Publisher {
         case let .failure(error):
             return Publishers.Fail<Output, Error>(error: error).eraseToAnyPublisher()
         }
-    }
-    
-    public subscript<T>(dynamicMember keyPath: KeyPath<Output, T>) -> DatabasePublished<T> {
-        // Safe because initialResult is not nil
-        DatabasePublished<T>(
-            initialResult: value.map { $0[keyPath: keyPath] },
-            unsafePublisher: currentValuePublisher.map { $0[keyPath: keyPath] }.eraseToResult())
     }
 }
 

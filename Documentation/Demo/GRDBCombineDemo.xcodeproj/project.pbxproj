@@ -14,6 +14,7 @@
 		566FA87822AD25A80036C2D8 /* MenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566FA87722AD25A80036C2D8 /* MenuViewController.swift */; };
 		566FA87A22AD48A20036C2D8 /* HallOfFameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566FA87922AD48A20036C2D8 /* HallOfFameView.swift */; };
 		566FA87C22AD51DA0036C2D8 /* Players.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566FA87B22AD51DA0036C2D8 /* Players.swift */; };
+		5698B7CE22C0A3A70053A4D1 /* DatabasePublishedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5698B7CD22C0A3A70053A4D1 /* DatabasePublishedTests.swift */; };
 		56AACA9322AC04A000A40F2A /* HallOfFameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */; };
 		56AACA9D22AC2C7C00A40F2A /* HallOfFameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */; };
 		56B28CF822BA0AC600E65640 /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B28CF722BA0AC600E65640 /* Support.swift */; };
@@ -45,10 +46,12 @@
 /* Begin PBXFileReference section */
 		56284AFD22AD1FC700048746 /* World.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = World.swift; sourceTree = "<group>"; };
 		56284AFF22AD215200048746 /* Combine+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Combine+App.swift"; sourceTree = "<group>"; };
+		563CCE2422C3278200A11C56 /* GRDBCombine */ = {isa = PBXFileReference; lastKnownFileType = folder; name = GRDBCombine; path = ../..; sourceTree = "<group>"; };
 		565D3CD222BE64F500DE5688 /* DatabasePublishersValueTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabasePublishersValueTests.swift; sourceTree = "<group>"; };
 		566FA87722AD25A80036C2D8 /* MenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuViewController.swift; sourceTree = "<group>"; };
 		566FA87922AD48A20036C2D8 /* HallOfFameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameView.swift; sourceTree = "<group>"; };
 		566FA87B22AD51DA0036C2D8 /* Players.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Players.swift; sourceTree = "<group>"; };
+		5698B7CD22C0A3A70053A4D1 /* DatabasePublishedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabasePublishedTests.swift; sourceTree = "<group>"; };
 		56AACA9222AC04A000A40F2A /* HallOfFameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameViewController.swift; sourceTree = "<group>"; };
 		56AACA9C22AC2C7C00A40F2A /* HallOfFameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HallOfFameViewModel.swift; sourceTree = "<group>"; };
 		56B28CEB22BA09CB00E65640 /* GRDBCombineTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GRDBCombineTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -133,6 +136,7 @@
 			isa = PBXGroup;
 			children = (
 				56B28CEF22BA09CB00E65640 /* Info.plist */,
+				5698B7CD22C0A3A70053A4D1 /* DatabasePublishedTests.swift */,
 				565D3CD222BE64F500DE5688 /* DatabasePublishersValueTests.swift */,
 				56F3364522BC307E00CC0009 /* DatabaseReaderReadPublisherTests.swift */,
 				56F3364422BC307E00CC0009 /* DatabaseWriterWritePublisherTests.swift */,
@@ -149,6 +153,7 @@
 				56B28CEC22BA09CB00E65640 /* GRDBCombineTests */,
 				56DF376622A992DB00166718 /* Products */,
 				56284AFA22AD19CC00048746 /* Frameworks */,
+				563CCE2422C3278200A11C56 /* GRDBCombine */,
 			);
 			sourceTree = "<group>";
 		};
@@ -292,6 +297,7 @@
 				565D3CD322BE64F500DE5688 /* DatabasePublishersValueTests.swift in Sources */,
 				56F3364622BC307E00CC0009 /* DatabaseWriterWritePublisherTests.swift in Sources */,
 				56B28CF822BA0AC600E65640 /* Support.swift in Sources */,
+				5698B7CE22C0A3A70053A4D1 /* DatabasePublishedTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

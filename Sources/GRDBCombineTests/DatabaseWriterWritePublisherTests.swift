@@ -97,12 +97,6 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 .writePublisher { db in
                     try db.execute(sql: "THIS IS NOT SQL")
                 }
-                .handleEvents(
-                    receiveSubscription: { Swift.print("\(label): receiveSubscription \($0)") },
-                    receiveOutput: { Swift.print("\(label): receiveOutput \($0)") },
-                    receiveCompletion: { Swift.print("\(label): receiveCompletion \($0)") },
-                    receiveCancel: { Swift.print("\(label): receiveCancel") },
-                    receiveRequest: { Swift.print("\(label): receiveRequest \($0)") })
                 .sink(
                     receiveCompletion: { completion in
                         XCTAssertError(completion, label: label) { (error: DatabaseError) in
@@ -118,6 +112,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { DatabaseQueue() }
+            // TODO: fix flacky test (unfulfilled expectation)
             .runInTemporaryDirectory("DatabaseQueue") { try DatabaseQueue(path: $0) }
             .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
     }
