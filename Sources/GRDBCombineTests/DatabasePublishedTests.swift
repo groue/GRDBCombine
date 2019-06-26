@@ -76,36 +76,8 @@ class DatabasePublishedTests : XCTestCase {
             .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
             .runInTemporaryDirectory("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
     }
-
-    func testInitializerWithInitialValue() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            }
-            return writer
-        }
-        
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
-            class Model {
-                static var countPublisher: DatabasePublishers.Value<Int>!
-                @DatabasePublished(initialValue: 0, countPublisher)
-                var count: Result<Int, Error>
-            }
-            
-            Model.countPublisher = Player.observationForCount().publisher(in: reader)
-            let model = Model()
-            try XCTAssertEqual(model.count.get(), 0)
-        }
-        
-        try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
-    }
     
-    func testDatabasePublishedAsPublisher() throws {
+    func testInitializerWithoutInitialAsPublisher() throws {
         func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
@@ -161,7 +133,7 @@ class DatabasePublishedTests : XCTestCase {
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
     
-    func testDatabasePublishedDidChange() throws {
+    func testInitializerWithoutInitialDidChange() throws {
         func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
@@ -208,6 +180,86 @@ class DatabasePublishedTests : XCTestCase {
                     try Player(id: 3, name: "Craig", score: 500).insert(db)
                     return .commit
                 }
+            }
+            
+            waitForExpectations(timeout: 1, handler: nil)
+        }
+        
+        try Test(test)
+            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
+            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+    }
+
+    func testInitializerWithInitialValue() throws {
+        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write { db in
+                try Player.createTable(db)
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+            }
+            return writer
+        }
+        
+        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+            class Model {
+                static var countPublisher: DatabasePublishers.Value<Int>!
+                @DatabasePublished(initialValue: 0, countPublisher)
+                var count: Result<Int, Error>
+            }
+            
+            Model.countPublisher = Player.observationForCount().publisher(in: reader)
+            let model = Model()
+            try XCTAssertEqual(model.count.get(), 0)
+        }
+        
+        try Test(test)
+            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
+            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runInTemporaryDirectory("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+    }
+    
+    func testInitializerWithInitialAsPublisher() throws {
+        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write { db in
+                try Player.createTable(db)
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+            }
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+            class Model {
+                static var countPublisher: DatabasePublishers.Value<Int>!
+                @DatabasePublished(initialValue: 0, countPublisher)
+                var count: Result<Int, Error>
+            }
+            
+            Model.countPublisher = Player.observationForCount().publisher(in: writer)
+            let model = Model()
+            
+            let expectation = self.expectation(description: label)
+            let testSubject = PassthroughSubject<Int, Error>()
+            testSubject
+                .collect(3)
+                .sink(
+                    receiveCompletion: { completion in
+                        XCTAssertNoFailure(completion, label: label)
+                },
+                    receiveValue: { value in
+                        XCTAssertEqual(value, [0, 1, 3])
+                        expectation.fulfill()
+                })
+                .add(to: cancelBag)
+            
+            model
+                .$count
+                .subscribe(testSubject)
+                .add(to: cancelBag)
+            
+            try writer.write { db in
+                try Player(id: 2, name: "Barbara", score: 750).insert(db)
+                try Player(id: 3, name: "Craig", score: 500).insert(db)
             }
             
             waitForExpectations(timeout: 1, handler: nil)
