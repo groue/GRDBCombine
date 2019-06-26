@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>DatabasePublished Class Reference</title>
+    <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
+    <meta charset='utf-8'>
+    <script src="../js/jquery.min.js" defer></script>
+    <script src="../js/jazzy.js" defer></script>
+    
+  </head>
+  <body>
+    <a name="//apple_ref/swift/Class/DatabasePublished" class="dashAnchor"></a>
+    <a title="DatabasePublished Class Reference"></a>
+    <header>
+      <div class="content-wrapper">
+        <p><a href="../index.html">GRDBCombine Docs</a> (100% documented)</p>
+        <p class="header-right"><a href="https://github.com/groue/GRDBCombine"><img src="../img/gh.png"/>View on GitHub</a></p>
+        <p class="header-right"><a href="dash-feed://https%3A%2F%2Fgroue%2Egithub%2Eio%2FGRDBCombine%2Fdocs%2F0%2E2%2Fdocsets%2FGRDBCombine%2Exml"><img src="../img/dash.png"/>Install in Dash</a></p>
+      </div>
+    </header>
+    <div class="content-wrapper">
+      <p id="breadcrumbs">
+        <a href="../index.html">GRDBCombine Reference</a>
+        <img id="carat" src="../img/carat.png" />
+        DatabasePublished Class Reference
+      </p>
+    </div>
+    <div class="content-wrapper">
+      <nav class="sidebar">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a href="../Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Classes/DatabasePublished.html">DatabasePublished</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Enums.html">Enumerations</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Enums/DatabasePublishers.html">DatabasePublishers</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Enums/DatabasePublishers/DatabaseRegion.html">– DatabaseRegion</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Enums/DatabasePublishers/Value.html">– Value</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Extensions.html">Extensions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Extensions/DatabaseReader.html">DatabaseReader</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/DatabaseRegionObservation.html">DatabaseRegionObservation</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/DatabaseWriter.html">DatabaseWriter</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/ValueObservation.html">ValueObservation</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+        <section>
+          <section class="section">
+            <h1>DatabasePublished</h1>
+              <div class="declaration">
+                <div class="language">
+                  <pre class="highlight swift"><code><span class="kd">@propertyDelegate</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="kt">DatabasePublished</span><span class="o">&lt;</span><span class="kt">Output</span><span class="o">&gt;</span> <span class="p">:</span> <span class="kt">Publisher</span></code></pre>
+
+                </div>
+              </div>
+            <p>DatabasePublished is a property wrapper whose value automatically changes,
+on the main queue, when the database is modified.</p>
+
+<p>Usage:</p>
+<pre class="highlight swift"><code><span class="kd">class</span> <span class="nf">MyModel</span> <span class="p">{</span>
+    <span class="c1">// A DatabasePublishers.Value</span>
+    <span class="kd">static</span> <span class="k">let</span> <span class="nv">playersPublisher</span> <span class="o">=</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">observationForAll</span><span class="p">()</span><span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+
+    <span class="kd">@DatabasePublished(playersPublisher)</span>
+    <span class="k">var</span> <span class="nv">players</span><span class="p">:</span> <span class="kt">Result</span><span class="o">&lt;</span><span class="p">[</span><span class="kt">Players</span><span class="p">],</span> <span class="kt">Error</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="k">let</span> <span class="nv">model</span> <span class="o">=</span> <span class="nf">MyModel</span><span class="p">()</span>
+<span class="k">try</span> <span class="n">model</span><span class="o">.</span><span class="n">players</span><span class="o">.</span><span class="nf">get</span><span class="p">()</span> <span class="c1">// [Player]</span>
+<span class="n">model</span><span class="o">.</span><span class="err">$</span><span class="n">players</span>          <span class="c1">// Publisher of output [Player], failure Error</span>
+</code></pre>
+
+<p>By default, the initial value of the property is immediately fetched from
+the database. This blocks your main queue until the database access
+completes.</p>
+
+<p>You can opt in for an asynchronous fetching by providing an initial value:</p>
+<pre class="highlight swift"><code><span class="kd">class</span> <span class="nf">MyModel</span> <span class="p">{</span>
+    <span class="c1">// The initialValue argument triggers asynchronous fetching</span>
+    <span class="kd">@DatabasePublished(initialValue: [], playersPublisher)</span>
+    <span class="k">var</span> <span class="nv">players</span><span class="p">:</span> <span class="kt">Result</span><span class="o">&lt;</span><span class="p">[</span><span class="kt">Players</span><span class="p">],</span> <span class="kt">Error</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="k">let</span> <span class="nv">model</span> <span class="o">=</span> <span class="nf">MyModel</span><span class="p">()</span>
+<span class="c1">// Empty array until the initial fetch is performed</span>
+<span class="k">try</span> <span class="n">model</span><span class="o">.</span><span class="n">players</span><span class="o">.</span><span class="nf">get</span><span class="p">()</span>
+</code></pre>
+
+<p>DatabasePublished is a <a href="https://developer.apple.com/swift/blog/?id=10">reference type</a>
+which tracks changes the database during its whole life time. It is not
+advised to use it in a value type such as a struct.</p>
+
+          </section>
+          <section class="section task-group-section">
+            <div class="task-group">
+              <ul>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:7Combine9PublisherP6OutputQa"></a>
+                    <a name="//apple_ref/swift/Alias/Output" class="dashAnchor"></a>
+                    <a class="token" href="#/s:7Combine9PublisherP6OutputQa">Output</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">typealias</span> <span class="kt">Output</span> <span class="o">=</span> <span class="kt">Output</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/groue/GRDBCombine/tree/v0.2.0/Sources/GRDBCombine/DatabasePublished.swift#L">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:7Combine9PublisherP7FailureQa"></a>
+                    <a name="//apple_ref/swift/Alias/Failure" class="dashAnchor"></a>
+                    <a class="token" href="#/s:7Combine9PublisherP7FailureQa">Failure</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">typealias</span> <span class="kt">Failure</span> <span class="o">=</span> <span class="kt">Error</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/groue/GRDBCombine/tree/v0.2.0/Sources/GRDBCombine/DatabasePublished.swift#L">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:11GRDBCombine17DatabasePublishedC5values6ResultOyxs5Error_pGvp"></a>
+                    <a name="//apple_ref/swift/Property/value" class="dashAnchor"></a>
+                    <a class="token" href="#/s:11GRDBCombine17DatabasePublishedC5values6ResultOyxs5Error_pGvp">value</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>The freshest value.</p>
+<div class="aside aside-warning">
+    <p class="aside-title">Warning</p>
+    this property is not thread-safe and must be used from the
+main queue only.
+
+</div>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">var</span> <span class="nv">value</span><span class="p">:</span> <span class="kt">Result</span><span class="o">&lt;</span><span class="kt"><a href="../Classes/DatabasePublished.html#/s:7Combine9PublisherP6OutputQa">Output</a></span><span class="p">,</span> <span class="kt">Error</span><span class="o">&gt;</span> <span class="p">{</span> <span class="k">get</span> <span class="p">}</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/groue/GRDBCombine/tree/v0.2.0/Sources/GRDBCombine/DatabasePublished.swift#L50">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:11GRDBCombine17DatabasePublishedC9didChange7Combine18PassthroughSubjectCyyts5NeverOGvp"></a>
+                    <a name="//apple_ref/swift/Property/didChange" class="dashAnchor"></a>
+                    <a class="token" href="#/s:11GRDBCombine17DatabasePublishedC9didChange7Combine18PassthroughSubjectCyyts5NeverOGvp">didChange</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>A publisher that emits an event whenever the value changes.</p>
+<div class="aside aside-warning">
+    <p class="aside-title">Warning</p>
+    The type of this property will change. Only rely on the fact
+that it is a Publisher.
+
+</div>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">didChange</span><span class="p">:</span> <span class="kt">PassthroughSubject</span><span class="o">&lt;</span><span class="kt">Void</span><span class="p">,</span> <span class="kt">Never</span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/groue/GRDBCombine/tree/v0.2.0/Sources/GRDBCombine/DatabasePublished.swift#L56">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:11GRDBCombine17DatabasePublishedCyACyxGAA0B10PublishersO5ValueVy_xGcfc"></a>
+                    <a name="//apple_ref/swift/Method/init(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:11GRDBCombine17DatabasePublishedCyACyxGAA0B10PublishersO5ValueVy_xGcfc">init(_:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a property wrapper whose value automatically changes when the
+database is modified.</p>
+
+<p>It must be instantiated from the main queue, or you will get a
+fatal error.</p>
+
+<p>Its value is eventually updated on the main queue after each
+database change.</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="n">convenience</span> <span class="nf">init</span><span class="p">(</span><span class="n">_</span> <span class="nv">publisher</span><span class="p">:</span> <span class="kt"><a href="../Enums/DatabasePublishers.html">DatabasePublishers</a></span><span class="o">.</span><span class="kt">Value</span><span class="o">&lt;</span><span class="kt"><a href="../Classes/DatabasePublished.html#/s:7Combine9PublisherP6OutputQa">Output</a></span><span class="o">&gt;</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/groue/GRDBCombine/tree/v0.2.0/Sources/GRDBCombine/DatabasePublished.swift#L70-L75">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:11GRDBCombine17DatabasePublishedC12initialValue_ACyxGx_AA0B10PublishersO0E0Vy_xGtcfc"></a>
+                    <a name="//apple_ref/swift/Method/init(initialValue:_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:11GRDBCombine17DatabasePublishedC12initialValue_ACyxGx_AA0B10PublishersO0E0Vy_xGtcfc">init(initialValue:_:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a property wrapper whose value automatically changes when the
+database is modified.</p>
+
+<p>Its value is eventually updated on the main queue after each
+database change.</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="n">convenience</span> <span class="nf">init</span><span class="p">(</span><span class="nv">initialValue</span><span class="p">:</span> <span class="kt"><a href="../Classes/DatabasePublished.html#/s:7Combine9PublisherP6OutputQa">Output</a></span><span class="p">,</span> <span class="n">_</span> <span class="nv">publisher</span><span class="p">:</span> <span class="kt"><a href="../Enums/DatabasePublishers.html">DatabasePublishers</a></span><span class="o">.</span><span class="kt">Value</span><span class="o">&lt;</span><span class="kt"><a href="../Classes/DatabasePublished.html#/s:7Combine9PublisherP6OutputQa">Output</a></span><span class="o">&gt;</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/groue/GRDBCombine/tree/v0.2.0/Sources/GRDBCombine/DatabasePublished.swift#L82-L87">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </section>
+        <section id="footer">
+          <p>&copy; 2019 <a class="link" href="https://github.com/groue" target="_blank" rel="external">Gwendal Roué</a>. All rights reserved. (Last updated: 2019-06-26)</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.9.6</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+        </section>
+      </article>
+    </div>
+  </body>
+</div>
+</html>
