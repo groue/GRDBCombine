@@ -25,9 +25,9 @@ Demo Application
 
 - [Players.swift](GRDBCombineDemo/Models/Players.swift)
     
-    Players provides defines read and write operations on the players database.
+    Players defines read and write operations on the players database.
     
-    It exposes a [publisher](../../Sources/GRDBCombine/DatabasePublishersValue.swift) of HallOfFame, that change everytime the database is modified.
+    It exposes a [publisher](../../Sources/GRDBCombine/DatabasePublishersValue.swift) of HallOfFame, that changes everytime the database is modified.
     
     ```swift
     struct HallOfFame {
