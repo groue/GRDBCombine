@@ -76,7 +76,8 @@ class DatabasePublishedTests : XCTestCase {
             .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
             .runInTemporaryDirectory("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
     }
-    
+
+    /*
     func testInitializerWithoutInitialAsPublisher() throws {
         func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
@@ -132,6 +133,7 @@ class DatabasePublishedTests : XCTestCase {
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
+
     
     func testInitializerWithoutInitialDidChange() throws {
         func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
@@ -190,6 +192,7 @@ class DatabasePublishedTests : XCTestCase {
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
+     */
 
     func testInitializerWithInitialValue() throws {
         func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
@@ -218,7 +221,8 @@ class DatabasePublishedTests : XCTestCase {
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
             .runInTemporaryDirectory("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
     }
-    
+
+    /*
     func testInitializerWithInitialAsPublisher() throws {
         func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
@@ -270,4 +274,5 @@ class DatabasePublishedTests : XCTestCase {
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
+ */
 }

@@ -38,7 +38,7 @@ import GRDB
 /// DatabasePublished is a [reference type](https://developer.apple.com/swift/blog/?id=10)
 /// which tracks changes the database during its whole life time. It is not
 /// advised to use it in a value type such as a struct.
-@propertyDelegate
+@propertyWrapper
 public class DatabasePublished<Output>: Publisher {
     public typealias Output = Output
     public typealias Failure = Error
@@ -47,7 +47,7 @@ public class DatabasePublished<Output>: Publisher {
     ///
     /// - warning: this property is not thread-safe and must be used from the
     ///   main queue only.
-    public var value: Result<Output, Error> { _result! }
+    public var wrappedValue: Result<Output, Error> { _result! }
     
     /// A publisher that emits an event whenever the value changes.
     ///
@@ -127,7 +127,7 @@ public class DatabasePublished<Output>: Publisher {
     }
     
     private var currentValuePublisher: AnyPublisher<Output, Error> {
-        switch value {
+        switch wrappedValue {
         case let .success(value):
             return subject.prepend(value).eraseToAnyPublisher()
         case let .failure(error):

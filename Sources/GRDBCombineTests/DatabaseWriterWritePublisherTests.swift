@@ -239,7 +239,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 },
                     receiveValue: { _ in })
                 .add(to: cancelBag)
-            waitForExpectations(timeout: 1, handler: nil)
+            waitForExpectations(timeout: 5, handler: nil)
         }
         
         try Test(test)
@@ -267,7 +267,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 },
                     receiveValue: { _ in })
                 .add(to: cancelBag)
-            waitForExpectations(timeout: 1, handler: nil)
+            waitForExpectations(timeout: 5, handler: nil)
         }
         
         try Test(test)
