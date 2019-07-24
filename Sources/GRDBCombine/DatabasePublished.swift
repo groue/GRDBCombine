@@ -49,6 +49,8 @@ public class DatabasePublished<Output>: Publisher {
     ///   main queue only.
     public var wrappedValue: Result<Output, Error> { _result! }
     
+    // TODO: doc
+    // TODO: review APIs exposed by $property. Do we still want it to be self?
     public var projectedValue: DatabasePublished<Output> { self }
     
     /// A publisher that emits an event whenever the value changes.
@@ -104,7 +106,9 @@ public class DatabasePublished<Output>: Publisher {
                 }
         },
             receiveValue: { result in
-                // Make sure self.value is set before publishing
+                // TODO: now that BindableObject has replaced didChange with
+                // willChange, don't we need to publish to willChange *before*
+                // changing value?
                 self._result = result
                 switch result {
                 case let .success(value):
