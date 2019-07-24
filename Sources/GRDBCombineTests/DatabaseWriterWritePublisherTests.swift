@@ -112,7 +112,6 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { DatabaseQueue() }
-            // TODO: fix flacky test (unfulfilled expectation)
             .runInTemporaryDirectory("DatabaseQueue") { try DatabaseQueue(path: $0) }
             .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
     }

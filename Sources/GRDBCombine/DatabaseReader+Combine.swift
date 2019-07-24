@@ -39,16 +39,18 @@ extension DatabaseReader {
         -> AnyPublisher<Output, Error>
         where S : Scheduler
     {
-        DatabasePublishers.DeferredFuture({ fulfill in
-            self.asyncRead { db in
-                do {
-                    try fulfill(Result.success(value(db.get())))
-                } catch {
-                    fulfill(Result.failure(error))
+        Deferred {
+            Future { fulfill in
+                self.asyncRead { db in
+                    do {
+                        try fulfill(Result.success(value(db.get())))
+                    } catch {
+                        fulfill(Result.failure(error))
+                    }
                 }
             }
-        })
-            .receive(on: scheduler)
+        }
+        .receive(on: scheduler)
             .eraseToAnyPublisher()
     }
 }
