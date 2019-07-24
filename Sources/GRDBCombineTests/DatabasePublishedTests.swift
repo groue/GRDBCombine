@@ -167,7 +167,7 @@ class DatabasePublishedTests : XCTestCase {
             
             model
                 .$count
-                .didChange
+                .willChange
                 .tryMap { try model.count.get() }
                 .subscribe(testSubject)
                 .add(to: cancelBag)
@@ -190,7 +190,7 @@ class DatabasePublishedTests : XCTestCase {
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
-
+    
     func testInitializerWithInitialValue() throws {
         func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in

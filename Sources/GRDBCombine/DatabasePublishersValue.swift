@@ -97,8 +97,7 @@ extension DatabasePublishers {
             reader: DatabaseReader,
             queue: DispatchQueue,
             receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
-            receive: @escaping (Output) -> Subscribers.Demand
-            )
+            receive: @escaping (Output) -> Subscribers.Demand)
         {
             self.startObservation = startObservation
             self.reader = reader

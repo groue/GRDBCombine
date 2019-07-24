@@ -43,7 +43,7 @@ extension DatabaseWriter {
         where S : Scheduler
     {
         flatMapWritePublisher(receiveOn: scheduler) { db in
-            Publishers.Once(Result { try updates(db) })
+            Result(catching: { try updates(db) }).publisher
         }
     }
     
@@ -91,7 +91,7 @@ extension DatabaseWriter {
             do {
                 return try self.concurrentReadPublisher(input: updates(db), value: value)
             } catch {
-                return Publishers.Fail(error: error).eraseToAnyPublisher()
+                return Fail(error: error).eraseToAnyPublisher()
             }
         }
     }

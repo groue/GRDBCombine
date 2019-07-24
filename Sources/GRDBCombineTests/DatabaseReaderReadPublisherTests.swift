@@ -32,9 +32,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) {
             let expectation = self.expectation(description: label)
             reader
-                .readPublisher { db in
+                .readPublisher(value: { db in
                     try Player.fetchCount(db)
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         XCTAssertNoFailure(completion, label: label)
@@ -60,9 +60,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
             let expectation = self.expectation(description: label)
             reader
-                .readPublisher { db in
+                .readPublisher(value: { db in
                     try Row.fetchAll(db, sql: "THIS IS NOT SQL")
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         XCTAssertError(completion, label: label) { (error: DatabaseError) in
@@ -97,9 +97,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) {
             let expectation = self.expectation(description: label)
             reader
-                .readPublisher { db in
+                .readPublisher(value: { db in
                     try Player.fetchCount(db)
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         dispatchPrecondition(condition: .onQueue(.main))
@@ -134,9 +134,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
             let queue = DispatchQueue(label: "test")
             let expectation = self.expectation(description: label)
             reader
-                .readPublisher(receiveOn: queue) { db in
+                .readPublisher(receiveOn: queue, value: { db in
                     try Player.fetchCount(db)
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         dispatchPrecondition(condition: .onQueue(queue))
@@ -162,9 +162,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
             let expectation = self.expectation(description: label)
             reader
-                .readPublisher { db in
+                .readPublisher(value: { db in
                     try Player.createTable(db)
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         XCTAssertError(completion, label: label) { (error: DatabaseError) in

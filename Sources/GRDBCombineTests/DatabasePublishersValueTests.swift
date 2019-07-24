@@ -68,7 +68,7 @@ class DatabasePublishersValueTests : XCTestCase {
             .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
             .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
-
+    
     // MARK: -
     
     func testDatabasePublishersValueDefaultScheduler() throws {
@@ -133,10 +133,12 @@ class DatabasePublishersValueTests : XCTestCase {
             let semaphore = DispatchSemaphore(value: 0)
             let testSubject = PassthroughSubject<Int, Error>()
             testSubject
-                .sink { _ in
-                    semaphore.wait()
-                    expectation.fulfill()
-                }
+                .sink(
+                    receiveCompletion: { _ in },
+                    receiveValue: { _ in
+                        semaphore.wait()
+                        expectation.fulfill()
+                })
                 .add(to: cancelBag)
             
             Player
@@ -269,10 +271,12 @@ class DatabasePublishersValueTests : XCTestCase {
             let semaphore = DispatchSemaphore(value: 0)
             let testSubject = PassthroughSubject<Int, Error>()
             testSubject
-                .sink { _ in
-                    dispatchPrecondition(condition: .onQueue(.main))
-                    semaphore.signal()
-                }
+                .sink(
+                    receiveCompletion: { _ in },
+                    receiveValue: { _ in
+                        dispatchPrecondition(condition: .onQueue(.main))
+                        semaphore.signal()
+                })
                 .add(to: cancelBag)
             
             Player

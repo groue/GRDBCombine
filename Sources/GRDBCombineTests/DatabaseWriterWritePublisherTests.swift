@@ -33,9 +33,9 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             try XCTAssertEqual(writer.read(Player.fetchCount), 0)
             let expectation = self.expectation(description: label)
             writer
-                .writePublisher { db in
+                .writePublisher(updates: { db in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         XCTAssertNoFailure(completion, label: label)
@@ -66,10 +66,10 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
             let expectation = self.expectation(description: label)
             writer
-                .writePublisher { db -> Int in
+                .writePublisher(updates: { db -> Int in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
                     return try Player.fetchCount(db)
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         XCTAssertNoFailure(completion, label: label)
@@ -94,9 +94,9 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
             let expectation = self.expectation(description: label)
             writer
-                .writePublisher { db in
+                .writePublisher(updates: { db in
                     try db.execute(sql: "THIS IS NOT SQL")
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         XCTAssertError(completion, label: label) { (error: DatabaseError) in
@@ -130,9 +130,9 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) {
             let expectation = self.expectation(description: label)
             writer
-                .writePublisher { db in
+                .writePublisher(updates: { db in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         dispatchPrecondition(condition: .onQueue(.main))
@@ -165,9 +165,9 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             let queue = DispatchQueue(label: "test")
             let expectation = self.expectation(description: label)
             writer
-                .writePublisher(receiveOn: queue) { db in
+                .writePublisher(receiveOn: queue, updates: { db in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-                }
+                })
                 .sink(
                     receiveCompletion: { completion in
                         dispatchPrecondition(condition: .onQueue(queue))
