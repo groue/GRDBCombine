@@ -56,7 +56,7 @@ extension DatabasePublishers {
             let subscription = ValueSubscription<Output>(
                 startObservation: startObservation,
                 reader: reader,
-                queue: DispatchQueue.main, // Wait for Combine Schedulers to be ready before we attempt at doing more
+                queue: DispatchQueue.main, // TODO: allow more scheduling options
                 receiveCompletion: subscriber.receive(completion:),
                 receive: subscriber.receive(_:))
             subscriber.receive(subscription: subscription)
