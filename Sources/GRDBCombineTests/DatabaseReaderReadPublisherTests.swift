@@ -29,9 +29,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) {
+        func test(reader: DatabaseReader, label: String) {
             let expectation = self.expectation(description: label)
-            reader
+            let testCancellable = reader
                 .readPublisher(value: { db in
                     try Player.fetchCount(db)
                 })
@@ -43,8 +43,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                     receiveValue: { value in
                         XCTAssertEqual(value, 1)
                 })
-                .add(to: cancelBag)
+            
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
         }
         
         try Test(test)
@@ -57,9 +58,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     // MARK: -
     
     func testReadPublisherError() throws {
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+        func test(reader: DatabaseReader, label: String) throws {
             let expectation = self.expectation(description: label)
-            reader
+            let testCancellable = reader
                 .readPublisher(value: { db in
                     try Row.fetchAll(db, sql: "THIS IS NOT SQL")
                 })
@@ -72,8 +73,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                         expectation.fulfill()
                 },
                     receiveValue: { _ in })
-                .add(to: cancelBag)
+            
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
         }
         
         try Test(test)
@@ -94,9 +96,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) {
+        func test(reader: DatabaseReader, label: String) {
             let expectation = self.expectation(description: label)
-            reader
+            let testCancellable = reader
                 .readPublisher(value: { db in
                     try Player.fetchCount(db)
                 })
@@ -108,8 +110,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                     receiveValue: { _ in
                         dispatchPrecondition(condition: .onQueue(.main))
                 })
-                .add(to: cancelBag)
+            
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
         }
         
         try Test(test)
@@ -130,10 +133,10 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) {
+        func test(reader: DatabaseReader, label: String) {
             let queue = DispatchQueue(label: "test")
             let expectation = self.expectation(description: label)
-            reader
+            let testCancellable = reader
                 .readPublisher(receiveOn: queue, value: { db in
                     try Player.fetchCount(db)
                 })
@@ -145,8 +148,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                     receiveValue: { _ in
                         dispatchPrecondition(condition: .onQueue(queue))
                 })
-                .add(to: cancelBag)
+            
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
         }
         
         try Test(test)
@@ -159,9 +163,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     // MARK: -
     
     func testReadPublisherIsReadonly() throws {
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+        func test(reader: DatabaseReader, label: String) throws {
             let expectation = self.expectation(description: label)
-            reader
+            let testCancellable = reader
                 .readPublisher(value: { db in
                     try Player.createTable(db)
                 })
@@ -173,8 +177,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                         expectation.fulfill()
                 },
                     receiveValue: { _ in })
-                .add(to: cancelBag)
+            
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
         }
         
         try Test(test)

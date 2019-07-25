@@ -28,7 +28,7 @@ class DatabasePublishedTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+        func test(reader: DatabaseReader, label: String) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(countPublisher)
@@ -48,7 +48,7 @@ class DatabasePublishedTests : XCTestCase {
     }
     
     func testInitializerWithoutInitialValueError() throws {
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+        func test(reader: DatabaseReader, label: String) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(countPublisher)
@@ -85,7 +85,7 @@ class DatabasePublishedTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(countPublisher)
@@ -97,7 +97,7 @@ class DatabasePublishedTests : XCTestCase {
             
             let expectation = self.expectation(description: label)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
@@ -107,12 +107,10 @@ class DatabasePublishedTests : XCTestCase {
                         XCTAssertEqual(value, [0, 1, 3])
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            model
+            let observationCancellable = model
                 .$count
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -125,6 +123,8 @@ class DatabasePublishedTests : XCTestCase {
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -141,7 +141,7 @@ class DatabasePublishedTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(countPublisher)
@@ -153,7 +153,7 @@ class DatabasePublishedTests : XCTestCase {
             
             let expectation = self.expectation(description: label)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .collect(2)
                 .sink(
                     receiveCompletion: { completion in
@@ -163,14 +163,12 @@ class DatabasePublishedTests : XCTestCase {
                         XCTAssertEqual(value, [1, 3])
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            model
+            let observationCancellable = model
                 .$count
                 .willChange
-                .tryMap { try model.count.get() }
+                .tryMap { [unowned model] in try model.count.get() } // TODO: I don't understand why we have a memory leak without this unowned capture.
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -183,6 +181,8 @@ class DatabasePublishedTests : XCTestCase {
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -200,7 +200,7 @@ class DatabasePublishedTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+        func test(reader: DatabaseReader, label: String) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(initialValue: 0, countPublisher)
@@ -228,7 +228,7 @@ class DatabasePublishedTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(initialValue: 0, countPublisher)
@@ -240,7 +240,7 @@ class DatabasePublishedTests : XCTestCase {
             
             let expectation = self.expectation(description: label)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
@@ -250,12 +250,10 @@ class DatabasePublishedTests : XCTestCase {
                         XCTAssertEqual(value, [0, 1, 3])
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            model
+            let observationCancellable = model
                 .$count
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.write { db in
                 try Player(id: 2, name: "Barbara", score: 750).insert(db)
@@ -263,6 +261,8 @@ class DatabasePublishedTests : XCTestCase {
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)

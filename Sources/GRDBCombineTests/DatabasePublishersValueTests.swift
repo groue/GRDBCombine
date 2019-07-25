@@ -29,10 +29,10 @@ class DatabasePublishersValueTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             let expectation = self.expectation(description: label)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
@@ -42,13 +42,11 @@ class DatabasePublishersValueTests : XCTestCase {
                         XCTAssertEqual(value, [0, 1, 3])
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            Player
+            let observationCancellable = Player
                 .observationForCount()
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -61,6 +59,8 @@ class DatabasePublishersValueTests : XCTestCase {
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -79,10 +79,10 @@ class DatabasePublishersValueTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             let expectation = self.expectation(description: label)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .handleEvents(receiveOutput: { _ in
                     dispatchPrecondition(condition: .onQueue(.main))
                 })
@@ -97,19 +97,19 @@ class DatabasePublishersValueTests : XCTestCase {
                         XCTAssertEqual(value.count, 2)
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            Player
+            let observationCancellable = Player
                 .observationForCount()
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -128,26 +128,27 @@ class DatabasePublishersValueTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             let expectation = self.expectation(description: label)
             let semaphore = DispatchSemaphore(value: 0)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .sink(
                     receiveCompletion: { _ in },
                     receiveValue: { _ in
                         semaphore.wait()
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            Player
+            let observationCancellable = Player
                 .observationForCount()
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(testSubject)
-                .add(to: cancelBag)
+            
             semaphore.signal()
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -166,10 +167,10 @@ class DatabasePublishersValueTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             let expectation = self.expectation(description: label)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
@@ -179,14 +180,12 @@ class DatabasePublishersValueTests : XCTestCase {
                         XCTAssertEqual(value, [0, 1, 3])
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            Player
+            let observationCancellable = Player
                 .observationForCount()
                 .publisher(in: writer as DatabaseReader)
                 .fetchOnSubscription()
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -199,6 +198,8 @@ class DatabasePublishersValueTests : XCTestCase {
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -217,10 +218,10 @@ class DatabasePublishersValueTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             let expectation = self.expectation(description: label)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .handleEvents(receiveOutput: { _ in
                     dispatchPrecondition(condition: .onQueue(.main))
                 })
@@ -235,20 +236,20 @@ class DatabasePublishersValueTests : XCTestCase {
                         XCTAssertEqual(value.count, 2)
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            Player
+            let observationCancellable = Player
                 .observationForCount()
                 .publisher(in: writer as DatabaseReader)
                 .fetchOnSubscription()
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -267,25 +268,26 @@ class DatabasePublishersValueTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter, label: String) throws {
             let semaphore = DispatchSemaphore(value: 0)
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .sink(
                     receiveCompletion: { _ in },
                     receiveValue: { _ in
                         dispatchPrecondition(condition: .onQueue(.main))
                         semaphore.signal()
                 })
-                .add(to: cancelBag)
             
-            Player
+            let observationCancellable = Player
                 .observationForCount()
                 .publisher(in: writer as DatabaseReader)
                 .fetchOnSubscription()
                 .subscribe(testSubject)
-                .add(to: cancelBag)
+            
             semaphore.wait()
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
