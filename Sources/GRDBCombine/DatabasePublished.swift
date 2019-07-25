@@ -98,14 +98,14 @@ public class DatabasePublished<Output>: Publisher {
         _result = initialResult
         
         canceller = AnyCancellable(publisher.sink(
-            receiveCompletion: { completion in
+            receiveCompletion: { [unowned self] completion in
                 switch completion {
                 case .finished:
                     self.willChange.send(())
                     self.subject.send(completion: .finished)
                 }
-        },
-            receiveValue: { result in
+            },
+            receiveValue: { [unowned self] result in
                 // TODO: now that BindableObject has replaced didChange with
                 // willChange, don't we need to publish to willChange *before*
                 // changing value?

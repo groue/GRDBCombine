@@ -118,8 +118,8 @@ extension DatabasePublishers {
                         reader,
                         queue,
                         { sync in self.state = .observing(demand: demand, sync: sync) },
-                        { error in self.receiveCompletion(.failure(error)) },
-                        { value in self.receive(value) })
+                        { [weak self] error in self?.receiveCompletion(.failure(error)) },
+                        { [weak self] value in self?.receive(value) })
                     
                 case let .observing(demand: currentDemand, sync: sync):
                     state = .observing(demand: currentDemand + demand, sync: sync)
