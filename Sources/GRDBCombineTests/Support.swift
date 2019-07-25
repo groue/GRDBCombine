@@ -12,15 +12,15 @@ final class Test<Context> {
     }
     
     @discardableResult
-    func run(_ label: String = "", makeContext: () throws -> Context) throws -> Self {
+    func run(_ label: String = "", context: () throws -> Context) throws -> Self {
         for _ in 1...repeatCount {
-            try test(makeContext(), label)
+            try test(context(), label)
         }
         return self
     }
     
     @discardableResult
-    func runInTemporaryDirectory(_ label: String = "", makeContext: (_ path: String) throws -> Context) throws -> Self {
+    func runInTemporaryDirectory(_ label: String = "", context: (_ directoryURL: URL) throws -> Context) throws -> Self {
         for _ in 1...repeatCount {
             let directoryURL = URL(fileURLWithPath: NSTemporaryDirectory())
                 .appendingPathComponent("GRDBCombine", isDirectory: true)
@@ -31,13 +31,16 @@ final class Test<Context> {
                 try! FileManager.default.removeItem(at: directoryURL)
             }
             
-            let databasePath = directoryURL.appendingPathComponent("db.sqlite").path
-            do {
-                let context = try makeContext(databasePath)
-                try test(context, label)
-            }
+            try test(context(directoryURL), label)
         }
         return self
+    }
+    
+    @discardableResult
+    func runAtTemporaryDatabasePath(_ label: String = "", context: (_ path: String) throws -> Context) throws -> Self {
+        try runInTemporaryDirectory { url in
+            try context(url.appendingPathComponent("db.sqlite").path)
+        }
     }
 }
 

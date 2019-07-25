@@ -50,9 +50,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
     }
     
     // MARK: -
@@ -80,9 +80,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { DatabaseQueue() }
-            .runInTemporaryDirectory("DatabaseQueue") { try DatabaseQueue(path: $0) }
-            .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try DatabasePool(path: $0) }
+            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
     }
     
     // MARK: -
@@ -117,9 +117,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
     }
     
     // MARK: -
@@ -155,9 +155,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
     }
     
     // MARK: -
@@ -184,8 +184,8 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { DatabaseQueue() }
-            .runInTemporaryDirectory("DatabaseQueue") { try DatabaseQueue(path: $0) }
-            .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try DatabasePool(path: $0) }
+            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
     }
 }

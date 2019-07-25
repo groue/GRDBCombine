@@ -65,8 +65,8 @@ class DatabasePublishersValueTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
     
     // MARK: -
@@ -114,8 +114,8 @@ class DatabasePublishersValueTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
     
     // MARK: -
@@ -153,8 +153,8 @@ class DatabasePublishersValueTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
     
     // MARK: - FetchOnSubscription
@@ -204,8 +204,8 @@ class DatabasePublishersValueTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
     
     // MARK: -
@@ -254,8 +254,8 @@ class DatabasePublishersValueTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
     
     // MARK: -
@@ -292,7 +292,7 @@ class DatabasePublishersValueTests : XCTestCase {
         
         try Test(test)
             .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
     }
 }
