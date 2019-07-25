@@ -233,7 +233,7 @@ extension ValueObservation where Reducer: ValueReducer {
         dispatchPrecondition(condition: .onQueue(queue))
         var observation = self
         observation.scheduling = .unsafe(startImmediately: true)
-        return start(in: reader, onError: onError, onChange: onChange)
+        return observation.start(in: reader, onError: onError, onChange: onChange)
     }
     
     /// Support for DatabasePublishers.Value.
@@ -251,6 +251,6 @@ extension ValueObservation where Reducer: ValueReducer {
         
         var observation = self
         observation.scheduling = .async(onQueue: queue, startImmediately: true)
-        return start(in: reader, onError: onError, onChange: onChange)
+        return observation.start(in: reader, onError: onError, onChange: onChange)
     }
 }
