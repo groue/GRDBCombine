@@ -49,8 +49,7 @@ extension DatabaseReader {
                     }
                 }
             }
-            .share()
-                .buffer(size: 1, prefetch: .keepFull, whenFull: .dropOldest)
+            .buffer(size: 1, prefetch: .keepFull, whenFull: .dropOldest)
         }
         .receive(on: scheduler)
             .eraseToAnyPublisher()
