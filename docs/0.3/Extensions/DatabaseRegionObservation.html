@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>DatabaseRegionObservation Extension Reference</title>
+    <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
+    <meta charset='utf-8'>
+    <script src="../js/jquery.min.js" defer></script>
+    <script src="../js/jazzy.js" defer></script>
+    
+  </head>
+  <body>
+    <a name="//apple_ref/swift/Extension/DatabaseRegionObservation" class="dashAnchor"></a>
+    <a title="DatabaseRegionObservation Extension Reference"></a>
+    <header>
+      <div class="content-wrapper">
+        <p><a href="../index.html">GRDBCombine 0.3 Docs</a> (96% documented)</p>
+        <p class="header-right"><a href="https://github.com/groue/GRDBCombine"><img src="../img/gh.png"/>View on GitHub</a></p>
+        <p class="header-right"><a href="dash-feed://https%3A%2F%2Fgroue%2Egithub%2Eio%2FGRDBCombine%2Fdocs%2F0%2E3%2Fdocsets%2FGRDBCombine%2Exml"><img src="../img/dash.png"/>Install in Dash</a></p>
+      </div>
+    </header>
+    <div class="content-wrapper">
+      <p id="breadcrumbs">
+        <a href="../index.html">GRDBCombine Reference</a>
+        <img id="carat" src="../img/carat.png" />
+        DatabaseRegionObservation Extension Reference
+      </p>
+    </div>
+    <div class="content-wrapper">
+      <nav class="sidebar">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a href="../Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Classes/DatabasePublished.html">DatabasePublished</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Enums.html">Enumerations</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Enums/DatabasePublishers.html">DatabasePublishers</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Enums/DatabasePublishers/DatabaseRegion.html">– DatabaseRegion</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Enums/DatabasePublishers/Value.html">– Value</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Extensions.html">Extensions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Extensions/DatabaseReader.html">DatabaseReader</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/DatabaseRegionObservation.html">DatabaseRegionObservation</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/DatabaseWriter.html">DatabaseWriter</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/ValueObservation.html">ValueObservation</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+        <section>
+          <section class="section">
+            <h1>DatabaseRegionObservation</h1>
+              <div class="declaration">
+                <div class="language">
+                  <pre class="highlight swift"><code><span class="kd">extension</span> <span class="kt">DatabaseRegionObservation</span></code></pre>
+
+                </div>
+              </div>
+            <p>Combine extensions on <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#databaseregionobservation">DatabaseRegionObservation</a>.</p>
+
+          </section>
+          <section class="section task-group-section">
+            <div class="task-group">
+              <ul>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4GRDB25DatabaseRegionObservationV11GRDBCombineE9publisher2inAD0B10PublishersO0bC0VAA0B6Writer_p_tF"></a>
+                    <a name="//apple_ref/swift/Method/publisher(in:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4GRDB25DatabaseRegionObservationV11GRDBCombineE9publisher2inAD0B10PublishersO0bC0VAA0B6Writer_p_tF">publisher(in:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Returns a publisher that tracks changes in a database region.</p>
+
+<p>It emits database connections on a protected dispatch queue.</p>
+
+<p>Error completion, if any, is only emitted, synchronously,
+on subscription.</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">publisher</span><span class="p">(</span><span class="k">in</span> <span class="nv">writer</span><span class="p">:</span> <span class="kt">DatabaseWriter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Enums/DatabasePublishers.html">DatabasePublishers</a></span><span class="o">.</span><span class="kt">DatabaseRegion</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/groue/GRDBCombine/tree/v0.3.0/Sources/GRDBCombine/DatabasePublishersDatabaseRegion.swift#L13-L15">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </section>
+        <section id="footer">
+          <p>&copy; 2019 <a class="link" href="https://github.com/groue" target="_blank" rel="external">Gwendal Roué</a>. All rights reserved. (Last updated: 2019-07-26)</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.10.0</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+        </section>
+      </article>
+    </div>
+  </body>
+</div>
+</html>

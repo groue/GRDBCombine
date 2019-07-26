@@ -1,0 +1,12 @@
+{
+  "warnings": [
+    {
+      "file": "/Users/groue/Documents/git/groue/GRDBCombine/Sources/GRDBCombine/DatabasePublished.swift",
+      "line": 58,
+      "symbol": "DatabasePublished.projectedValue",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    }
+  ],
+  "source_directory": "/Users/groue/Documents/git/groue/GRDBCombine"
+}
