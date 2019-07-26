@@ -1,3 +1,4 @@
+GIT := $(shell command -v git)
 JAZZY := $(shell command -v jazzy)
 SOURCEKITTEN := $(shell command -v sourcekitten)
 SWIFT := $(shell command -v xcrun swift)
