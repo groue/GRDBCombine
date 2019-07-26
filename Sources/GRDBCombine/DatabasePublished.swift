@@ -101,21 +101,16 @@ public class DatabasePublished<Output>: Publisher {
             receiveCompletion: { [unowned self] completion in
                 switch completion {
                 case .finished:
-                    self.willChange.send(())
                     self.subject.send(completion: .finished)
                 }
             },
             receiveValue: { [unowned self] result in
-                // TODO: now that BindableObject has replaced didChange with
-                // willChange, don't we need to publish to willChange *before*
-                // changing value?
+                self.willChange.send(())
                 self._result = result
                 switch result {
                 case let .success(value):
-                    self.willChange.send(())
                     self.subject.send(value)
                 case let .failure(error):
-                    self.willChange.send(())
                     self.subject.send(completion: .failure(error))
                 }
         }))
