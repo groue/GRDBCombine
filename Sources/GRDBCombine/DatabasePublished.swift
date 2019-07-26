@@ -102,7 +102,7 @@ public class DatabasePublished<Output>: Publisher {
     {
         _result = initialResult
         
-        cancellable = AnyCancellable(publisher.sink(
+        cancellable = publisher.sink(
             receiveCompletion: { [unowned self] completion in
                 switch completion {
                 case .finished:
@@ -118,7 +118,7 @@ public class DatabasePublished<Output>: Publisher {
                 case let .failure(error):
                     self.subject.send(completion: .failure(error))
                 }
-        }))
+        })
         
         if _result == nil {
             fatalError("Contract broken: first element wasn't published on subscription")
