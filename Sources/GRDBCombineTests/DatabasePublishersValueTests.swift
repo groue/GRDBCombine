@@ -22,21 +22,21 @@ class DatabasePublishersValueTests : XCTestCase {
     // MARK: -
     
     func testDatabasePublishersValue() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
             }
             return writer
         }
         
-        func test(writer: DatabaseWriter, label: String) throws {
-            let expectation = self.expectation(description: label)
+        func test(writer: DatabaseWriter) throws {
+            let expectation = self.expectation(description: "")
             let testSubject = PassthroughSubject<Int, Error>()
             let testCancellable = testSubject
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion, label: label)
+                        XCTAssertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1, 3])
@@ -64,23 +64,23 @@ class DatabasePublishersValueTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
     // MARK: -
     
     func testDatabasePublishersValueDefaultScheduler() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
             }
             return writer
         }
         
-        func test(writer: DatabaseWriter, label: String) throws {
-            let expectation = self.expectation(description: label)
+        func test(writer: DatabaseWriter) throws {
+            let expectation = self.expectation(description: "")
             let testSubject = PassthroughSubject<Int, Error>()
             let testCancellable = testSubject
                 .handleEvents(receiveOutput: { _ in
@@ -89,7 +89,7 @@ class DatabasePublishersValueTests : XCTestCase {
                 .collect(2)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion, label: label)
+                        XCTAssertNoFailure(completion)
                         dispatchPrecondition(condition: .onQueue(.main))
                 },
                     receiveValue: { value in
@@ -113,23 +113,23 @@ class DatabasePublishersValueTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
     // MARK: -
     
     func testDatabasePublishersValueEmitsFirstValueAsynchronously() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
             }
             return writer
         }
         
-        func test(writer: DatabaseWriter, label: String) throws {
-            let expectation = self.expectation(description: label)
+        func test(writer: DatabaseWriter) throws {
+            let expectation = self.expectation(description: "")
             let semaphore = DispatchSemaphore(value: 0)
             let testSubject = PassthroughSubject<Int, Error>()
             let testCancellable = testSubject
@@ -152,29 +152,29 @@ class DatabasePublishersValueTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
     // MARK: - FetchOnSubscription
     
     func testDatabasePublishersValueFetchOnSubscription() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
             }
             return writer
         }
         
-        func test(writer: DatabaseWriter, label: String) throws {
-            let expectation = self.expectation(description: label)
+        func test(writer: DatabaseWriter) throws {
+            let expectation = self.expectation(description: "")
             let testSubject = PassthroughSubject<Int, Error>()
             let testCancellable = testSubject
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion, label: label)
+                        XCTAssertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1, 3])
@@ -203,23 +203,23 @@ class DatabasePublishersValueTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
     // MARK: -
     
     func testDatabasePublishersValueFetchOnSubscriptionDefaultScheduler() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
             }
             return writer
         }
         
-        func test(writer: DatabaseWriter, label: String) throws {
-            let expectation = self.expectation(description: label)
+        func test(writer: DatabaseWriter) throws {
+            let expectation = self.expectation(description: "")
             let testSubject = PassthroughSubject<Int, Error>()
             let testCancellable = testSubject
                 .handleEvents(receiveOutput: { _ in
@@ -228,7 +228,7 @@ class DatabasePublishersValueTests : XCTestCase {
                 .collect(2)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion, label: label)
+                        XCTAssertNoFailure(completion)
                         dispatchPrecondition(condition: .onQueue(.main))
                 },
                     receiveValue: { value in
@@ -253,22 +253,22 @@ class DatabasePublishersValueTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
     // MARK: -
     
     func testDatabasePublishersValueFetchOnSubscriptionEmitsFirstValueSynchronously() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
             }
             return writer
         }
         
-        func test(writer: DatabaseWriter, label: String) throws {
+        func test(writer: DatabaseWriter) throws {
             let semaphore = DispatchSemaphore(value: 0)
             let testSubject = PassthroughSubject<Int, Error>()
             let testCancellable = testSubject
@@ -291,8 +291,8 @@ class DatabasePublishersValueTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
 }

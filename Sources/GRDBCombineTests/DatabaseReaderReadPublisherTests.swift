@@ -21,7 +21,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     // MARK: -
     
     func testReadPublisher() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -29,15 +29,15 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, label: String) {
-            let expectation = self.expectation(description: label)
+        func test(reader: DatabaseReader) {
+            let expectation = self.expectation(description: "")
             let testCancellable = reader
                 .readPublisher(value: { db in
                     try Player.fetchCount(db)
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion, label: label)
+                        XCTAssertNoFailure(completion)
                         expectation.fulfill()
                 },
                     receiveValue: { value in
@@ -49,24 +49,24 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)).makeSnapshot() }
     }
     
     // MARK: -
     
     func testReadPublisherError() throws {
-        func test(reader: DatabaseReader, label: String) throws {
-            let expectation = self.expectation(description: label)
+        func test(reader: DatabaseReader) throws {
+            let expectation = self.expectation(description: "")
             let testCancellable = reader
                 .readPublisher(value: { db in
                     try Row.fetchAll(db, sql: "THIS IS NOT SQL")
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertError(completion, label: label) { (error: DatabaseError) in
+                        XCTAssertError(completion) { (error: DatabaseError) in
                             XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
                             XCTAssertEqual(error.sql, "THIS IS NOT SQL")
                         }
@@ -79,16 +79,16 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { DatabaseQueue() }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try DatabaseQueue(path: $0) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try DatabasePool(path: $0) }
-            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
+            .run { DatabaseQueue() }
+            .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0).makeSnapshot() }
     }
     
     // MARK: -
     
     func testReadPublisherDefaultScheduler() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -96,8 +96,8 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, label: String) {
-            let expectation = self.expectation(description: label)
+        func test(reader: DatabaseReader) {
+            let expectation = self.expectation(description: "")
             let testCancellable = reader
                 .readPublisher(value: { db in
                     try Player.fetchCount(db)
@@ -116,16 +116,16 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)).makeSnapshot() }
     }
     
     // MARK: -
     
     func testReadPublisherCustomScheduler() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -133,9 +133,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, label: String) {
+        func test(reader: DatabaseReader) {
             let queue = DispatchQueue(label: "test")
-            let expectation = self.expectation(description: label)
+            let expectation = self.expectation(description: "")
             let testCancellable = reader
                 .readPublisher(receiveOn: queue, value: { db in
                     try Player.fetchCount(db)
@@ -154,24 +154,24 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)).makeSnapshot() }
     }
     
     // MARK: -
     
     func testReadPublisherIsReadonly() throws {
-        func test(reader: DatabaseReader, label: String) throws {
-            let expectation = self.expectation(description: label)
+        func test(reader: DatabaseReader) throws {
+            let expectation = self.expectation(description: "")
             let testCancellable = reader
                 .readPublisher(value: { db in
                     try Player.createTable(db)
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertError(completion, label: label) { (error: DatabaseError) in
+                        XCTAssertError(completion) { (error: DatabaseError) in
                             XCTAssertEqual(error.resultCode, .SQLITE_READONLY)
                         }
                         expectation.fulfill()
@@ -183,9 +183,9 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { DatabaseQueue() }
-            .runAtTemporaryDatabasePath("DatabaseQueue") { try DatabaseQueue(path: $0) }
-            .runAtTemporaryDatabasePath("DatabasePool") { try DatabasePool(path: $0) }
-            .runAtTemporaryDatabasePath("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
+            .run { DatabaseQueue() }
+            .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0).makeSnapshot() }
     }
 }
