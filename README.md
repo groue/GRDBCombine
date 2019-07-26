@@ -5,9 +5,11 @@ GRDBCombine
 
 ---
 
-**Latest release**: June 26, 2019 • version 0.2.0 • [Release Notes]
+**Latest release**: July 26, 2019 • version 0.3.0 • [Release Notes]
 
-**DON'T USE IN PRODUCTION** - Xcode 11 beta 2 required
+**Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0 beta 4
+
+**DON'T USE IN PRODUCTION** - this is beta software.
 
 GRDBCombine provides Combine publishers for database observation, asynchronous reads, and writes.
 
