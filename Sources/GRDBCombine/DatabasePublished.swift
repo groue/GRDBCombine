@@ -1,4 +1,5 @@
 import Combine
+import Dispatch
 import Foundation
 import GRDB
 
@@ -38,7 +39,7 @@ import GRDB
 /// DatabasePublished is a [reference type](https://developer.apple.com/swift/blog/?id=10)
 /// which tracks changes the database during its whole life time. It is not
 /// advised to use it in a value type such as a struct.
-@propertyDelegate
+@propertyWrapper
 public class DatabasePublished<Output>: Publisher {
     public typealias Output = Output
     public typealias Failure = Error
@@ -47,17 +48,25 @@ public class DatabasePublished<Output>: Publisher {
     ///
     /// - warning: this property is not thread-safe and must be used from the
     ///   main queue only.
-    public var value: Result<Output, Error> { _result! }
+    public var wrappedValue: Result<Output, Error> {
+        dispatchPrecondition(condition: .onQueue(.main))
+        return _result!
+    }
     
-    /// A publisher that emits an event whenever the value changes.
+    // TODO: doc
+    // TODO: review APIs exposed by $property. Do we still want it to be self?
+    public var projectedValue: DatabasePublished<Output> { self }
+    
+    /// A publisher that publishes an event immediately before the wrapped
+    /// value changes.
     ///
     /// - warning: The type of this property will change. Only rely on the fact
     ///   that it is a Publisher.
-    public let didChange = PassthroughSubject<Void, Never>() // Support for SwiftUI
+    public let willChange = PassthroughSubject<Void, Never>() // Support for SwiftUI
     private var _result: Result<Output, Error>?
     private var subject = PassthroughSubject<Output, Error>()
     
-    private var canceller: AnyCancellable!
+    private var cancellable: AnyCancellable!
     
     /// Creates a property wrapper whose value automatically changes when the
     /// database is modified.
@@ -93,29 +102,26 @@ public class DatabasePublished<Output>: Publisher {
     {
         _result = initialResult
         
-        canceller = AnyCancellable(publisher.sink(
-            receiveCompletion: { completion in
+        cancellable = publisher.sink(
+            receiveCompletion: { [unowned self] completion in
                 switch completion {
                 case .finished:
-                    self.didChange.send(())
                     self.subject.send(completion: .finished)
                 }
-        },
-            receiveValue: { result in
-                // Make sure self.value is set before publishing
+            },
+            receiveValue: { [unowned self] result in
+                self.willChange.send(())
                 self._result = result
                 switch result {
                 case let .success(value):
-                    self.didChange.send(())
                     self.subject.send(value)
                 case let .failure(error):
-                    self.didChange.send(())
                     self.subject.send(completion: .failure(error))
                 }
-        }))
+        })
         
         if _result == nil {
-            fatalError("Contract broken: observation did not emit its first element")
+            fatalError("Contract broken: first element wasn't published on subscription")
         }
     }
     
@@ -127,11 +133,11 @@ public class DatabasePublished<Output>: Publisher {
     }
     
     private var currentValuePublisher: AnyPublisher<Output, Error> {
-        switch value {
+        switch wrappedValue {
         case let .success(value):
             return subject.prepend(value).eraseToAnyPublisher()
         case let .failure(error):
-            return Publishers.Fail<Output, Error>(error: error).eraseToAnyPublisher()
+            return Fail(error: error).eraseToAnyPublisher()
         }
     }
 }

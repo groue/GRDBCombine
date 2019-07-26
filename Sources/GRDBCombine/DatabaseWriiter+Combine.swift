@@ -43,7 +43,7 @@ extension DatabaseWriter {
         where S : Scheduler
     {
         flatMapWritePublisher(receiveOn: scheduler) { db in
-            Publishers.Once(Result { try updates(db) })
+            Result(catching: { try updates(db) }).publisher
         }
     }
     
@@ -91,7 +91,7 @@ extension DatabaseWriter {
             do {
                 return try self.concurrentReadPublisher(input: updates(db), value: value)
             } catch {
-                return Publishers.Fail(error: error).eraseToAnyPublisher()
+                return Fail(error: error).eraseToAnyPublisher()
             }
         }
     }
@@ -104,26 +104,29 @@ extension DatabaseWriter {
         -> AnyPublisher<P.Output, Error>
         where S : Scheduler, P : Publisher, P.Failure == Error
     {
-        DatabasePublishers.DeferredFuture<P, Error>({ fulfill in
-            self.asyncWriteWithoutTransaction { db in
-                do {
-                    var publisher: P? = nil
-                    try db.inTransaction {
-                        publisher = try updates(db)
-                        return .commit
+        Deferred {
+            Future<P, Error> { fulfill in
+                self.asyncWriteWithoutTransaction { db in
+                    do {
+                        var publisher: P? = nil
+                        try db.inTransaction {
+                            publisher = try updates(db)
+                            return .commit
+                        }
+                        // Support for writePublisher(updates:thenRead:):
+                        // fulfill after transaction, but still in the database
+                        // writer queue.
+                        fulfill(.success(publisher!))
+                    } catch {
+                        fulfill(.failure(error))
                     }
-                    // Support for writePublisher(updates:thenRead:):
-                    // fulfill after transaction, but still in the database
-                    // writer queue.
-                    fulfill(.success(publisher!))
-                } catch {
-                    fulfill(.failure(error))
                 }
             }
-        })
+        }
             // ? Tests for writePublisher(updates:thenRead:) fail
             // without .unlimited
             .flatMap(maxPublishers: .unlimited, { $0 })
+            .buffer(size: 1, prefetch: .keepFull, whenFull: .dropOldest)
             .receive(on: scheduler)
             .eraseToAnyPublisher()
     }
@@ -133,13 +136,16 @@ extension DatabaseWriter {
         value: @escaping (Database, T) throws -> Output)
         -> AnyPublisher<Output, Error>
     {
-        DatabasePublishers.DeferredFuture({ fulfill in
-            self.spawnConcurrentRead { db in
-                fulfill(Result {
-                    try value(db.get(), input)
-                })
+        Deferred {
+            Future { fulfill in
+                self.spawnConcurrentRead { db in
+                    fulfill(Result {
+                        try value(db.get(), input)
+                    })
+                }
             }
-        })
-            .eraseToAnyPublisher()
+            .buffer(size: 1, prefetch: .keepFull, whenFull: .dropOldest)
+        }
+        .eraseToAnyPublisher()
     }
 }

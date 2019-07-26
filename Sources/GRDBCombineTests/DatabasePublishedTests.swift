@@ -20,7 +20,7 @@ private struct Player: Codable, FetchableRecord, PersistableRecord {
 class DatabasePublishedTests : XCTestCase {
     
     func testInitializerWithoutInitialValueSuccess() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -28,7 +28,7 @@ class DatabasePublishedTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+        func test(reader: DatabaseReader) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(countPublisher)
@@ -41,14 +41,14 @@ class DatabasePublishedTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)).makeSnapshot() }
     }
     
     func testInitializerWithoutInitialValueError() throws {
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+        func test(reader: DatabaseReader) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(countPublisher)
@@ -71,21 +71,21 @@ class DatabasePublishedTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { DatabaseQueue() }
-            .runInTemporaryDirectory("DatabaseQueue") { try DatabaseQueue(path: $0) }
-            .runInTemporaryDirectory("DatabasePool") { try DatabasePool(path: $0) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try DatabasePool(path: $0).makeSnapshot() }
+            .run { DatabaseQueue() }
+            .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0).makeSnapshot() }
     }
     
     func testInitializerWithoutInitialAsPublisher() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
             }
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(countPublisher)
@@ -95,24 +95,22 @@ class DatabasePublishedTests : XCTestCase {
             Model.countPublisher = Player.observationForCount().publisher(in: writer)
             let model = Model()
             
-            let expectation = self.expectation(description: label)
+            let expectation = self.expectation(description: "")
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion, label: label)
+                        XCTAssertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1, 3])
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            model
+            let observationCancellable = model
                 .$count
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -125,23 +123,25 @@ class DatabasePublishedTests : XCTestCase {
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
-    func testInitializerWithoutInitialDidChange() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+    func testInitializerWithoutInitialWillChange() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
             }
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(countPublisher)
@@ -151,26 +151,24 @@ class DatabasePublishedTests : XCTestCase {
             Model.countPublisher = Player.observationForCount().publisher(in: writer)
             let model = Model()
             
-            let expectation = self.expectation(description: label)
+            let expectation = self.expectation(description: "")
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .collect(2)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion, label: label)
+                        XCTAssertNoFailure(completion)
                 },
                     receiveValue: { value in
-                        XCTAssertEqual(value, [1, 3])
+                        XCTAssertEqual(value, [0, 1])
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            model
+            let observationCancellable = model
                 .$count
-                .didChange
-                .tryMap { try model.count.get() }
+                .willChange
+                .tryMap { [unowned model] in try model.count.get() } // TODO: I don't understand why we have a memory leak without this unowned capture.
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -183,16 +181,18 @@ class DatabasePublishedTests : XCTestCase {
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
-
+    
     func testInitializerWithInitialValue() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -200,7 +200,7 @@ class DatabasePublishedTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader, cancelBag: CancelBag, label: String) throws {
+        func test(reader: DatabaseReader) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(initialValue: 0, countPublisher)
@@ -213,14 +213,14 @@ class DatabasePublishedTests : XCTestCase {
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
-            .runInTemporaryDirectory("DatabaseSnapshot") { try prepare(DatabasePool(path: $0)).makeSnapshot() }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)).makeSnapshot() }
     }
     
     func testInitializerWithInitialAsPublisher() throws {
-        func prepare<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -228,7 +228,7 @@ class DatabasePublishedTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter, cancelBag: CancelBag, label: String) throws {
+        func test(writer: DatabaseWriter) throws {
             class Model {
                 static var countPublisher: DatabasePublishers.Value<Int>!
                 @DatabasePublished(initialValue: 0, countPublisher)
@@ -238,24 +238,22 @@ class DatabasePublishedTests : XCTestCase {
             Model.countPublisher = Player.observationForCount().publisher(in: writer)
             let model = Model()
             
-            let expectation = self.expectation(description: label)
+            let expectation = self.expectation(description: "")
             let testSubject = PassthroughSubject<Int, Error>()
-            testSubject
+            let testCancellable = testSubject
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion, label: label)
+                        XCTAssertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1, 3])
                         expectation.fulfill()
                 })
-                .add(to: cancelBag)
             
-            model
+            let observationCancellable = model
                 .$count
                 .subscribe(testSubject)
-                .add(to: cancelBag)
             
             try writer.write { db in
                 try Player(id: 2, name: "Barbara", score: 750).insert(db)
@@ -263,11 +261,13 @@ class DatabasePublishedTests : XCTestCase {
             }
             
             waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            observationCancellable.cancel()
         }
         
         try Test(test)
-            .run("InMemoryDatabaseQueue") { try prepare(DatabaseQueue()) }
-            .runInTemporaryDirectory("DatabaseQueue") { try prepare(DatabaseQueue(path: $0)) }
-            .runInTemporaryDirectory("DatabasePool") { try prepare(DatabasePool(path: $0)) }
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
 }

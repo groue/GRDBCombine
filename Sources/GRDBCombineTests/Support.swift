@@ -3,75 +3,57 @@ import Foundation
 import XCTest
 
 final class Test<Context> {
-    private let test: (Context, CancelBag, String) throws -> ()
+    // Raise the repeatCount in order to help spotting flaky tests.
+    private let repeatCount = 1
+    private let test: (Context) throws -> ()
     
-    init(_ test: @escaping (Context, CancelBag, String) throws -> ()) {
+    init(_ test: @escaping (Context) throws -> ()) {
         self.test = test
     }
     
     @discardableResult
-    func run(_ label: String = "", makeContext: () throws -> Context) throws -> Self {
-        try executeTest(label: label, context: makeContext())
+    func run(context: () throws -> Context) throws -> Self {
+        for _ in 1...repeatCount {
+            try test(context())
+        }
         return self
     }
     
     @discardableResult
-    func runInTemporaryDirectory(_ label: String = "", makeContext: (_ path: String) throws -> Context) throws -> Self {
-        let directoryURL = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("GRDBCombine", isDirectory: true)
-            .appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString, isDirectory: true)
-        
-        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
-        defer {
-            try! FileManager.default.removeItem(at: directoryURL)
+    func runInTemporaryDirectory(context: (_ directoryURL: URL) throws -> Context) throws -> Self {
+        for _ in 1...repeatCount {
+            let directoryURL = URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent("GRDBCombine", isDirectory: true)
+                .appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString, isDirectory: true)
+            
+            try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+            defer {
+                try! FileManager.default.removeItem(at: directoryURL)
+            }
+            
+            try test(context(directoryURL))
         }
-        
-        let databasePath = directoryURL.appendingPathComponent("db.sqlite").path
-        let context = try makeContext(databasePath)
-        try executeTest(label: label, context: context)
         return self
     }
     
-    private func executeTest(label: String, context: Context) throws {
-        let bag = CancelBag()
-        defer {
-            bag.cancel()
+    @discardableResult
+    func runAtTemporaryDatabasePath(context: (_ path: String) throws -> Context) throws -> Self {
+        try runInTemporaryDirectory { url in
+            try context(url.appendingPathComponent("db.sqlite").path)
         }
-        try test(context, bag, label)
     }
 }
 
-final class CancelBag: Cancellable {
-    fileprivate var cancellables: [AnyCancellable] = []
-    
-    func cancel() {
-        for cancellable in cancellables {
-            cancellable.cancel()
-        }
-        cancellables = []
-    }
-    
-    deinit {
-        cancel()
-    }
-}
-
-extension Cancellable {
-    func add(to bag: CancelBag) {
-        bag.cancellables.append(AnyCancellable(self))
-    }
-}
-
-public func XCTAssertNoFailure<Failure>(_ completion: Subscribers.Completion<Failure>, label: String, file: StaticString = #file, line: UInt = #line) {
+public func XCTAssertNoFailure<Failure>(_ completion: Subscribers.Completion<Failure>, file: StaticString = #file, line: UInt = #line) {
     if case let .failure(error) = completion {
-        XCTFail("\(label): unexpected completion failure: \(error)", file: file, line: line)
+        XCTFail("unexpected completion failure: \(error)", file: file, line: line)
     }
 }
 
-public func XCTAssertError<Failure, ExpectedFailure>(_ completion: Subscribers.Completion<Failure>, label: String, file: StaticString = #file, line: UInt = #line, test: (ExpectedFailure) -> Void) {
+public func XCTAssertError<Failure, ExpectedFailure>(_ completion: Subscribers.Completion<Failure>, file: StaticString = #file, line: UInt = #line, test: (ExpectedFailure) -> Void) {
     if case let .failure(error) = completion, let failure = error as? ExpectedFailure {
         test(failure)
     } else {
-        XCTFail("\(label): unexpected \(ExpectedFailure.self), got \(completion)", file: file, line: line)
+        XCTFail("unexpected \(ExpectedFailure.self), got \(completion)", file: file, line: line)
     }
 }

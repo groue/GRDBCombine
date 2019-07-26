@@ -7,12 +7,12 @@ struct HallOfFameView: View {
         VStack {
             list
             toolbar
-            }
-            .navigationBarTitle(Text(viewModel.title))
+        }
+        .navigationBarTitle(Text(viewModel.title))
     }
     
     var list: some View {
-        List(viewModel.bestPlayers.identified(by: \.id)) {
+        List(viewModel.bestPlayers, id: \.id) {
             PlayerRow(player: $0)
         }
     }
@@ -30,8 +30,8 @@ struct HallOfFameView: View {
             Button(
                 action: { Current.players().stressTest() },
                 label: { Text("💣") })
-            }
-            .padding()
+        }
+        .padding()
     }
 }
 

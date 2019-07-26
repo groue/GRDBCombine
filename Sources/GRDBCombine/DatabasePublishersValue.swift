@@ -56,7 +56,7 @@ extension DatabasePublishers {
             let subscription = ValueSubscription<Output>(
                 startObservation: startObservation,
                 reader: reader,
-                queue: DispatchQueue.main, // Wait for Combine Schedulers to be ready before we attempt at doing more
+                queue: DispatchQueue.main, // TODO: allow more scheduling options
                 receiveCompletion: subscriber.receive(completion:),
                 receive: subscriber.receive(_:))
             subscriber.receive(subscription: subscription)
@@ -97,8 +97,7 @@ extension DatabasePublishers {
             reader: DatabaseReader,
             queue: DispatchQueue,
             receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
-            receive: @escaping (Output) -> Subscribers.Demand
-            )
+            receive: @escaping (Output) -> Subscribers.Demand)
         {
             self.startObservation = startObservation
             self.reader = reader
@@ -119,8 +118,8 @@ extension DatabasePublishers {
                         reader,
                         queue,
                         { sync in self.state = .observing(demand: demand, sync: sync) },
-                        { error in self.receiveCompletion(.failure(error)) },
-                        { value in self.receive(value) })
+                        { [weak self] error in self?.receiveCompletion(.failure(error)) },
+                        { [weak self] value in self?.receive(value) })
                     
                 case let .observing(demand: currentDemand, sync: sync):
                     state = .observing(demand: currentDemand + demand, sync: sync)
@@ -234,7 +233,7 @@ extension ValueObservation where Reducer: ValueReducer {
         dispatchPrecondition(condition: .onQueue(queue))
         var observation = self
         observation.scheduling = .unsafe(startImmediately: true)
-        return start(in: reader, onError: onError, onChange: onChange)
+        return observation.start(in: reader, onError: onError, onChange: onChange)
     }
     
     /// Support for DatabasePublishers.Value.
@@ -252,6 +251,6 @@ extension ValueObservation where Reducer: ValueReducer {
         
         var observation = self
         observation.scheduling = .async(onQueue: queue, startImmediately: true)
-        return start(in: reader, onError: onError, onChange: onChange)
+        return observation.start(in: reader, onError: onError, onChange: onChange)
     }
 }
