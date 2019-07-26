@@ -133,7 +133,7 @@ class DatabasePublishedTests : XCTestCase {
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
-    func testInitializerWithoutInitialDidChange() throws {
+    func testInitializerWithoutInitialWillChange() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
                 try Player.createTable(db)
@@ -160,7 +160,7 @@ class DatabasePublishedTests : XCTestCase {
                         XCTAssertNoFailure(completion)
                 },
                     receiveValue: { value in
-                        XCTAssertEqual(value, [1, 3])
+                        XCTAssertEqual(value, [0, 1])
                         expectation.fulfill()
                 })
             
