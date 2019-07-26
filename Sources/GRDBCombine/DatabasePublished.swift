@@ -1,4 +1,5 @@
 import Combine
+import Dispatch
 import Foundation
 import GRDB
 
@@ -47,13 +48,17 @@ public class DatabasePublished<Output>: Publisher {
     ///
     /// - warning: this property is not thread-safe and must be used from the
     ///   main queue only.
-    public var wrappedValue: Result<Output, Error> { _result! }
+    public var wrappedValue: Result<Output, Error> {
+        dispatchPrecondition(condition: .onQueue(.main))
+        return _result!
+    }
     
     // TODO: doc
     // TODO: review APIs exposed by $property. Do we still want it to be self?
     public var projectedValue: DatabasePublished<Output> { self }
     
-    /// A publisher that emits an event whenever the value changes.
+    /// A publisher that publishes an event immediately before the wrapped
+    /// value changes.
     ///
     /// - warning: The type of this property will change. Only rely on the fact
     ///   that it is a Publisher.
@@ -61,7 +66,7 @@ public class DatabasePublished<Output>: Publisher {
     private var _result: Result<Output, Error>?
     private var subject = PassthroughSubject<Output, Error>()
     
-    private var canceller: AnyCancellable!
+    private var cancellable: AnyCancellable!
     
     /// Creates a property wrapper whose value automatically changes when the
     /// database is modified.
@@ -97,7 +102,7 @@ public class DatabasePublished<Output>: Publisher {
     {
         _result = initialResult
         
-        canceller = AnyCancellable(publisher.sink(
+        cancellable = AnyCancellable(publisher.sink(
             receiveCompletion: { [unowned self] completion in
                 switch completion {
                 case .finished:
@@ -116,7 +121,7 @@ public class DatabasePublished<Output>: Publisher {
         }))
         
         if _result == nil {
-            fatalError("Contract broken: observation did not emit its first element")
+            fatalError("Contract broken: first element wasn't published on subscription")
         }
     }
     
@@ -132,7 +137,7 @@ public class DatabasePublished<Output>: Publisher {
         case let .success(value):
             return subject.prepend(value).eraseToAnyPublisher()
         case let .failure(error):
-            return Fail<Output, Error>(error: error).eraseToAnyPublisher()
+            return Fail(error: error).eraseToAnyPublisher()
         }
     }
 }
