@@ -20,5 +20,5 @@ GRDBCombine provides Combine publishers for database observation, asynchronous r
 [GRDB.swift]: https://github.com/groue/GRDB.swift
 [Combine]: https://developer.apple.com/documentation/combine
 [Release Notes]: CHANGELOG.md
-[Reference]: https://groue.github.io/GRDBCombine/docs/0.2/index.html
+[Reference]: https://groue.github.io/GRDBCombine/docs/0.3/index.html
 [Demo Application]: Documentation/Demo/README.md
