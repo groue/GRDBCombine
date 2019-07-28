@@ -11,7 +11,7 @@ GRDBCombine
 
 :construction: **Don't use in production** - this is beta software.
 
-:mega: **Please provide feedback** - this is how experimental software turns into robust and reliable solutions that help us doing our everyday job.
+:mega: **Please provide feedback** - this is how experimental software turns into robust and reliable solutions that help us doing our everyday job. Don't be shy! Open [issues](https://github.com/groue/GRDBCombine/issues) and ask questions, contact [@groue](http://twitter.com/groue).
 
 ---
 
