@@ -9,9 +9,9 @@ GRDBCombine
 
 **Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0 beta 4
 
-**Don't use in production** - this is beta software.
+:construction: **Don't use in production** - this is beta software.
 
-**Please provide feedback** - this is how experimental software turns into robust and reliable solutions that help us doing our everyday job.
+:mega: **Please provide feedback** - this is how experimental software turns into robust and reliable solutions that help us doing our everyday job.
 
 ---
 
@@ -294,9 +294,9 @@ TODO: test this publisher, and document
 
 # @DatabasePublished
 
-**DatabasePublished is a property wrapper** that let you declare properties that are automatically updated as database content changes.
+**DatabasePublished is a property wrapper** that automatically updates the value of a property as database content changes.
 
-You declare @DatabasePublished properties with a database publisher returned from [`ValueObservation.publisher(in:)`]:
+You declare a @DatabasePublished property with a database publisher returned from [`ValueObservation.publisher(in:)`]:
 
 ```swift
 class MyModel {
