@@ -140,9 +140,15 @@ let players = dbQueue.readPublisher { db in
 }
 ```
 
-The fetched value is published on the main queue, unless you provide a specific scheduler to the `receiveOn` argument.
+Any attempt at modifying the database completes subscriptions with an error.
 
-A new database access starts each time this publisher is subscribed to.
+When you use a [database queue] or a [database snapshot], the read has to wait for any eventual concurrent database access performed by this queue or snapshot to complete.
+
+When you use a [database pool], reads are generally non-blocking, unless the maximum number of concurrent reads has been reached. In this case, a read has to wait for another read to complete. That maximum number can be [configured].
+
+This publisher can be subscribed from any thread. A new database access starts on every subscription.
+
+The fetched value is published on the main queue, unless you provide a specific scheduler to the `receiveOn` argument.
 
 
 #### `DatabaseWriter.writePublisher(receiveOn:updates:)`
@@ -162,9 +168,9 @@ let newPlayerCount = dbQueue.writePublisher { db -> Int in
 }
 ```
 
-The publisher completes on the main queue, unless you provide a specific [scheduler] to the `receiveOn` argument.
+This publisher can be subscribed from any thread. A new database access starts on every subscription.
 
-A new database access starts each time this publisher is subscribed to.
+It completes on the main queue, unless you provide a specific [scheduler] to the `receiveOn` argument.
 
 When you use a [database pool], and your app executes some database updates followed by some slow fetches, you may profit from optimized scheduling with [`writePublisher(receiveOn:updates:thenRead:)`]. See below.
 
@@ -193,13 +199,13 @@ let newPlayerCount = dbQueue.writePublisher { db -> Int in
 
 The difference is that the last fetches are performed in the `thenRead` function. This function accepts two arguments: a readonly database connection, and the result of the `updates` function. This allows you to pass information from a function to the other (it is ignored in the sample code above).
 
-When you use a [database pool], this method applies a scheduling optimization: the `thenRead` function sees the database in the state left by the `updates` function, and yet does not block any concurrent writes. See [Advanced DatabasePool](https://github.com/groue/GRDB.swift/tree/GRDB-4.1#advanced-databasepool) for more information.
+When you use a [database pool], this method applies a scheduling optimization: the `thenRead` function sees the database in the state left by the `updates` function, and yet does not block any concurrent writes. This can reduce database write contention. See [Advanced DatabasePool](https://github.com/groue/GRDB.swift/tree/GRDB-4.1#advanced-databasepool) for more information.
 
 When you use a [database queue], the results are guaranteed to be identical, but no scheduling optimization is applied.
 
-The publisher completes on the main queue, unless you provide a specific [scheduler] to the `receiveOn` argument.
+This publisher can be subscribed from any thread. A new database access starts on every subscription.
 
-A new database access starts each time this publisher is subscribed to.
+It completes on the main queue, unless you provide a specific [scheduler] to the `receiveOn` argument.
 
 
 # Database Observation
@@ -355,8 +361,10 @@ The DatabasePublished property wrapper conforms to the SwiftUI [BindableObject] 
 [`readPublisher(receiveOn:value:)`]: #databasereaderreadpublisherreceiveonvalue
 [`writePublisher(receiveOn:updates:)`]: #databasewriterwritepublisherreceiveonupdates
 [`writePublisher(receiveOn:updates:thenRead:)`]: #databasewriterwritepublisherreceiveonupdatesthenread
+[configured]: https://github.com/groue/GRDB.swift/blob/master/README.md#databasepool-configuration
 [database connection]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-connections
 [database pool]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-pools
 [database queue]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-queues
+[database snapshot]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-snapshots
 [query interface]: https://github.com/groue/GRDB.swift/blob/master/README.md#requests
 [scheduler]: https://developer.apple.com/documentation/combine/scheduler
