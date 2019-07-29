@@ -142,7 +142,7 @@ let players = dbQueue.readPublisher { db in
 
 The fetched value is published on the main queue, unless you provide a specific scheduler to the `receiveOn` argument.
 
-A new database access starts each time this publishers is subscribed to.
+A new database access starts each time this publisher is subscribed to.
 
 
 #### `DatabaseWriter.writePublisher(receiveOn:updates:)`
@@ -164,7 +164,7 @@ let newPlayerCount = dbQueue.writePublisher { db -> Int in
 
 The publisher completes on the main queue, unless you provide a specific [scheduler] to the `receiveOn` argument.
 
-A new database access starts each time this publishers is subscribed to.
+A new database access starts each time this publisher is subscribed to.
 
 When you use a [database pool], and your app executes some database updates followed by some slow fetches, you may profit from optimized scheduling with [`writePublisher(receiveOn:updates:thenRead:)`]. See below.
 
@@ -199,7 +199,7 @@ When you use a [database queue], the results are guaranteed to be identical, but
 
 The publisher completes on the main queue, unless you provide a specific [scheduler] to the `receiveOn` argument.
 
-A new database access starts each time this publishers is subscribed to.
+A new database access starts each time this publisher is subscribed to.
 
 
 # Database Observation
