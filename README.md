@@ -20,7 +20,7 @@ GRDBCombine
 To connect to the database, please refer to [GRDB](https://github.com/groue/GRDB.swift), the database library that supports GRDBCombine.
 
 <details open>
-  <summary>Observe database changes</summary>
+  <summary><strong>Observe database changes</strong></summary>
 
 Observe the results of a request:
 
@@ -49,7 +49,7 @@ let publisher = request.observationForFirst().publisher(in: dbQueue)
 </details>
 
 <details>
-  <summary>Define auto-updating properties</summary>
+  <summary><strong>Define auto-updating properties</strong></summary>
 
 ```swift
 class MyModel {
@@ -63,7 +63,7 @@ class MyModel {
 </details>
 
 <details>
-  <summary>Asynchronously write in the database</summary>
+  <summary><strong>Asynchronously write in the database</strong></summary>
 
 ```swift
 // AnyPublisher<Void, Error>
@@ -81,7 +81,7 @@ let newPlayerCount = dbQueue.writePublisher { db -> Int in
 </details>
 
 <details>
-  <summary>Asynchronously read from the database</summary>
+  <summary><strong>Asynchronously read from the database</strong></summary>
 
 ```swift
 // AnyPublisher<[Player], Error>
