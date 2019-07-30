@@ -22,33 +22,28 @@ To connect to the database, please refer to [GRDB](https://github.com/groue/GRDB
 <details open>
   <summary>Observe database changes</summary>
 
+Observe the results of a request:
+
 ```swift
-// Observe the results of a request
 let request = Player.all()
+// AnyPublisher<[Player], Error>
 let publisher = request.observationForAll().publisher(in: dbQueue)
-let cancellable = publisher.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (players: [Player]) in
-        print("Fresh players: \(players)")
-    })
+```
 
-// Observe the first result of a request
+Observe the first result of a request:
+
+```swift
 let request = Player.filter(key: 1)
+// AnyPublisher<Player?, Error>
 let publisher = request.observationForFirst().publisher(in: dbQueue)
-let cancellable = publisher.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (player: Player?) in
-        print("Fresh player: \(player)")
-    })
+```
 
-// Observe raw SQL requests
+Observe raw SQL requests:
+
+```swift
 let request: SQLRequest<Int> = "SELECT MAX(score) FROM player"
+// AnyPublisher<Int?, Error>
 let publisher = request.observationForFirst().publisher(in: dbQueue)
-let cancellable = publisher.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (score: Int?) in
-        print("Fresh maximum score: \(score)")
-    })
 ```
 
 </details>
