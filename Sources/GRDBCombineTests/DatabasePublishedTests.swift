@@ -166,7 +166,7 @@ class DatabasePublishedTests : XCTestCase {
             
             let observationCancellable = model
                 .$count
-                .willChange
+                .objectWillChange
                 .tryMap { [unowned model] in try model.count.get() } // TODO: I don't understand why we have a memory leak without this unowned capture.
                 .subscribe(testSubject)
             
