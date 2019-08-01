@@ -332,13 +332,34 @@ try model.players.get()
 
 @DatabasePublished properties must be used from the main queue. It is a programmer error to create or access those properties from any other queue. Future GRDBCombine versions may soothe this limitation.
 
-The DatabasePublished property wrapper conforms to the SwiftUI [BindableObject] protocol.
+The DatabasePublished property wrapper supports the SwiftUI [@ObservedObject] property wrapper:
+
+```swift
+/// A view
+struct myView: View {
+    @ObservedObject var model: MyModel
+    var body: some View { ... }
+}
+
+/// A model
+class MyModel {
+    @DatabasePublished(...)
+    var value: ...
+}
+
+/// Support for @ObservedObject
+extension MyModel: ObservableObject {
+    var objectWillChange: PassthroughSubject<Void, Never> {
+        return $value.objectWillChange
+    }
+}
+```
 
 
 [@DatabasePublished]: #DatabasePublished
 [Associations]: https://github.com/groue/GRDB.swift/blob/master/Documentation/AssociationsBasics.md
 [Asynchronous Database Access]: #asynchronous-database-access
-[BindableObject]: https://developer.apple.com/documentation/swiftui/bindableobject
+[@ObservedObject]: https://developer.apple.com/documentation/swiftui/observedobject
 [Combine]: https://developer.apple.com/documentation/combine
 [Database Changes Observation]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-changes-observation
 [Database Observation]: #database-observation

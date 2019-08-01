@@ -62,7 +62,7 @@ public class DatabasePublished<Output>: Publisher {
     ///
     /// - warning: The type of this property will change. Only rely on the fact
     ///   that it is a Publisher.
-    public let willChange = PassthroughSubject<Void, Never>() // Support for SwiftUI
+    public let objectWillChange = PassthroughSubject<Void, Never>() // ObservableObject
     private var _result: Result<Output, Error>?
     private var subject = PassthroughSubject<Output, Error>()
     
@@ -110,7 +110,7 @@ public class DatabasePublished<Output>: Publisher {
                 }
             },
             receiveValue: { [unowned self] result in
-                self.willChange.send(())
+                self.objectWillChange.send(())
                 self._result = result
                 switch result {
                 case let .success(value):
@@ -142,7 +142,5 @@ public class DatabasePublished<Output>: Publisher {
     }
 }
 
-#if canImport(SwiftUI)
-import SwiftUI
-extension DatabasePublished: BindableObject { }
-#endif
+extension DatabasePublished: ObservableObject { }
+extension DatabasePublished: Identifiable { }

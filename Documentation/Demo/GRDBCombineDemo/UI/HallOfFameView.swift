@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HallOfFameView: View {
-    @ObjectBinding var viewModel: HallOfFameViewModel
+    @ObservedObject var viewModel: HallOfFameViewModel
     
     var body: some View {
         VStack {

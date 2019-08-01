@@ -60,8 +60,8 @@ class HallOfFameViewModel {
 
 // MARK: - SwiftUI Support
 
-extension HallOfFameViewModel: BindableObject {
-    var willChange: PassthroughSubject<Void, Never> {
-        return $hallOfFame.willChange
+extension HallOfFameViewModel: ObservableObject {
+    var objectWillChange: PassthroughSubject<Void, Never> {
+        return $hallOfFame.objectWillChange
     }
 }
