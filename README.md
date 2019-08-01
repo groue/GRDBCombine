@@ -5,9 +5,9 @@ GRDBCombine
 
 ---
 
-**Latest release**: July 26, 2019 • version 0.3.0 • [Release Notes]
+**Latest release**: August 1, 2019 • version 0.4.0 • [Release Notes]
 
-**Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0 beta 4
+**Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0 beta 5
 
 :construction: **Don't use in production** - this is beta software.
 
@@ -109,7 +109,7 @@ The [Swift Package Manager] automates the distribution of Swift code. To use GRD
 ```swift
 let package = Package(
     dependencies: [
-        .package(url: "https://github.com/groue/GRDBCombine.git", .exact("0.3.0"))
+        .package(url: "https://github.com/groue/GRDBCombine.git", .exact("0.4.0"))
     ]
 )
 ```
@@ -367,7 +367,7 @@ extension MyModel: ObservableObject {
 [Demo Application]: Documentation/Demo/README.md
 [GRDB.swift]: https://github.com/groue/GRDB.swift
 [Installation]: #installation
-[Reference]: https://groue.github.io/GRDBCombine/docs/0.3/index.html
+[Reference]: https://groue.github.io/GRDBCombine/docs/0.4/index.html
 [Release Notes]: CHANGELOG.md
 [SQLite]: http://sqlite.org
 [Swift Package Manager]: https://swift.org/package-manager/
