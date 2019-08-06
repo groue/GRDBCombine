@@ -1,1 +1,2 @@
 - [ ] DatabaseMigrator.publisher(in:)
+- [ ] Update demo app for GRDB 4.2: simplify the definition of the Hall of Fame publisher with `ValueObservation.tracking(value:)`
