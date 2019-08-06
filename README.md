@@ -22,28 +22,11 @@ To connect to the database, please refer to [GRDB](https://github.com/groue/GRDB
 <details open>
   <summary><strong>Observe database changes</strong></summary>
 
-Observe the results of a request:
-
 ```swift
-let request = Player.all()
 // AnyPublisher<[Player], Error>
-let publisher = request.observationForAll().publisher(in: dbQueue)
-```
-
-Observe the first result of a request:
-
-```swift
-let request = Player.filter(key: 1)
-// AnyPublisher<Player?, Error>
-let publisher = request.observationForFirst().publisher(in: dbQueue)
-```
-
-Observe raw SQL requests:
-
-```swift
-let request: SQLRequest<Int> = "SELECT MAX(score) FROM player"
-// AnyPublisher<Int?, Error>
-let publisher = request.observationForFirst().publisher(in: dbQueue)
+let publisher = ValueObservation
+    .tracking(value: Player.fetchAll)
+    .publisher(in: dbQueue)
 ```
 
 </details>
@@ -53,7 +36,9 @@ let publisher = request.observationForFirst().publisher(in: dbQueue)
 
 ```swift
 class MyModel {
-    static let playersPublisher = Player.observationForAll().publisher(in: dbQueue)
+    static let playersPublisher = ValueObservation
+        .tracking(value: Player.fetchAll)
+        .publisher(in: dbQueue)
     
     @DatabasePublished(playersPublisher)
     var players: Result<[Players], Error>
@@ -221,19 +206,15 @@ GRDBCombine publishers are based on GRDB's [ValueObservation] and [DatabaseRegio
 
 #### `ValueObservation.publisher(in:)`
 
-GRDB's [ValueObservation] tracks changes in the results of database requests, and notifies fresh values whenever the database changes. GRDBCombine can build Combine publishers from it:
+GRDB's [ValueObservation] notifies fresh values whenever the database changes. GRDBCombine can build Combine publishers from it:
 
 ```swift
-let request = Player.all()
-
-// AnyPublisher<Int, Error>
-let publisher = request.observationForCount().publisher(in: dbQueue)
-
-// AnyPublisher<Player?, Error>
-let publisher = request.observationForFirst().publisher(in: dbQueue)
+let observation = ValueObservation.tracking { db in
+    try Player.fetchAll(db)
+}
 
 // AnyPublisher<[Player], Error>
-let publisher = request.observationForAll().publisher(in: dbQueue)
+let publisher = observation.publisher(in: dbQueue)
 ```
 
 This publisher always publishes an initial value, and waits for database changes before publishing updated values. It only completes when a database error happens.
@@ -243,8 +224,6 @@ All values are published on the main queue. Future GRDBCombine versions may lift
 All values are published asynchronously, unless you modify the publisher with the `fetchOnSubscription()` method. In this case, the publisher synchronously fetches its initial value right on subscription. Subscription must then happen from the main queue, or you will get a fatal error:
 
 ```swift
-let request = Player.all()
-let publisher = request.observationForAll().publisher(in: dbQueue)
 let cancellable = publisher.fetchOnSubscription().sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (players: [Player]) in
@@ -257,22 +236,35 @@ let cancellable = publisher.fetchOnSubscription().sink(
 
 ```swift
 // CAUTION: DATA CONSISTENCY NOT GUARANTEED
-let team = Team.filter(key: 1).observationForFirst().publisher(in: dbQueue)
-let players = Player.filter(teamId: 1).observationForAll().publisher(in: dbQueue)
+let team = ValueObservation
+    .tracking { db in try Team.fetchOne(db, key: 1) }
+    .publisher(in: dbQueue)
+let players = ValueObservation
+    .tracking { db in try Player.filter(teamId: 1).fetchAll(db) }
+    .publisher(in: dbQueue)
 let publisher = team.combineLatest(players)
 ```
 
-Instead, compose requests or value observations together **before** building a **single** publisher:
+Instead, compose requests or value observations together **before** building a **single** publisher.
+
+For example, fetch all requested values in a single observation:
 
 ```swift
-// Data consistency guaranteed by combining value observations
-let team = Team.filter(key: 1).observationForFirst()
-let players = Player.filter(teamId: 1).observationForAll()
-let observation = ValueObservation.combine(team, players)
+// DATA CONSISTENCY GUARANTEED
 // AnyPublisher<(Team?, [Player]), Error>
-let publisher = observation.publisher(in: dbQueue)
+let publisher = ValueObservation
+    .tracking { db -> (Team?, [Player]) in
+        let team = try Team.fetchOne(db, key: 1)
+        let players = Player.filter(teamId: 1).fetchAll(db)
+        return (team, players)
+    }
+    .publisher(in: dbQueue)
+```
 
-// Data consistency guaranteed by associations
+Or use [Associations]:
+
+```swift
+// DATA CONSISTENCY GUARANTEED
 struct TeamInfo: FetchableRecord, Decodable {
     var team: Team
     var players: [Player]
@@ -281,8 +273,25 @@ let request = Team
     .filter(key: 1)
     .including(all: Team.players)
     .asRequest(of: TeamInfo.self)
+
 // AnyPublisher<TeamInfo?, Error>
-let publisher = request.observationForFirst().publisher(in: dbQueue)
+let publisher = ValueObservation
+    .tracking(value: request.fetchOne)
+    .publisher(in: dbQueue)
+```
+
+Or combine observations together:
+
+```swift
+// DATA CONSISTENCY GUARANTEED
+let team = ValueObservation
+    .tracking { db in try Team.fetchOne(db, key: 1) }
+let players = ValueObservation
+    .tracking { db in try Player.filter(teamId: 1).fetchAll(db) }
+let observation = ValueObservation.combine(team, players)
+
+// AnyPublisher<(Team?, [Player]), Error>
+let publisher = observation.publisher(in: dbQueue)
 ```
 
 See [ValueObservation] and [Associations] for more information.
@@ -301,7 +310,9 @@ You declare a @DatabasePublished property with a database publisher returned fro
 
 ```swift
 class MyModel {
-    static let playersPublisher = Player.observationForAll().publisher(in: dbQueue)
+    static let playersPublisher = ValueObservation
+        .tracking(value: Player.fetchAll)
+        .publisher(in: dbQueue)
     
     @DatabasePublished(playersPublisher)
     var players: Result<[Players], Error>
