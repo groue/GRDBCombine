@@ -63,36 +63,26 @@ struct Players {
         
         /// The best ones
         var bestPlayers: [Player]
-        
-        init(playerCount: Int, bestPlayers: [Player]) {
-            // Safety check: assert consistency
-            assert(playerCount >= bestPlayers.count, "inconsistent HallOfFame")
-            self.playerCount = playerCount
-            self.bestPlayers = bestPlayers
-        }
     }
     
     /// A publisher that tracks changes in the Hall of Fame
     func hallOfFamePublisher(maxPlayerCount: Int) -> DatabasePublishers.Value<HallOfFame> {
-        let playerCount = Player.observationForCount()
-        
-        let bestPlayers = Player
-            .limit(maxPlayerCount)
-            .orderedByScore()
-            .observationForAll()
-        
-        // We combine database observations instead of combining publishers
-        // with the combineLatest method. This is because we care about data
-        // consistency. See the HallOfFame initializer.
-        let hallOfFame = playerCount.combine(bestPlayers) {
-            HallOfFame(playerCount: $0, bestPlayers: $1)
-        }
-        
-        return hallOfFame.publisher(in: database)
+        ValueObservation
+            .tracking(value: { db in
+                let playerCount = try Player.fetchCount(db)
+                let bestPlayers = try Player
+                    .limit(maxPlayerCount)
+                    .orderedByScore()
+                    .fetchAll(db)
+                return HallOfFame(playerCount: playerCount, bestPlayers: bestPlayers)
+            })
+            .publisher(in: database)
     }
     
     /// A publisher that tracks changes in the number of players
     func playerCountPublisher() -> DatabasePublishers.Value<Int> {
-        Player.observationForCount().publisher(in: database)
+        ValueObservation
+            .tracking(value: Player.fetchCount)
+            .publisher(in: database)
     }
 }

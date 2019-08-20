@@ -1,3 +1,2 @@
 - [ ] DatabaseMigrator.publisher(in:)
-- [ ] Update demo app for GRDB 4.2: simplify the definition of the Hall of Fame publisher with `ValueObservation.tracking(value:)`
 - [ ] Look at [@FetchRequest](https://developer.apple.com/documentation/swiftui/fetchrequest): managed object context is stored in the environment, and error processing happens somewhere else (where?).
