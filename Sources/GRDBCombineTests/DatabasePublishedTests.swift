@@ -38,6 +38,7 @@ class DatabasePublishedTests : XCTestCase {
             Model.countPublisher = Player.observationForCount().publisher(in: reader)
             let model = Model()
             try XCTAssertEqual(model.count.get(), 1)
+            Model.countPublisher = nil // release writer
         }
         
         try Test(test)
@@ -68,6 +69,7 @@ class DatabasePublishedTests : XCTestCase {
                     XCTFail("Expected DatabaseError")
                 }
             }
+            Model.countPublisher = nil // release writer
         }
         
         try Test(test)
@@ -125,6 +127,7 @@ class DatabasePublishedTests : XCTestCase {
             waitForExpectations(timeout: 1, handler: nil)
             testCancellable.cancel()
             observationCancellable.cancel()
+            Model.countPublisher = nil // release writer
         }
         
         try Test(test)
@@ -183,6 +186,7 @@ class DatabasePublishedTests : XCTestCase {
             waitForExpectations(timeout: 1, handler: nil)
             testCancellable.cancel()
             observationCancellable.cancel()
+            Model.countPublisher = nil // release writer
         }
         
         try Test(test)
@@ -210,6 +214,7 @@ class DatabasePublishedTests : XCTestCase {
             Model.countPublisher = Player.observationForCount().publisher(in: reader)
             let model = Model()
             try XCTAssertEqual(model.count.get(), 0)
+            Model.countPublisher = nil // release writer
         }
         
         try Test(test)
@@ -263,6 +268,7 @@ class DatabasePublishedTests : XCTestCase {
             waitForExpectations(timeout: 1, handler: nil)
             testCancellable.cancel()
             observationCancellable.cancel()
+            Model.countPublisher = nil // release writer
         }
         
         try Test(test)
