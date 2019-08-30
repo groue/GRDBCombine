@@ -36,7 +36,7 @@ class DatabasePublishersValueTests : XCTestCase {
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1, 3])
@@ -89,7 +89,7 @@ class DatabasePublishersValueTests : XCTestCase {
                 .collect(2)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                         dispatchPrecondition(condition: .onQueue(.main))
                 },
                     receiveValue: { value in
@@ -174,7 +174,7 @@ class DatabasePublishersValueTests : XCTestCase {
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1, 3])
@@ -228,7 +228,7 @@ class DatabasePublishersValueTests : XCTestCase {
                 .collect(2)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                         dispatchPrecondition(condition: .onQueue(.main))
                 },
                     receiveValue: { value in

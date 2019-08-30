@@ -38,7 +38,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                         expectation.fulfill()
                 },
                     receiveValue: { _ in })
@@ -74,7 +74,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                         expectation.fulfill()
                 },
                     receiveValue: { count in
@@ -102,7 +102,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertError(completion) { (error: DatabaseError) in
+                        assertFailure(completion) { (error: DatabaseError) in
                             XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
                             XCTAssertEqual(error.sql, "THIS IS NOT SQL")
                         }
@@ -209,7 +209,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                     thenRead: { db, _ in try Player.fetchCount(db) })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                         expectation.fulfill()
                 },
                     receiveValue: { count in
@@ -237,7 +237,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                     thenRead: { _, _ in XCTFail("Should not read") })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertError(completion) { (error: DatabaseError) in
+                        assertFailure(completion) { (error: DatabaseError) in
                             XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
                             XCTAssertEqual(error.sql, "THIS IS NOT SQL")
                         }
@@ -266,7 +266,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                     thenRead: { db, _ in try Row.fetchAll(db, sql: "THIS IS NOT SQL") })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertError(completion) { (error: DatabaseError) in
+                        assertFailure(completion) { (error: DatabaseError) in
                             XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
                             XCTAssertEqual(error.sql, "THIS IS NOT SQL")
                         }

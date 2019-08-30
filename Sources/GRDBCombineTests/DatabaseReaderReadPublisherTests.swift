@@ -37,7 +37,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                         expectation.fulfill()
                 },
                     receiveValue: { value in
@@ -66,7 +66,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertError(completion) { (error: DatabaseError) in
+                        assertFailure(completion) { (error: DatabaseError) in
                             XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
                             XCTAssertEqual(error.sql, "THIS IS NOT SQL")
                         }
@@ -171,7 +171,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                 })
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertError(completion) { (error: DatabaseError) in
+                        assertFailure(completion) { (error: DatabaseError) in
                             XCTAssertEqual(error.resultCode, .SQLITE_READONLY)
                         }
                         expectation.fulfill()

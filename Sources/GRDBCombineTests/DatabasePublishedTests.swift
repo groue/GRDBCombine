@@ -103,7 +103,7 @@ class DatabasePublishedTests : XCTestCase {
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1, 3])
@@ -160,7 +160,7 @@ class DatabasePublishedTests : XCTestCase {
                 .collect(2)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1])
@@ -249,7 +249,7 @@ class DatabasePublishedTests : XCTestCase {
                 .collect(3)
                 .sink(
                     receiveCompletion: { completion in
-                        XCTAssertNoFailure(completion)
+                        assertNoFailure(completion)
                 },
                     receiveValue: { value in
                         XCTAssertEqual(value, [0, 1, 3])

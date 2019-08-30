@@ -44,16 +44,25 @@ final class Test<Context> {
     }
 }
 
-public func XCTAssertNoFailure<Failure>(_ completion: Subscribers.Completion<Failure>, file: StaticString = #file, line: UInt = #line) {
+public func assertNoFailure<Failure>(
+    _ completion: Subscribers.Completion<Failure>,
+    file: StaticString = #file,
+    line: UInt = #line)
+{
     if case let .failure(error) = completion {
-        XCTFail("unexpected completion failure: \(error)", file: file, line: line)
+        XCTFail("Unexpected completion failure: \(error)", file: file, line: line)
     }
 }
 
-public func XCTAssertError<Failure, ExpectedFailure>(_ completion: Subscribers.Completion<Failure>, file: StaticString = #file, line: UInt = #line, test: (ExpectedFailure) -> Void) {
-    if case let .failure(error) = completion, let failure = error as? ExpectedFailure {
-        test(failure)
+public func assertFailure<Failure, ExpectedFailure>(
+    _ completion: Subscribers.Completion<Failure>,
+    file: StaticString = #file,
+    line: UInt = #line,
+    test: (ExpectedFailure) -> Void)
+{
+    if case let .failure(error) = completion, let expectedError = error as? ExpectedFailure {
+        test(expectedError)
     } else {
-        XCTFail("unexpected \(ExpectedFailure.self), got \(completion)", file: file, line: line)
+        XCTFail("Expected \(ExpectedFailure.self), got \(completion)", file: file, line: line)
     }
 }
