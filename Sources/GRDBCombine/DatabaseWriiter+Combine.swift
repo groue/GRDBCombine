@@ -123,12 +123,9 @@ extension DatabaseWriter {
                 }
             }
         }
-            // ? Tests for writePublisher(updates:thenRead:) fail
-            // without .unlimited
-            .flatMap(maxPublishers: .unlimited, { $0 })
-            .buffer(size: 1, prefetch: .keepFull, whenFull: .dropOldest)
-            .receive(on: scheduler)
-            .eraseToAnyPublisher()
+        .flatMap(maxPublishers: .unlimited, { $0 })
+        .receiveValue(on: scheduler)
+        .eraseToAnyPublisher()
     }
     
     private func concurrentReadPublisher<T, Output>(
@@ -144,7 +141,6 @@ extension DatabaseWriter {
                     })
                 }
             }
-            .buffer(size: 1, prefetch: .keepFull, whenFull: .dropOldest)
         }
         .eraseToAnyPublisher()
     }
