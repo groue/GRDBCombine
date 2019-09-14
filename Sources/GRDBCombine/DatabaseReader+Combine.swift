@@ -46,7 +46,7 @@ extension DatabaseReader {
                 }
             }
         }
-        .receiveElements(on: scheduler)
+        .receiveValues(on: scheduler)
         .eraseToAnyPublisher()
     }
 }
