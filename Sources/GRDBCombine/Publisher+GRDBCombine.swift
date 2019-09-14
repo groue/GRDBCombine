@@ -8,4 +8,3 @@ extension Publisher {
             .eraseToAnyPublisher()
     }
 }
-

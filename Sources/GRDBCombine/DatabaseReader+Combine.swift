@@ -41,12 +41,8 @@ extension DatabaseReader {
     {
         Deferred {
             Future { fulfill in
-                self.asyncRead { db in
-                    do {
-                        try fulfill(Result.success(value(db.get())))
-                    } catch {
-                        fulfill(Result.failure(error))
-                    }
+                self.asyncRead { dbResult in
+                    fulfill(dbResult.flatMap { db in Result { try value(db) } })
                 }
             }
         }
