@@ -133,13 +133,9 @@ extension DatabaseWriter {
         value: @escaping (Database, T) throws -> Output)
         -> AnyPublisher<Output, Error>
     {
-        Deferred {
-            Future { fulfill in
-                self.spawnConcurrentRead { db in
-                    fulfill(Result {
-                        try value(db.get(), input)
-                    })
-                }
+        OnDemandFuture { fulfill in
+            self.spawnConcurrentRead { dbResult in
+                fulfill(dbResult.flatMap { db in Result { try value(db, input) } })
             }
         }
         .eraseToAnyPublisher()
