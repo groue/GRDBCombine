@@ -50,7 +50,7 @@ extension DatabaseReader {
                 }
             }
         }
-        .receiveValue(on: scheduler)
+        .receiveElements(on: scheduler)
         .eraseToAnyPublisher()
     }
 }

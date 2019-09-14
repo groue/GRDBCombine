@@ -124,7 +124,7 @@ extension DatabaseWriter {
             }
         }
         .flatMap(maxPublishers: .unlimited, { $0 })
-        .receiveValue(on: scheduler)
+        .receiveElements(on: scheduler)
         .eraseToAnyPublisher()
     }
     
