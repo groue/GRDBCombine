@@ -104,22 +104,20 @@ extension DatabaseWriter {
         -> AnyPublisher<P.Output, Error>
         where S : Scheduler, P : Publisher, P.Failure == Error
     {
-        Deferred {
-            Future<P, Error> { fulfill in
-                self.asyncWriteWithoutTransaction { db in
-                    do {
-                        var publisher: P? = nil
-                        try db.inTransaction {
-                            publisher = try updates(db)
-                            return .commit
-                        }
-                        // Support for writePublisher(updates:thenRead:):
-                        // fulfill after transaction, but still in the database
-                        // writer queue.
-                        fulfill(.success(publisher!))
-                    } catch {
-                        fulfill(.failure(error))
+        OnDemandFuture<P, Error> { fulfill in
+            self.asyncWriteWithoutTransaction { db in
+                do {
+                    var publisher: P? = nil
+                    try db.inTransaction {
+                        publisher = try updates(db)
+                        return .commit
                     }
+                    // Support for writePublisher(updates:thenRead:):
+                    // fulfill after transaction, but still in the database
+                    // writer queue.
+                    fulfill(.success(publisher!))
+                } catch {
+                    fulfill(.failure(error))
                 }
             }
         }

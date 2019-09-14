@@ -1,18 +1,20 @@
 import Combine
 import Foundation
 
+// TODO: release more memory: some SQLite connections complain that they are
+// closed after the database file has been deleted.
 /// A publisher that eventually produces one value and then finishes or fails.
 ///
 /// Like a Combine.Future wrapped in Combine.Deferred, OnDemandFuture starts
 /// producing its value on demand.
 ///
-/// Unlike Combine.Future, OnDemandFuture guarantees that it starts producing
-/// its value on demand, **synchronously**. Combine.Future does not provide such
-/// guarantee, and actually breaks it *sometimes*.
+/// Unlike Combine.Future wrapped in Combine.Deferred, OnDemandFuture guarantees
+/// that it starts producing its value on demand, **synchronously**, and that
+/// it produces its value on promise completion, **synchronously**.
 ///
-/// This extra scheduling guarantee is used by GRDBCombine in order to be able
-/// to spawn concurrent database reads right from the database writer queue, and
-/// fulfill GRDB preconditions.
+/// Both two extra scheduling guarantees are used by GRDBCombine in order to be
+/// able to spawn concurrent database reads right from the database writer
+/// queue, and fulfill GRDB preconditions.
 struct OnDemandFuture<Output, Failure : Error>: Publisher {
     typealias Promise = (Result<Output, Failure>) -> Void
     typealias Output = Output

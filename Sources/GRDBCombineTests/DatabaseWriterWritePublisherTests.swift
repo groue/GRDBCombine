@@ -193,6 +193,8 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     
     // MARK: -
     
+    // TODO: Fix flaky test with both pool and on-disk queue:
+    // - Expectation timeout
     func testWriteThenReadPublisher() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write { db in
@@ -257,9 +259,8 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     
     // MARK: -
     
-    // TODO: Fix flaky test with pool:
-    // - Fatal error: Database was not used on the correct thread
-    // - Timeout
+    // TODO: Fix flaky test with both pool and on-disk queue:
+    // - Expectation timeout
     func testWriteThenReadPublisherReadError() throws {
         func test(writer: DatabaseWriter) {
             let expectation = self.expectation(description: "")
