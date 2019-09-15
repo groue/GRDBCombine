@@ -1,8 +1,6 @@
 import Combine
 import Foundation
 
-// TODO: release more memory: some SQLite connections complain that they are
-// closed after the database file has been deleted.
 /// A publisher that eventually produces one value and then finishes or fails.
 ///
 /// Like a Combine.Future wrapped in Combine.Deferred, OnDemandFuture starts
@@ -27,49 +25,46 @@ struct OnDemandFuture<Output, Failure : Error>: Publisher {
     
     /// :nodoc:
     public func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, Output == S.Input {
-        let subscription = DeferredFutureSubscription(
-            future: self,
-            subscriber: subscriber)
+        let subscription = OnDemandFutureSubscription(
+            attemptToFulfill: attemptToFulfill,
+            downstream: subscriber)
         subscriber.receive(subscription: subscription)
     }
 }
 
-private class DeferredFutureSubscription<Downstream: Subscriber>: Subscription {
+private class OnDemandFutureSubscription<Downstream: Subscriber>: Subscription {
+    typealias Promise = (Result<Downstream.Input, Downstream.Failure>) -> Void
+    
     private enum State {
-        case waitingForDemand
-        case waitingForFulfillment
+        case waitingForDemand(downstream: Downstream, attemptToFulfill: (@escaping Promise) -> Void)
+        case waitingForFulfillment(downstream: Downstream)
         case finished
     }
     
-    private let subscriber: Downstream
-    private var future: OnDemandFuture<Downstream.Input, Downstream.Failure>?
-    private var state: State = .waitingForDemand
+    private var state: State
     private let lock = NSRecursiveLock() // Allow re-entrancy
     
     init(
-        future: OnDemandFuture<Downstream.Input, Downstream.Failure>,
-        subscriber: Downstream)
+        attemptToFulfill: @escaping (@escaping Promise) -> Void,
+        downstream: Downstream)
     {
-        self.future = future
-        self.subscriber = subscriber
+        self.state = .waitingForDemand(downstream: downstream, attemptToFulfill: attemptToFulfill)
     }
     
     func request(_ demand: Subscribers.Demand) {
         lock.synchronized {
             switch state {
-            case .waitingForDemand:
+            case let .waitingForDemand(downstream: downstream, attemptToFulfill: attemptToFulfill):
                 guard demand > 0 else {
                     return
                 }
-                state = .waitingForFulfillment
-                let future = self.future!
-                self.future = nil // Release memory
-                future.attemptToFulfill { result in
+                state = .waitingForFulfillment(downstream: downstream)
+                attemptToFulfill { result in
                     switch result {
                     case let .success(value):
-                        self.receiveAndComplete(value)
+                        self.receive(value)
                     case let .failure(error):
-                        self.receiveCompletion(.failure(error))
+                        self.receive(completion: .failure(error))
                     }
                 }
                 
@@ -81,31 +76,34 @@ private class DeferredFutureSubscription<Downstream: Subscriber>: Subscription {
     
     func cancel() {
         lock.synchronized {
-            future = nil // Release memory
             state = .finished
         }
     }
     
-    private func receiveAndComplete(_ value: Downstream.Input) {
+    private func receive(_ value: Downstream.Input) {
         lock.synchronized {
-            guard case .waitingForFulfillment = state else {
-                return
+            switch state {
+            case let .waitingForFulfillment(downstream: downstream):
+                state = .finished
+                _ = downstream.receive(value)
+                downstream.receive(completion: .finished)
+                
+            case .waitingForDemand, .finished:
+                break
             }
-            
-            state = .finished
-            _ = subscriber.receive(value)
-            subscriber.receive(completion: .finished)
         }
     }
     
-    private func receiveCompletion(_ completion: Subscribers.Completion<Downstream.Failure>) {
+    private func receive(completion: Subscribers.Completion<Downstream.Failure>) {
         lock.synchronized {
-            guard case .waitingForFulfillment = state else {
-                return
+            switch state {
+            case let .waitingForFulfillment(downstream: downstream):
+                state = .finished
+                downstream.receive(completion: completion)
+
+            case .waitingForDemand, .finished:
+                break
             }
-            
-            state = .finished
-            subscriber.receive(completion: completion)
         }
     }
 }
