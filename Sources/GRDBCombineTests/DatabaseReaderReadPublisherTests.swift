@@ -30,6 +30,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         }
         
         func test(reader: DatabaseReader) {
+            var value: Int?
             let expectation = self.expectation(description: "")
             let testCancellable = reader
                 .readPublisher(value: { db in
@@ -40,11 +41,12 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                         assertNoFailure(completion)
                         expectation.fulfill()
                 },
-                    receiveValue: { value in
-                        XCTAssertEqual(value, 1)
+                    receiveValue: {
+                        value = $0
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
+            XCTAssertEqual(value, 1)
             testCancellable.cancel()
         }
         

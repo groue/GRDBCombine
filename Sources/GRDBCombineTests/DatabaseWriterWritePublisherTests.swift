@@ -66,6 +66,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         }
         
         func test(writer: DatabaseWriter) {
+            var count: Int?
             let expectation = self.expectation(description: "")
             let testCancellable = writer
                 .writePublisher(updates: { db -> Int in
@@ -77,11 +78,12 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                         assertNoFailure(completion)
                         expectation.fulfill()
                 },
-                    receiveValue: { count in
-                        XCTAssertEqual(count, 1)
+                    receiveValue: {
+                        count = $0
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
+            XCTAssertEqual(count, 1)
             testCancellable.cancel()
         }
         
@@ -204,6 +206,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         }
         
         func test(writer: DatabaseWriter) {
+            var count: Int?
             let expectation = self.expectation(description: "")
             let testCancellable = writer
                 .writePublisher(
@@ -214,11 +217,12 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                         assertNoFailure(completion)
                         expectation.fulfill()
                 },
-                    receiveValue: { count in
-                        XCTAssertEqual(count, 1)
+                    receiveValue: {
+                        count = $0
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
+            XCTAssertEqual(count, 1)
             testCancellable.cancel()
         }
         
