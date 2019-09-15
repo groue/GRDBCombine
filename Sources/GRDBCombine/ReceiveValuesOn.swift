@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 /// A publisher that delivers values to its downstream subscriber on a
 /// specific scheduler.
@@ -18,26 +19,106 @@ struct ReceiveValuesOn<Upstream: Publisher, Context: Scheduler>: Publisher {
     fileprivate let options: Context.SchedulerOptions?
     
     func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, Output == S.Input {
-        upstream.receive(subscriber: ReceiveValuesOnSubscriber(
-            downstream: subscriber,
+        let subscription = ReceiveValuesOnSubscription(
+            upstream: upstream,
             context: context,
-            options: options))
+            options: options,
+            downstream: subscriber)
+        subscriber.receive(subscription: subscription)
     }
 }
 
-private struct ReceiveValuesOnSubscriber<Downstream: Subscriber, Context: Scheduler>: Subscriber {
-    let combineIdentifier = CombineIdentifier()
-    fileprivate let downstream: Downstream
-    fileprivate let context: Context
-    fileprivate let options: Context.SchedulerOptions?
-    
-    func receive(subscription: Subscription) {
-        downstream.receive(subscription: subscription)
+private class ReceiveValuesOnSubscription<Upstream: Publisher, Context: Scheduler, Downstream: Subscriber>: Subscription, Subscriber
+    where Upstream.Failure == Downstream.Failure, Upstream.Output == Downstream.Input
+{
+    private struct Target {
+        let context: Context
+        let options: Context.SchedulerOptions?
+        let downstream: Downstream
     }
     
-    func receive(_ input: Downstream.Input) -> Subscribers.Demand {
-        context.schedule(options: options) {
-            _ = self.downstream.receive(input)
+    private enum State {
+        case waitingForRequest(Upstream, Target)
+        case waitingForSubscription(Target, Subscribers.Demand)
+        case subscribed(Target, Subscription)
+        case finished
+    }
+    
+    private var state: State
+    private let lock = NSRecursiveLock()
+    
+    init(
+        upstream: Upstream,
+        context: Context,
+        options: Context.SchedulerOptions?,
+        downstream: Downstream)
+    {
+        let target = Target(context: context, options: options, downstream: downstream)
+        self.state = .waitingForRequest(upstream, target)
+    }
+    
+    // MARK: Subscription
+    
+    func request(_ demand: Subscribers.Demand) {
+        lock.synchronized {
+            switch state {
+            case let .waitingForRequest(upstream, target):
+                state = .waitingForSubscription(target, demand)
+                upstream.receive(subscriber: self)
+                
+            case let .waitingForSubscription(target, currentDemand):
+                state = .waitingForSubscription(target, demand + currentDemand)
+                
+            case let .subscribed(_, subcription):
+                subcription.request(demand)
+                
+            case .finished:
+                break
+            }
+        }
+    }
+    
+    func cancel() {
+        lock.synchronized {
+            switch state {
+            case .waitingForRequest, .waitingForSubscription:
+                state = .finished
+                
+            case let .subscribed(_, subcription):
+                subcription.cancel()
+                state = .finished
+                
+            case .finished:
+                break
+            }
+        }
+    }
+
+    // MARK: Subscriber
+    
+    func receive(subscription: Subscription) {
+        lock.synchronized {
+            switch state {
+            case let .waitingForSubscription(target, currentDemand):
+                state = .subscribed(target, subscription)
+                subscription.request(currentDemand)
+                
+            case .waitingForRequest, .subscribed, .finished:
+                preconditionFailure()
+            }
+        }
+    }
+    
+    func receive(_ input: Upstream.Output) -> Subscribers.Demand {
+        lock.synchronized {
+            switch state {
+            case let .subscribed(target, _):
+                target.context.schedule(options: target.options) {
+                    self._receive(input)
+                }
+            case .waitingForRequest, .waitingForSubscription, .finished:
+                break
+            }
         }
         
         // TODO: what problem are we creating by returning .unlimited and
@@ -48,9 +129,46 @@ private struct ReceiveValuesOnSubscriber<Downstream: Subscriber, Context: Schedu
         return .unlimited
     }
     
-    func receive(completion: Subscribers.Completion<Downstream.Failure>) {
-        context.schedule(options: options) {
-            self.downstream.receive(completion: completion)
+    func receive(completion: Subscribers.Completion<Upstream.Failure>) {
+        lock.synchronized {
+            switch state {
+            case .waitingForRequest, .waitingForSubscription:
+                break
+            case let .subscribed(target, _):
+                target.context.schedule(options: target.options) {
+                    self._receive(completion: completion)
+                }
+            case .finished:
+                break
+            }
+        }
+    }
+    
+    private func _receive(_ input: Upstream.Output) {
+        lock.synchronized {
+            switch state {
+            case .waitingForRequest, .waitingForSubscription:
+                break
+            case let .subscribed(target, _):
+                // TODO: don't ignore demand
+                _ = target.downstream.receive(input)
+            case .finished:
+                break
+            }
+        }
+    }
+    
+    private func _receive(completion: Subscribers.Completion<Upstream.Failure>) {
+        lock.synchronized {
+            switch state {
+            case .waitingForRequest, .waitingForSubscription:
+                break
+            case let .subscribed(target, _):
+                target.downstream.receive(completion: completion)
+                state = .finished
+            case .finished:
+                break
+            }
         }
     }
 }
@@ -64,4 +182,3 @@ extension Publisher {
         return ReceiveValuesOn(upstream: self, context: scheduler, options: options)
     }
 }
-
