@@ -8,6 +8,12 @@ struct Player {
     var score: Int
 }
 
+// Support for UIViewController (difference(from:).inferringMoves())
+extension Player: Hashable { }
+
+// Support for SwiftUI (List)
+extension Player: Identifiable { }
+
 // MARK: - Persistence
 
 // Turn Player into a Codable Record.
