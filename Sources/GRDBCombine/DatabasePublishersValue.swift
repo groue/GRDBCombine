@@ -181,6 +181,7 @@ extension DatabasePublishers {
                     let newDemand = demand + additionalDemand - 1
                     if newDemand == .none {
                         observer = nil
+                        // TODO: next demand may perform a synchronous fetch. Is it what we want?
                         state = .waitingForDemand(context: context)
                     } else {
                         state = .observing(context: context, demand: newDemand, sync: false)
