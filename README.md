@@ -209,9 +209,22 @@ This publisher always publishes an initial value, and waits for database changes
 
 All values are published on the main queue. Future GRDBCombine versions may lift this limitation.
 
-All values are published asynchronously, unless you modify the publisher with the `fetchOnSubscription()` method. In this case, the publisher synchronously fetches its initial value right on subscription. Subscription must then happen from the main queue, or you will get a fatal error:
+By default, all values are published asynchronously:
 
 ```swift
+// The default behavior
+let cancellable = publisher.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { (players: [Player]) in
+        print("Fresh players: \(players)")
+    })
+// <- here "Fresh players" is not printed yet.
+```
+
+You can force a synchronous fetch of the initial value with the `fetchOnSubscription()` method. Subscription must then happen from the main queue, or you will get a fatal error:
+
+```swift
+// Synchronous initial fetch
 let cancellable = publisher.fetchOnSubscription().sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (players: [Player]) in
@@ -220,7 +233,9 @@ let cancellable = publisher.fetchOnSubscription().sink(
 // <- here "Fresh players" has been printed.
 ```
 
-:warning: DO NOT compose ValueObservation publishers together with the [combineLatest](https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest) operator: you would lose all guarantees of [data consistency](https://en.wikipedia.org/wiki/Consistency_(database_systems)).
+:warning: **ValueObservation and Data Consistency**
+
+When you compose ValueObservation publishers together with the [combineLatest](https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest) operator, you lose all guarantees of [data consistency](https://en.wikipedia.org/wiki/Consistency_(database_systems)).
 
 ```swift
 // CAUTION: DATA CONSISTENCY NOT GUARANTEED
