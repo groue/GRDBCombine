@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 #### 0.x Releases
 
+- [0.6.0](#060)
 - [0.5.0](#050)
 - [0.4.0](#040)
 - [0.3.0](#030)
@@ -12,7 +13,9 @@ All notable changes to this project will be documented in this file.
 - [0.1.1](#011)
 - [0.1.0](#010)
 
-## Next Release
+## 0.6.0
+
+Released October 25, 2019
 
 - [#21](https://github.com/groue/GRDBCombine/pull/21) by [@groue](http://github.com/groue): Remove the @DatabasePublished property wrapper
 
