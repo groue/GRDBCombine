@@ -2,7 +2,7 @@ import Combine
 import GRDBCombine
 
 class HallOfFameViewModel {
-    @Published var hallOfFame: Players.HallOfFame = Players.HallOfFame.empty
+    @Published private var hallOfFame: Players.HallOfFame = Players.HallOfFame.empty
     private var cancellables: [AnyCancellable] = []
     
     init() {
