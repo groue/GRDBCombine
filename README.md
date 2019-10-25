@@ -7,11 +7,9 @@ GRDBCombine
 
 **Latest release**: October 17, 2019 • version 0.5.0 • [Release Notes]
 
-**Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0 beta 5
+**Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0+
 
-:construction: **Don't use in production** - this is beta software.
-
-:mega: **Please provide feedback** - this is how experimental software turns into robust and reliable solutions that help us doing our everyday job. Don't be shy! Open [issues](https://github.com/groue/GRDBCombine/issues) and ask questions, contact [@groue](http://twitter.com/groue).
+**Contact**: Report bugs and ask questions in [Github issues](https://github.com/groue/GRDBCombine/issues).
 
 ---
 
@@ -24,25 +22,16 @@ To connect to the database, please refer to [GRDB](https://github.com/groue/GRDB
 
 ```swift
 // AnyPublisher<[Player], Error>
-let publisher = ValueObservation
-    .tracking(value: Player.fetchAll)
+let playersRequest = Player.all()
+let playersPublisher = ValueObservation
+    .tracking(value: playersRequest.fetchAll)
     .publisher(in: dbQueue)
-```
-
-</details>
-
-<details>
-  <summary><strong>Define auto-updating properties</strong></summary>
-
-```swift
-class MyModel {
-    static let playersPublisher = ValueObservation
-        .tracking(value: Player.fetchAll)
-        .publisher(in: dbQueue)
     
-    @DatabasePublished(playersPublisher)
-    var players: Result<[Players], Error>
-}
+// AnyPublisher<Int?, Error>
+let maxScoreRequest = SQLRequest<Int>(sql: "SELECT MAX(score) FROM player")
+let maxScorePublisher = ValueObservation
+    .tracking(value: maxScoreRequest.fetchOne)
+    .publisher(in: dbQueue)
 ```
 
 </details>
