@@ -53,17 +53,18 @@ extension DatabasePublishers {
         
         /// :nodoc:
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
-            let subscription = ValueSubscription<Output>(
+            let subscription = ValueSubscription(
                 startObservation: startObservation,
                 reader: reader,
                 queue: DispatchQueue.main, // TODO: allow more scheduling options
-                receiveCompletion: subscriber.receive(completion:),
-                receive: subscriber.receive(_:))
+                downstream: subscriber)
             subscriber.receive(subscription: subscription)
         }
     }
     
-    private class ValueSubscription<Output>: Subscription {
+    private class ValueSubscription<Downstream: Subscriber>: Subscription
+        where Downstream.Failure == Error
+    {
         private enum State {
             // Waiting for demand, not observing the database.
             case waitingForDemand
@@ -83,27 +84,24 @@ extension DatabasePublishers {
             // Completed or cancelled, not observing the database.
             case finished
         }
-        private let startObservation: StartObservationFunction<Output>
+        private let startObservation: StartObservationFunction<Downstream.Input>
         private let reader: DatabaseReader
         private let queue: DispatchQueue
-        private let _receiveCompletion: (Subscribers.Completion<Error>) -> Void
-        private let _receive: (Output) -> Subscribers.Demand
+        private let downstream: Downstream
         private var observer: TransactionObserver?
         private var state: State = .waitingForDemand
         private var lock = NSRecursiveLock() // Allow re-entrancy
         
         init(
-            startObservation: @escaping StartObservationFunction<Output>,
+            startObservation: @escaping StartObservationFunction<Downstream.Input>,
             reader: DatabaseReader,
             queue: DispatchQueue,
-            receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
-            receive: @escaping (Output) -> Subscribers.Demand)
+            downstream: Downstream)
         {
             self.startObservation = startObservation
             self.reader = reader
             self.queue = queue
-            self._receiveCompletion = receiveCompletion
-            self._receive = receive
+            self.downstream = downstream
         }
         
         func request(_ demand: Subscribers.Demand) {
@@ -137,7 +135,7 @@ extension DatabasePublishers {
             }
         }
         
-        private func receive(_ value: Output) {
+        private func receive(_ value: Downstream.Input) {
             lock.synchronized {
                 guard case let .observing(demand: _, sync: sync) = state else {
                     return
@@ -153,7 +151,7 @@ extension DatabasePublishers {
             }
         }
         
-        private func receiveSync(_ value: Output) {
+        private func receiveSync(_ value: Downstream.Input) {
             dispatchPrecondition(condition: .onQueue(queue))
             
             lock.synchronized {
@@ -161,7 +159,7 @@ extension DatabasePublishers {
                     return
                 }
                 
-                let additionalDemand = _receive(value)
+                let additionalDemand = downstream.receive(value)
                 
                 if case let .observing(demand: demand, sync: _) = state {
                     let newDemand = demand + additionalDemand - 1
@@ -201,7 +199,7 @@ extension DatabasePublishers {
                 
                 observer = nil
                 state = .finished
-                _receiveCompletion(completion)
+                downstream.receive(completion: completion)
             }
         }
     }
