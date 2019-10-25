@@ -29,16 +29,6 @@
       shouldUseLaunchSchemeArgsEnv = "YES"
       codeCoverageEnabled = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "56B28CEA22BA09CB00E65640"
-               BuildableName = "GRDBCombineTests.xctest"
-               BlueprintName = "GRDBCombineTests"
-               ReferencedContainer = "container:GRDBCombineDemo.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
