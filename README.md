@@ -85,7 +85,6 @@ Documentation
 - [Demo Application]
 - [Asynchronous Database Access]
 - [Database Observation]
-- [@DatabasePublished]
 
 ## Installation
 
@@ -302,72 +301,6 @@ See [ValueObservation] and [Associations] for more information.
 TODO: test this publisher, and document
 
 
-# @DatabasePublished
-
-**DatabasePublished is a property wrapper** that automatically updates the value of a property as database content changes.
-
-You declare a @DatabasePublished property with a database publisher returned from [`ValueObservation.publisher(in:)`]:
-
-```swift
-class MyModel {
-    static let playersPublisher = ValueObservation
-        .tracking(value: Player.fetchAll)
-        .publisher(in: dbQueue)
-    
-    @DatabasePublished(playersPublisher)
-    var players: Result<[Players], Error>
-}
-
-let model = MyModel()
-try model.players.get() // [Player]
-model.$players          // Publisher of output [Player], failure Error
-```
-
-By default, the initial value of the property is immediately fetched from the database. This blocks your main queue until the database access completes.
-
-You can opt in for asynchronous fetching of this first database value by providing an explicit initial value to the property:
-
-```swift
-class MyModel {
-    // The initialValue argument triggers asynchronous fetching
-    @DatabasePublished(initialValue: [], playersPublisher)
-    var players: Result<[Players], Error>
-}
-
-let model = MyModel()
-// Empty array until the initial fetch is performed
-try model.players.get()
-```
-
-@DatabasePublished properties track their changes in the database during their whole life time. It is not advised to use them in a value type such as a struct.
-
-@DatabasePublished properties must be used from the main queue. It is a programmer error to create or access those properties from any other queue. Future GRDBCombine versions may soothe this limitation.
-
-The DatabasePublished property wrapper supports the SwiftUI [@ObservedObject] property wrapper:
-
-```swift
-/// A view
-struct myView: View {
-    @ObservedObject var model: MyModel
-    var body: some View { ... }
-}
-
-/// A model
-class MyModel {
-    @DatabasePublished(...)
-    var value: ...
-}
-
-/// Support for @ObservedObject
-extension MyModel: ObservableObject {
-    var objectWillChange: PassthroughSubject<Void, Never> {
-        return $value.objectWillChange
-    }
-}
-```
-
-
-[@DatabasePublished]: #DatabasePublished
 [Associations]: https://github.com/groue/GRDB.swift/blob/master/Documentation/AssociationsBasics.md
 [Asynchronous Database Access]: #asynchronous-database-access
 [@ObservedObject]: https://developer.apple.com/documentation/swiftui/observedobject
