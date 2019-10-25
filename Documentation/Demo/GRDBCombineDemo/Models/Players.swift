@@ -63,6 +63,8 @@ struct Players {
         
         /// The best ones
         var bestPlayers: [Player]
+        
+        static let empty = HallOfFame(playerCount: 0, bestPlayers: [])
     }
     
     /// A publisher that tracks changes in the Hall of Fame

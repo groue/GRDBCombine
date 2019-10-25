@@ -12,7 +12,7 @@ struct HallOfFameView: View {
     }
     
     var list: some View {
-        List(viewModel.bestPlayers, id: \.id) {
+        List(viewModel.bestPlayers) {
             PlayerRow(player: $0)
         }
     }

@@ -7,11 +7,9 @@ GRDBCombine
 
 **Latest release**: October 17, 2019 • version 0.5.0 • [Release Notes]
 
-**Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0 beta 5
+**Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0+
 
-:construction: **Don't use in production** - this is beta software.
-
-:mega: **Please provide feedback** - this is how experimental software turns into robust and reliable solutions that help us doing our everyday job. Don't be shy! Open [issues](https://github.com/groue/GRDBCombine/issues) and ask questions, contact [@groue](http://twitter.com/groue).
+**Contact**: Report bugs and ask questions in [Github issues](https://github.com/groue/GRDBCombine/issues).
 
 ---
 
@@ -24,25 +22,16 @@ To connect to the database, please refer to [GRDB](https://github.com/groue/GRDB
 
 ```swift
 // AnyPublisher<[Player], Error>
-let publisher = ValueObservation
-    .tracking(value: Player.fetchAll)
+let playersRequest = Player.all()
+let playersPublisher = ValueObservation
+    .tracking(value: playersRequest.fetchAll)
     .publisher(in: dbQueue)
-```
-
-</details>
-
-<details>
-  <summary><strong>Define auto-updating properties</strong></summary>
-
-```swift
-class MyModel {
-    static let playersPublisher = ValueObservation
-        .tracking(value: Player.fetchAll)
-        .publisher(in: dbQueue)
     
-    @DatabasePublished(playersPublisher)
-    var players: Result<[Players], Error>
-}
+// AnyPublisher<Int?, Error>
+let maxScoreRequest = SQLRequest<Int>(sql: "SELECT MAX(score) FROM player")
+let maxScorePublisher = ValueObservation
+    .tracking(value: maxScoreRequest.fetchOne)
+    .publisher(in: dbQueue)
 ```
 
 </details>
@@ -85,7 +74,6 @@ Documentation
 - [Demo Application]
 - [Asynchronous Database Access]
 - [Database Observation]
-- [@DatabasePublished]
 
 ## Installation
 
@@ -221,9 +209,22 @@ This publisher always publishes an initial value, and waits for database changes
 
 All values are published on the main queue. Future GRDBCombine versions may lift this limitation.
 
-All values are published asynchronously, unless you modify the publisher with the `fetchOnSubscription()` method. In this case, the publisher synchronously fetches its initial value right on subscription. Subscription must then happen from the main queue, or you will get a fatal error:
+By default, all values are published asynchronously:
 
 ```swift
+// The default behavior
+let cancellable = publisher.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { (players: [Player]) in
+        print("Fresh players: \(players)")
+    })
+// <- here "Fresh players" is not printed yet.
+```
+
+You can force a synchronous fetch of the initial value with the `fetchOnSubscription()` method. Subscription must then happen from the main queue, or you will get a fatal error:
+
+```swift
+// Synchronous initial fetch
 let cancellable = publisher.fetchOnSubscription().sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (players: [Player]) in
@@ -232,7 +233,9 @@ let cancellable = publisher.fetchOnSubscription().sink(
 // <- here "Fresh players" has been printed.
 ```
 
-:warning: DO NOT compose ValueObservation publishers together with the [combineLatest](https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest) operator: you would lose all guarantees of [data consistency](https://en.wikipedia.org/wiki/Consistency_(database_systems)).
+:warning: **ValueObservation and Data Consistency**
+
+When you compose ValueObservation publishers together with the [combineLatest](https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest) operator, you lose all guarantees of [data consistency](https://en.wikipedia.org/wiki/Consistency_(database_systems)).
 
 ```swift
 // CAUTION: DATA CONSISTENCY NOT GUARANTEED
@@ -302,72 +305,6 @@ See [ValueObservation] and [Associations] for more information.
 TODO: test this publisher, and document
 
 
-# @DatabasePublished
-
-**DatabasePublished is a property wrapper** that automatically updates the value of a property as database content changes.
-
-You declare a @DatabasePublished property with a database publisher returned from [`ValueObservation.publisher(in:)`]:
-
-```swift
-class MyModel {
-    static let playersPublisher = ValueObservation
-        .tracking(value: Player.fetchAll)
-        .publisher(in: dbQueue)
-    
-    @DatabasePublished(playersPublisher)
-    var players: Result<[Players], Error>
-}
-
-let model = MyModel()
-try model.players.get() // [Player]
-model.$players          // Publisher of output [Player], failure Error
-```
-
-By default, the initial value of the property is immediately fetched from the database. This blocks your main queue until the database access completes.
-
-You can opt in for asynchronous fetching of this first database value by providing an explicit initial value to the property:
-
-```swift
-class MyModel {
-    // The initialValue argument triggers asynchronous fetching
-    @DatabasePublished(initialValue: [], playersPublisher)
-    var players: Result<[Players], Error>
-}
-
-let model = MyModel()
-// Empty array until the initial fetch is performed
-try model.players.get()
-```
-
-@DatabasePublished properties track their changes in the database during their whole life time. It is not advised to use them in a value type such as a struct.
-
-@DatabasePublished properties must be used from the main queue. It is a programmer error to create or access those properties from any other queue. Future GRDBCombine versions may soothe this limitation.
-
-The DatabasePublished property wrapper supports the SwiftUI [@ObservedObject] property wrapper:
-
-```swift
-/// A view
-struct myView: View {
-    @ObservedObject var model: MyModel
-    var body: some View { ... }
-}
-
-/// A model
-class MyModel {
-    @DatabasePublished(...)
-    var value: ...
-}
-
-/// Support for @ObservedObject
-extension MyModel: ObservableObject {
-    var objectWillChange: PassthroughSubject<Void, Never> {
-        return $value.objectWillChange
-    }
-}
-```
-
-
-[@DatabasePublished]: #DatabasePublished
 [Associations]: https://github.com/groue/GRDB.swift/blob/master/Documentation/AssociationsBasics.md
 [Asynchronous Database Access]: #asynchronous-database-access
 [@ObservedObject]: https://developer.apple.com/documentation/swiftui/observedobject
