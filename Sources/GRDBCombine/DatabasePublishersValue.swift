@@ -21,12 +21,21 @@ extension ValueObservation where Reducer: ValueReducer {
 }
 
 extension DatabasePublishers {
+    /// A helper type which helps erasing the ValueObservation type
+    private typealias StartObservationFunction<Output> = (
+        _ reader: DatabaseReader,
+        _ queue: DispatchQueue,
+        _ willSubscribeSync: (Bool) -> Void,
+        _ onError: @escaping (Error) -> Void,
+        _ onChange: @escaping (Output) -> Void)
+        -> TransactionObserver
+    
     /// A publisher that tracks changes in the database.
     ///
     /// See `ValueObservation.publisher(in:)`.
     public struct Value<Output>: Publisher {
         public typealias Failure = Error
-        let reader: DatabaseReader
+        private let reader: DatabaseReader
         private var startObservation: StartObservationFunction<Output>
         private let startObservationSync: StartObservationFunction<Output>
         private let startObservationAsync: StartObservationFunction<Output>
@@ -35,10 +44,12 @@ extension DatabasePublishers {
             where Reducer: ValueReducer, Reducer.Value == Output
         {
             self.reader = reader
+            
+            // Erase the Reducer generic type
             self.startObservationSync = observation.startSync(in:queue:willSubscribeSync:onError:onChange:)
             self.startObservationAsync = observation.startAsync(in:queue:willSubscribeSync:onError:onChange:)
             
-            // Default to async fetch of initial value
+            // Async fetch of initial value by default
             self.startObservation = startObservationAsync
         }
         
@@ -54,9 +65,9 @@ extension DatabasePublishers {
         /// :nodoc:
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
             let subscription = ValueSubscription(
-                startObservation: startObservation,
                 reader: reader,
                 queue: DispatchQueue.main, // TODO: allow more scheduling options
+                startObservation: startObservation,
                 downstream: subscriber)
             subscriber.receive(subscription: subscription)
         }
@@ -65,9 +76,16 @@ extension DatabasePublishers {
     private class ValueSubscription<Downstream: Subscriber>: Subscription
         where Downstream.Failure == Error
     {
+        private struct Context {
+            let reader: DatabaseReader
+            var queue: DispatchQueue
+            var startObservation: StartObservationFunction<Downstream.Input>
+            var downstream: Downstream
+        }
+        
         private enum State {
             // Waiting for demand, not observing the database.
-            case waitingForDemand
+            case waitingForDemand(context: Context)
             
             // Observing the database. Self.observer is not nil.
             //
@@ -79,48 +97,47 @@ extension DatabasePublishers {
             // dispatched asynchronously on self.queue.
             //
             // Sync may be true only once, when the subscription starts.
-            case observing(demand: Subscribers.Demand, sync: Bool)
+            case observing(context: Context, demand: Subscribers.Demand, sync: Bool)
             
             // Completed or cancelled, not observing the database.
             case finished
         }
-        private let startObservation: StartObservationFunction<Downstream.Input>
-        private let reader: DatabaseReader
-        private let queue: DispatchQueue
-        private let downstream: Downstream
+        
+        // Observer is not stored in self.state because the first value may be
+        // synchronously emitted when the observation starts, even before the
+        // observer has been stored in this property. When this happens, we
+        // need a proper state so that the first value is properly handled -
+        // even if we have no observer yet.
         private var observer: TransactionObserver?
-        private var state: State = .waitingForDemand
+        private var state: State
         private var lock = NSRecursiveLock() // Allow re-entrancy
         
         init(
-            startObservation: @escaping StartObservationFunction<Downstream.Input>,
             reader: DatabaseReader,
             queue: DispatchQueue,
+            startObservation: @escaping StartObservationFunction<Downstream.Input>,
             downstream: Downstream)
         {
-            self.startObservation = startObservation
-            self.reader = reader
-            self.queue = queue
-            self.downstream = downstream
+            let context = Context(reader: reader, queue: queue, startObservation: startObservation, downstream: downstream)
+            self.state = .waitingForDemand(context: context)
         }
         
         func request(_ demand: Subscribers.Demand) {
             lock.synchronized {
-                
                 switch state {
-                case .waitingForDemand:
+                case let .waitingForDemand(context):
                     guard demand > 0 else {
                         return
                     }
-                    observer = startObservation(
-                        reader,
-                        queue,
-                        { sync in self.state = .observing(demand: demand, sync: sync) },
+                    observer = context.startObservation(
+                        context.reader,
+                        context.queue,
+                        { sync in self.state = .observing(context: context, demand: demand, sync: sync) },
                         { [weak self] error in self?.receiveCompletion(.failure(error)) },
                         { [weak self] value in self?.receive(value) })
                     
-                case let .observing(demand: currentDemand, sync: sync):
-                    state = .observing(demand: currentDemand + demand, sync: sync)
+                case let .observing(context: context, demand: currentDemand, sync: sync):
+                    state = .observing(context: context, demand: currentDemand + demand, sync: sync)
                     
                 case .finished:
                     break
@@ -137,14 +154,14 @@ extension DatabasePublishers {
         
         private func receive(_ value: Downstream.Input) {
             lock.synchronized {
-                guard case let .observing(demand: _, sync: sync) = state else {
+                guard case let .observing(context: context, demand: _, sync: sync) = state else {
                     return
                 }
                 
                 if sync {
                     receiveSync(value)
                 } else {
-                    queue.async {
+                    context.queue.async {
                         self.receiveSync(value)
                     }
                 }
@@ -152,22 +169,21 @@ extension DatabasePublishers {
         }
         
         private func receiveSync(_ value: Downstream.Input) {
-            dispatchPrecondition(condition: .onQueue(queue))
-            
             lock.synchronized {
-                guard case .observing = state else {
+                guard case let .observing(context: context, demand: _, sync: _) = state else {
                     return
                 }
                 
-                let additionalDemand = downstream.receive(value)
+                dispatchPrecondition(condition: .onQueue(context.queue))
+                let additionalDemand = context.downstream.receive(value)
                 
-                if case let .observing(demand: demand, sync: _) = state {
+                if case let .observing(context: context, demand: demand, sync: _) = state {
                     let newDemand = demand + additionalDemand - 1
                     if newDemand == .none {
                         observer = nil
-                        state = .waitingForDemand
+                        state = .waitingForDemand(context: context)
                     } else {
-                        state = .observing(demand: newDemand, sync: false)
+                        state = .observing(context: context, demand: newDemand, sync: false)
                     }
                 }
             }
@@ -175,14 +191,14 @@ extension DatabasePublishers {
         
         private func receiveCompletion(_ completion: Subscribers.Completion<Error>) {
             lock.synchronized {
-                guard case let .observing(demand: _, sync: sync) = state else {
+                guard case let .observing(context: context, demand: _, sync: sync) = state else {
                     return
                 }
                 
                 if sync {
                     receiveCompletionSync(completion)
                 } else {
-                    queue.async {
+                    context.queue.async {
                         self.receiveCompletionSync(completion)
                     }
                 }
@@ -190,24 +206,21 @@ extension DatabasePublishers {
         }
         
         private func receiveCompletionSync(_ completion: Subscribers.Completion<Error>) {
-            dispatchPrecondition(condition: .onQueue(queue))
-            
             lock.synchronized {
-                guard case .observing = state else {
+                guard case let .observing(context: context, demand: _, sync: _) = state else {
                     return
                 }
                 
+                dispatchPrecondition(condition: .onQueue(context.queue))
                 observer = nil
                 state = .finished
-                downstream.receive(completion: completion)
+                context.downstream.receive(completion: completion)
             }
         }
     }
 }
 
 // MARK: - Erase ValueObservation.Reducer
-
-private typealias StartObservationFunction<Output> = (DatabaseReader, DispatchQueue, (Bool) -> Void, @escaping (Error) -> Void, @escaping (Output) -> Void) -> TransactionObserver
 
 extension ValueObservation where Reducer: ValueReducer {
     /// Support for DatabasePublishers.Value.
