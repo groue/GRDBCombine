@@ -23,9 +23,7 @@ class DatabasePublishersValueTests : XCTestCase {
     
     func testDatabasePublishersValue() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -73,9 +71,7 @@ class DatabasePublishersValueTests : XCTestCase {
     
     func testDatabasePublishersValueDefaultScheduler() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -122,9 +118,7 @@ class DatabasePublishersValueTests : XCTestCase {
     
     func testDatabasePublishersValueEmitsFirstValueAsynchronously() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -161,9 +155,7 @@ class DatabasePublishersValueTests : XCTestCase {
     
     func testDatabasePublishersValueFetchOnSubscription() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -212,9 +204,7 @@ class DatabasePublishersValueTests : XCTestCase {
     
     func testDatabasePublishersValueFetchOnSubscriptionDefaultScheduler() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -262,9 +252,7 @@ class DatabasePublishersValueTests : XCTestCase {
     
     func testDatabasePublishersValueFetchOnSubscriptionEmitsFirstValueSynchronously() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -288,6 +276,199 @@ class DatabasePublishersValueTests : XCTestCase {
             semaphore.wait()
             testCancellable.cancel()
             observationCancellable.cancel()
+        }
+        
+        try Test(test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+    
+    // MARK: - Demand
+    
+    private class DemandSubscriber<Input, Failure: Error>: Subscriber {
+        private var subscription: Subscription?
+        let subject = PassthroughSubject<Input, Failure>()
+        deinit {
+            subscription?.cancel()
+        }
+        
+        func cancel() {
+            subscription!.cancel()
+        }
+        
+        func request(_ demand: Subscribers.Demand) {
+            subscription!.request(demand)
+        }
+        
+        func receive(subscription: Subscription) {
+            self.subscription = subscription
+        }
+        
+        func receive(_ input: Input) -> Subscribers.Demand {
+            subject.send(input)
+            return .none
+        }
+        
+        func receive(completion: Subscribers.Completion<Failure>) {
+            subject.send(completion: completion)
+        }
+    }
+    
+    func testDatabasePublishersValueWithDemandNoneReceivesNoElement() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter) throws {
+            let subscriber = DemandSubscriber<Int, Error>()
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .subscribe(subscriber)
+            
+            let expectation = self.expectation(description: "")
+            expectation.isInverted = true
+            let testCancellable = subscriber.subject
+                .sink(
+                    receiveCompletion: { _ in XCTFail("Unexpected completion") },
+                    receiveValue: { _ in expectation.fulfill() })
+            
+            waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            subscriber.cancel()
+        }
+        
+        try Test(test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+    
+    func testDatabasePublishersValueDemandOneReceivesOneElement() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter) throws {
+            let subscriber = DemandSubscriber<Int, Error>()
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .subscribe(subscriber)
+            
+            subscriber.request(.max(1))
+            
+            let expectation = self.expectation(description: "")
+            let testCancellable = subscriber.subject.sink(
+                receiveCompletion: { _ in XCTFail("Unexpected completion") },
+                receiveValue: { value in
+                    XCTAssertEqual(value, 0)
+                    expectation.fulfill()
+            })
+            
+            waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            subscriber.cancel()
+        }
+        
+        try Test(test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+    
+    func testDatabasePublishersValueDemandOneDoesNotReceiveTwoElements() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter) throws {
+            let subscriber = DemandSubscriber<Int, Error>()
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .subscribe(subscriber)
+            
+            subscriber.request(.max(1))
+            
+            let expectation = self.expectation(description: "")
+            expectation.isInverted = true
+            let testCancellable = subscriber.subject
+                .collect(2)
+                .sink(
+                    receiveCompletion: { _ in XCTFail("Unexpected completion") },
+                    receiveValue: { _ in expectation.fulfill() })
+            
+            waitForExpectations(timeout: 1, handler: nil)
+            testCancellable.cancel()
+            subscriber.cancel()
+        }
+        
+        try Test(test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+    
+    func testDatabasePublishersValueCanRestartObservation() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter) throws {
+            let subscriber = DemandSubscriber<Int, Error>()
+            Player
+                .observationForCount()
+                .publisher(in: writer as DatabaseReader)
+                .subscribe(subscriber)
+            
+            var collectedValues: [Int] = []
+            let testCancellable = subscriber.subject
+                .collect(2)
+                .sink(
+                    receiveCompletion: { _ in XCTFail("Unexpected completion") },
+                    receiveValue: { collectedValues = $0 })
+            
+            do {
+                subscriber.request(.max(1))
+                let nextExpectation = self.expectation(description: "")
+                let nextCancellable = subscriber.subject.sink(
+                    receiveCompletion: { _ in XCTFail("Unexpected completion") },
+                    receiveValue: { _ in nextExpectation.fulfill() })
+                
+                try writer.writeWithoutTransaction { db in
+                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                    
+                    try db.inTransaction {
+                        try Player(id: 2, name: "Barbara", score: 750).insert(db)
+                        try Player(id: 3, name: "Craig", score: 500).insert(db)
+                        return .commit
+                    }
+                }
+                
+                waitForExpectations(timeout: 1, handler: nil)
+                nextCancellable.cancel()
+            }
+            
+            do {
+                subscriber.request(.max(1))
+                let nextExpectation = self.expectation(description: "")
+                let nextCancellable = subscriber.subject.sink(
+                    receiveCompletion: { _ in XCTFail("Unexpected completion") },
+                    receiveValue: { _ in nextExpectation.fulfill() })
+
+                waitForExpectations(timeout: 1, handler: nil)
+                nextCancellable.cancel()
+            }
+            
+            XCTAssertEqual(collectedValues, [0, 3])
+            testCancellable.cancel()
+            subscriber.cancel()
         }
         
         try Test(test)
