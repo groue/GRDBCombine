@@ -22,10 +22,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     
     func testReadPublisher() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -46,7 +43,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
-            XCTAssertEqual(value, 1)
+            XCTAssertEqual(value, 0)
             testCancellable.cancel()
         }
         
@@ -91,10 +88,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     
     func testReadPublisherDefaultScheduler() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -128,10 +122,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     
     func testReadPublisherCustomScheduler() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         

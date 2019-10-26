@@ -23,9 +23,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     
     func testWritePublisher() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -59,9 +57,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     
     func testWritePublisherValue() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -126,9 +122,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     
     func testWritePublisherDefaultScheduler() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -161,9 +155,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     
     func testWritePublisherCustomScheduler() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
@@ -199,9 +191,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     // - Expectation timeout
     func testWriteThenReadPublisher() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write { db in
-                try Player.createTable(db)
-            }
+            try writer.write(Player.createTable)
             return writer
         }
         
