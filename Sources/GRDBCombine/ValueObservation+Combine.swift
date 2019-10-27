@@ -135,7 +135,8 @@ extension DatabasePublishers {
                         { [weak self] value in self?.receive(value) })
                     
                 case let .observing(context: context, demand: currentDemand, sync: sync):
-                    state = .observing(context: context, demand: currentDemand + demand, sync: sync)
+                    let newDemand = currentDemand + demand
+                    state = .observing(context: context, demand: newDemand, sync: sync)
                     
                 case .finished:
                     break
@@ -166,13 +167,15 @@ extension DatabasePublishers {
         
         private func receiveSync(_ value: Downstream.Input) {
             lock.synchronized {
-                if case let .observing(context: context, demand: demand, sync: _) = state, demand > .none {
+                if case let .observing(context: context, demand: demand, sync: _) = state,
+                    demand > .none
+                {
                     dispatchPrecondition(condition: .onQueue(context.queue))
                     let additionalDemand = context.downstream.receive(value)
                     
-                    if case let .observing(context: _, demand: remainingDemand, sync: _) = state {
+                    if case let .observing(context: _, demand: demand, sync: _) = state {
                         // Next value will be dispatched asynchronously
-                        let newDemand = remainingDemand + additionalDemand - 1
+                        let newDemand = demand + additionalDemand - 1
                         state = .observing(context: context, demand: newDemand, sync: false)
                     }
                 }

@@ -17,7 +17,7 @@ private struct Player: Codable, FetchableRecord, PersistableRecord {
     }
 }
 
-class DatabasePublishersValueTests : XCTestCase {
+class ValueObservationPublisherTests : XCTestCase {
     
     func testChangesNotifications() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
