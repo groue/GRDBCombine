@@ -52,7 +52,7 @@ extension DatabasePublishers {
         
         private struct Observing {
             let downstream: Downstream
-            let observer: TransactionObserver
+            let writer: DatabaseWriter // Retain writer until subscription is finished
             var remainingDemand: Subscribers.Demand
         }
         
@@ -67,6 +67,9 @@ extension DatabasePublishers {
             case finished
         }
         
+        // Observer is not stored in self.state because we must enter the
+        // .observing state *before* the observation starts.
+        private var observer: TransactionObserver?
         private var state: State
         private var lock = NSRecursiveLock() // Allow re-entrancy
         
@@ -75,7 +78,7 @@ extension DatabasePublishers {
             observation: DatabaseRegionObservation,
             downstream: Downstream)
         {
-            self.state = .waitingForDemand(WaitingForDemand(
+            state = .waitingForDemand(WaitingForDemand(
                 downstream: downstream,
                 writer: writer,
                 observation: observation))
@@ -89,10 +92,13 @@ extension DatabasePublishers {
                         return
                     }
                     do {
-                        let observer = try info.observation.start(
+                        state = .observing(Observing(
+                            downstream: info.downstream,
+                            writer: info.writer,
+                            remainingDemand: demand))
+                        observer = try info.observation.start(
                             in: info.writer,
                             onChange: { [weak self] in self?.receive($0) })
-                        state = .observing(Observing(downstream: info.downstream, observer: observer, remainingDemand: demand))
                     } catch {
                         state = .finished
                         info.downstream.receive(completion: .failure(error))
@@ -110,6 +116,7 @@ extension DatabasePublishers {
         
         func cancel() {
             lock.synchronized {
+                observer = nil
                 state = .finished
             }
         }
