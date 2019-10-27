@@ -17,27 +17,24 @@ GRDBCombine
 
 To connect to the database, please refer to [GRDB](https://github.com/groue/GRDB.swift), the database library that supports GRDBCombine.
 
-<details open>
-  <summary><strong>Observe database changes</strong></summary>
+<details>
+  <summary><strong>Asynchronously read from the database</strong></summary>
+  
+This publisher reads a single value and delivers it.
 
 ```swift
 // AnyPublisher<[Player], Error>
-let playersRequest = Player.all()
-let playersPublisher = ValueObservation
-    .tracking(value: playersRequest.fetchAll)
-    .publisher(in: dbQueue)
-    
-// AnyPublisher<Int?, Error>
-let maxScoreRequest = SQLRequest<Int>(sql: "SELECT MAX(score) FROM player")
-let maxScorePublisher = ValueObservation
-    .tracking(value: maxScoreRequest.fetchOne)
-    .publisher(in: dbQueue)
+let players = dbQueue.readPublisher { db in
+    try Player.fetchAll(db)
+}
 ```
 
 </details>
 
 <details>
   <summary><strong>Asynchronously write in the database</strong></summary>
+  
+This publisher delivers a single value, after the database has been updated.
 
 ```swift
 // AnyPublisher<Void, Error>
@@ -55,13 +52,43 @@ let newPlayerCount = dbQueue.writePublisher { db -> Int in
 </details>
 
 <details>
-  <summary><strong>Asynchronously read from the database</strong></summary>
+  <summary><strong>Observe changes in database values</strong></summary>
+
+This publisher delivers fresh values whenever the database changes:
 
 ```swift
-// AnyPublisher<[Player], Error>
-let players = dbQueue.readPublisher { db in
-    try Player.fetchAll(db)
-}
+// A publisher with output [Player] and failure Error
+let playersRequest = Player.all()
+let cancellable = ValueObservation
+    .tracking(value: playersRequest.fetchAll)
+    .publisher(in: dbQueue)
+
+// A publisher with output Int? and failure Error
+let maxScoreRequest = SQLRequest<Int>(sql: "SELECT MAX(score) FROM player")
+let maxScorePublisher = ValueObservation
+    .tracking(value: maxScoreRequest.fetchOne)
+    .publisher(in: dbQueue)
+```
+
+</details>
+
+<details>
+  <summary><strong>Observe database transactions</strong></summary>
+
+This publisher delivers database connections whenever a database transaction has impacted an observed region:
+
+```swift
+// A publisher with output Database and failure Error
+let playersRequest = Player.all()
+let playersChangePublisher = DatabaseRegionObservation
+    .tracking(playersRequest)
+    .publisher(in: dbQueue)
+
+// A publisher with output Database and failure Error
+let maxScoreRequest = SQLRequest<Int>(sql: "SELECT MAX(score) FROM player")
+let maxScoreChangePublisher = DatabaseRegionObservation
+    .tracking(maxScoreRequest)
+    .publisher(in: dbQueue)
 ```
 
 </details>
@@ -194,14 +221,14 @@ GRDBCombine publishers are based on GRDB's [ValueObservation] and [DatabaseRegio
 
 #### `ValueObservation.publisher(in:)`
 
-GRDB's [ValueObservation] notifies fresh values whenever the database changes. GRDBCombine can build Combine publishers from it:
+GRDB's [ValueObservation] notifies fresh values whenever the database changes. You can turn it into a Combine publisher:
 
 ```swift
 let observation = ValueObservation.tracking { db in
     try Player.fetchAll(db)
 }
 
-// AnyPublisher<[Player], Error>
+// A publisher with output [Player] and failure Error
 let publisher = observation.publisher(in: dbQueue)
 ```
 
@@ -254,7 +281,7 @@ For example, fetch all requested values in a single observation:
 
 ```swift
 // DATA CONSISTENCY GUARANTEED
-// AnyPublisher<(Team?, [Player]), Error>
+// A publisher with output (Team?, [Player]) and failure Error
 let publisher = ValueObservation
     .tracking { db -> (Team?, [Player]) in
         let team = try Team.fetchOne(db, key: 1)
@@ -277,7 +304,7 @@ let request = Team
     .including(all: Team.players)
     .asRequest(of: TeamInfo.self)
 
-// AnyPublisher<TeamInfo?, Error>
+// A publisher with output TeamInfo? and failure Error
 let publisher = ValueObservation
     .tracking(value: request.fetchOne)
     .publisher(in: dbQueue)
@@ -293,7 +320,7 @@ let players = ValueObservation
     .tracking { db in try Player.filter(teamId: 1).fetchAll(db) }
 let observation = ValueObservation.combine(team, players)
 
-// AnyPublisher<(Team?, [Player]), Error>
+// A publisher with output (Team?, [Player]) and failure Error
 let publisher = observation.publisher(in: dbQueue)
 ```
 
@@ -302,7 +329,42 @@ See [ValueObservation] and [Associations] for more information.
 
 #### `DatabaseRegionObservation.publisher(in:)`
 
-TODO: test this publisher, and document
+GRDB's [DatabaseRegionObservation] notifies all transactions that impact a tracked database region. You can turn it into a Combine publisher:
+
+```swift
+let request = Player.all()
+let observation = DatabaseRegionObservation.tracking(request)
+
+// A publisher with output Database and failure Error
+let publisher = observation.publisher(in: dbQueue)
+```
+
+This publisher can be created and subscribed from any thread. It delivers database connections in a "protected dispatch queue", serialized with all database updates. It only completes when a database error happens.
+
+```swift
+let request = Player.all()
+let cancellable = DatabaseRegionObservation
+    .tracking(request)
+    .publisher(in: dbQueue)
+    .sink(
+        receiveCompletion: { completion in ... },
+        receiveValue: { (db: Database) in
+            print("Players have changed.")
+        })
+
+try dbQueue.write { db in
+    try Player(name: "Arthur").insert(db)
+    try Player(name: "Barbara").insert(db)
+} 
+// Prints "Players have changed."
+
+try dbQueue.write { db in
+    try Player.deleteAll(db)
+}
+// Prints "Players have changed."
+```
+
+See [DatabaseRegionObservation] for more information.
 
 
 [Associations]: https://github.com/groue/GRDB.swift/blob/master/Documentation/AssociationsBasics.md
