@@ -67,9 +67,11 @@ class DatabaseRegionObservationPublisherTests : XCTestCase {
     }
     
     // This is an usage test. Do the available APIs allow to prepend a
-    // database connection synchronously?
-    // TODO: And can we prepend a database connection asynchronously with the
-    // guarantee that no race can hide an impactful change?
+    // database connection synchronously, with the guarantee that no race can
+    // have the subscriber miss an impactful change?
+    //
+    // TODO: do the same, but asynchronously. If this is too hard, update the
+    // public API so that users can easily do it.
     func testPrependInitialDatabaseSync() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write(Player.createTable)
@@ -90,7 +92,6 @@ class DatabaseRegionObservationPublisherTests : XCTestCase {
                         XCTAssertEqual(value, [0, 1, 3])
                         expectation.fulfill()
                 })
-            
             
             let observationCancellable = try writer.write { db in
                 DatabaseRegionObservation(tracking: Player.all())
