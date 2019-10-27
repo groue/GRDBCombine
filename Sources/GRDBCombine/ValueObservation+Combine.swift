@@ -116,7 +116,7 @@ extension DatabasePublishers {
             downstream: Downstream)
         {
             let context = Context(reader: reader, queue: queue, startObservation: startObservation, downstream: downstream)
-            self.state = .waitingForDemand(context: context, sync: sync)
+            state = .waitingForDemand(context: context, sync: sync)
         }
         
         func request(_ demand: Subscribers.Demand) {
@@ -126,7 +126,7 @@ extension DatabasePublishers {
                     guard demand > 0 else {
                         return
                     }
-                    self.state = .observing(context: context, demand: demand, sync: sync)
+                    state = .observing(context: context, demand: demand, sync: sync)
                     observer = context.startObservation(
                         sync,
                         context.reader,
@@ -152,15 +152,13 @@ extension DatabasePublishers {
         
         private func receive(_ value: Downstream.Input) {
             lock.synchronized {
-                guard case let .observing(context: context, demand: _, sync: sync) = state else {
-                    return
-                }
-                
-                if sync {
-                    receiveSync(value)
-                } else {
-                    context.queue.async {
-                        self.receiveSync(value)
+                if case let .observing(context: context, demand: _, sync: sync) = state {
+                    if sync {
+                        receiveSync(value)
+                    } else {
+                        context.queue.async {
+                            self.receiveSync(value)
+                        }
                     }
                 }
             }
@@ -168,21 +166,13 @@ extension DatabasePublishers {
         
         private func receiveSync(_ value: Downstream.Input) {
             lock.synchronized {
-                guard case let .observing(context: context, demand: _, sync: _) = state else {
-                    return
-                }
-                
-                dispatchPrecondition(condition: .onQueue(context.queue))
-                let additionalDemand = context.downstream.receive(value)
-                
-                if case let .observing(context: context, demand: demand, sync: _) = state {
-                    let newDemand = demand + additionalDemand - 1
-                    if newDemand == .none {
-                        observer = nil
-                        // Next demand will start the observation asynchronously
-                        state = .waitingForDemand(context: context, sync: false)
-                    } else {
+                if case let .observing(context: context, demand: demand, sync: _) = state, demand > .none {
+                    dispatchPrecondition(condition: .onQueue(context.queue))
+                    let additionalDemand = context.downstream.receive(value)
+                    
+                    if case let .observing(context: _, demand: remainingDemand, sync: _) = state {
                         // Next value will be dispatched asynchronously
+                        let newDemand = remainingDemand + additionalDemand - 1
                         state = .observing(context: context, demand: newDemand, sync: false)
                     }
                 }
@@ -191,15 +181,13 @@ extension DatabasePublishers {
         
         private func receiveCompletion(_ completion: Subscribers.Completion<Error>) {
             lock.synchronized {
-                guard case let .observing(context: context, demand: _, sync: sync) = state else {
-                    return
-                }
-                
-                if sync {
-                    receiveCompletionSync(completion)
-                } else {
-                    context.queue.async {
-                        self.receiveCompletionSync(completion)
+                if case let .observing(context: context, demand: _, sync: sync) = state {
+                    if sync {
+                        receiveCompletionSync(completion)
+                    } else {
+                        context.queue.async {
+                            self.receiveCompletionSync(completion)
+                        }
                     }
                 }
             }
@@ -207,14 +195,12 @@ extension DatabasePublishers {
         
         private func receiveCompletionSync(_ completion: Subscribers.Completion<Error>) {
             lock.synchronized {
-                guard case let .observing(context: context, demand: _, sync: _) = state else {
-                    return
+                if case let .observing(context: context, demand: _, sync: _) = state {
+                    dispatchPrecondition(condition: .onQueue(context.queue))
+                    observer = nil
+                    state = .finished
+                    context.downstream.receive(completion: completion)
                 }
-                
-                dispatchPrecondition(condition: .onQueue(context.queue))
-                observer = nil
-                state = .finished
-                context.downstream.receive(completion: completion)
             }
         }
     }
