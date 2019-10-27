@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>GRDBCombine  Reference</title>
+    <link rel="stylesheet" type="text/css" href="css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="css/highlight.css" />
+    <meta charset='utf-8'>
+    <script src="js/jquery.min.js" defer></script>
+    <script src="js/jazzy.js" defer></script>
+    
+  </head>
+  <body>
+    <a title="GRDBCombine  Reference"></a>
+    <header>
+      <div class="content-wrapper">
+        <p><a href="index.html">GRDBCombine 0.7 Docs</a> (100% documented)</p>
+        <p class="header-right"><a href="https://github.com/groue/GRDBCombine"><img src="img/gh.png"/>View on GitHub</a></p>
+        <p class="header-right"><a href="dash-feed://https%3A%2F%2Fgroue%2Egithub%2Eio%2FGRDBCombine%2Fdocs%2F0%2E7%2Fdocsets%2FGRDBCombine%2Exml"><img src="img/dash.png"/>Install in Dash</a></p>
+      </div>
+    </header>
+    <div class="content-wrapper">
+      <p id="breadcrumbs">
+        <a href="index.html">GRDBCombine Reference</a>
+        <img id="carat" src="img/carat.png" />
+        GRDBCombine  Reference
+      </p>
+    </div>
+    <div class="content-wrapper">
+      <nav class="sidebar">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a href="Enums.html">Enumerations</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Enums/DatabasePublishers.html">DatabasePublishers</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Enums/DatabasePublishers/DatabaseRegion.html">– DatabaseRegion</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Enums/DatabasePublishers/Value.html">– Value</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Extensions.html">Extensions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Extensions/DatabaseReader.html">DatabaseReader</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Extensions/DatabaseRegionObservation.html">DatabaseRegionObservation</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Extensions/DatabaseWriter.html">DatabaseWriter</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Extensions/ValueObservation.html">ValueObservation</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+        <section>
+          <section class="section">
+            
+            <h1 id='grdbcombine' class='heading'>GRDBCombine</h1>
+<h3 id='a-set-of-extensions-for-a-href-http-sqlite-org-sqlite-a-a-href-https-github-com-groue-grdb-swift-grdb-swift-a-and-a-href-https-developer-apple-com-documentation-combine-combine-a' class='heading'>A set of extensions for <a href="http://sqlite.org">SQLite</a>, <a href="https://github.com/groue/GRDB.swift">GRDB.swift</a>, and <a href="https://developer.apple.com/documentation/combine">Combine</a></h3>
+
+<hr>
+
+<p><strong>Latest release</strong>: <a href="https://github.com/groue/GRDBCombine/tree/v0.7.0">version 0.7.0</a> (October 27, 2019) • <a href="CHANGELOG.md">Release Notes</a></p>
+
+<p><strong>Requirements</strong>: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0+</p>
+
+<p><strong>Contact</strong>: Report bugs and ask questions in <a href="https://github.com/groue/GRDBCombine/issues">Github issues</a>.</p>
+
+<hr>
+<h2 id='usage' class='heading'>Usage</h2>
+
+<p>To connect to the database, please refer to <a href="https://github.com/groue/GRDB.swift">GRDB</a>, the database library that supports GRDBCombine.</p>
+
+<details>
+  <summary><strong>Asynchronously read from the database</strong></summary>
+  
+This publisher reads a single value and delivers it.
+
+&ldquo;`swift
+// AnyPublisher<[Player], Error>
+let players = dbQueue.readPublisher { db in
+    try Player.fetchAll(db)
+}
+&rdquo;`
+
+</details>
+
+<details>
+  <summary><strong>Asynchronously write in the database</strong></summary>
+  
+This publisher delivers a single value, after the database has been updated.
+
+&ldquo;`swift
+// AnyPublisher<Void, Error>
+let write = dbQueue.writePublisher { db in
+    try Player(&hellip;).insert(db)
+}
+
+// AnyPublisher<Int, Error>
+let newPlayerCount = dbQueue.writePublisher { db -> Int in
+    try Player(&hellip;).insert(db)
+    return try Player.fetchCount(db)
+}
+&rdquo;`
+
+</details>
+
+<details>
+  <summary><strong>Observe changes in database values</strong></summary>
+
+This publisher delivers fresh values whenever the database changes:
+
+&ldquo;`swift
+// A publisher with output [Player] and failure Error
+let playersRequest = Player.all()
+let cancellable = ValueObservation
+    .tracking(value: playersRequest.fetchAll)
+    .publisher(in: dbQueue)
+
+// A publisher with output Int? and failure Error
+let maxScoreRequest = SQLRequest<Int>(sql: &quot;SELECT MAX(score) FROM player&rdquo;)
+let maxScorePublisher = ValueObservation
+    .tracking(value: maxScoreRequest.fetchOne)
+    .publisher(in: dbQueue)
+&ldquo;`
+
+</details>
+
+<details>
+  <summary><strong>Observe database transactions</strong></summary>
+
+This publisher delivers database connections whenever a database transaction has impacted an observed region:
+
+&rdquo;`swift
+// A publisher with output Database and failure Error
+let playersRequest = Player.all()
+let playersChangePublisher = DatabaseRegionObservation
+    .tracking(playersRequest)
+    .publisher(in: dbQueue)
+
+// A publisher with output Database and failure Error
+let maxScoreRequest = SQLRequest<Int>(sql: &ldquo;SELECT MAX(score) FROM player&rdquo;)
+let maxScoreChangePublisher = DatabaseRegionObservation
+    .tracking(maxScoreRequest)
+    .publisher(in: dbQueue)
+&ldquo;`
+
+</details>
+<h1 id='documentation' class='heading'>Documentation</h1>
+
+<ul>
+<li><a href="https://groue.github.io/GRDBCombine/docs/0.7/index.html">Reference</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="Documentation/Demo/README.md">Demo Application</a></li>
+<li><a href="#asynchronous-database-access">Asynchronous Database Access</a></li>
+<li><a href="#database-observation">Database Observation</a></li>
+</ul>
+<h2 id='installation' class='heading'>Installation</h2>
+
+<p>The <a href="https://swift.org/package-manager/">Swift Package Manager</a> automates the distribution of Swift code. To use GRDBCombine with SPM, add a dependency to your <code>Package.swift</code> file:</p>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">package</span> <span class="o">=</span> <span class="nf">Package</span><span class="p">(</span>
+    <span class="nv">dependencies</span><span class="p">:</span> <span class="p">[</span>
+        <span class="o">.</span><span class="nf">package</span><span class="p">(</span><span class="nv">url</span><span class="p">:</span> <span class="s">"https://github.com/groue/GRDBCombine.git"</span><span class="p">,</span> <span class="o">.</span><span class="nf">exact</span><span class="p">(</span><span class="s">"0.7.0"</span><span class="p">))</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</code></pre>
+<h1 id='asynchronous-database-access' class='heading'>Asynchronous Database Access</h1>
+
+<p>GRDBCombine provide publishers that perform asynchronous database accesses.</p>
+
+<ul>
+<li><a href="#databasereaderreadpublisherreceiveonvalue"><code>readPublisher(receiveOn:value:)</code></a></li>
+<li><a href="#databasewriterwritepublisherreceiveonupdates"><code>writePublisher(receiveOn:updates:)</code></a></li>
+<li><a href="#databasewriterwritepublisherreceiveonupdatesthenread"><code>writePublisher(receiveOn:updates:thenRead:)</code></a></li>
+</ul>
+<h4 id='code-databasereader-readpublisher-receiveon-value-code' class='heading'><code><a href="Extensions/DatabaseReader.html#/s:4GRDB14DatabaseReaderP11GRDBCombineE13readPublisher9receiveOn5value7Combine03AnyF0Vyqd_0_s5Error_pGqd___qd_0_AA0B0CKctAH9SchedulerRd__r0_lF">DatabaseReader.readPublisher(receiveOn:value:)</a></code></h4>
+
+<p>This methods returns a publisher that completes after database values have been asynchronously fetched.</p>
+<pre class="highlight swift"><code><span class="c1">// AnyPublisher&lt;[Player], Error&gt;</span>
+<span class="k">let</span> <span class="nv">players</span> <span class="o">=</span> <span class="n">dbQueue</span><span class="o">.</span><span class="nf">readPublisher</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span>
+    <span class="k">try</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">fetchAll</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>Any attempt at modifying the database completes subscriptions with an error.</p>
+
+<p>When you use a <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#database-queues">database queue</a> or a <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#database-snapshots">database snapshot</a>, the read has to wait for any eventual concurrent database access performed by this queue or snapshot to complete.</p>
+
+<p>When you use a <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#database-pools">database pool</a>, reads are generally non-blocking, unless the maximum number of concurrent reads has been reached. In this case, a read has to wait for another read to complete. That maximum number can be <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#databasepool-configuration">configured</a>.</p>
+
+<p>This publisher can be subscribed from any thread. A new database access starts on every subscription.</p>
+
+<p>The fetched value is published on the main queue, unless you provide a specific scheduler to the <code>receiveOn</code> argument.</p>
+<h4 id='code-databasewriter-writepublisher-receiveon-updates-code' class='heading'><code><a href="Extensions/DatabaseWriter.html#/s:4GRDB14DatabaseWriterP11GRDBCombineE14writePublisher9receiveOn7updates7Combine03AnyF0Vyqd_0_s5Error_pGqd___qd_0_AA0B0CKctAH9SchedulerRd__r0_lF">DatabaseWriter.writePublisher(receiveOn:updates:)</a></code></h4>
+
+<p>This method returns a publisher that completes after database updates have been succesfully executed inside a database transaction.</p>
+<pre class="highlight swift"><code><span class="c1">// AnyPublisher&lt;Void, Error&gt;</span>
+<span class="k">let</span> <span class="nv">write</span> <span class="o">=</span> <span class="n">dbQueue</span><span class="o">.</span><span class="nf">writePublisher</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span>
+    <span class="k">try</span> <span class="nf">Player</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="nf">insert</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// AnyPublisher&lt;Int, Error&gt;</span>
+<span class="k">let</span> <span class="nv">newPlayerCount</span> <span class="o">=</span> <span class="n">dbQueue</span><span class="o">.</span><span class="nf">writePublisher</span> <span class="p">{</span> <span class="n">db</span> <span class="o">-&gt;</span> <span class="kt">Int</span> <span class="k">in</span>
+    <span class="k">try</span> <span class="nf">Player</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="nf">insert</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">try</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">fetchCount</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>This publisher can be subscribed from any thread. A new database access starts on every subscription.</p>
+
+<p>It completes on the main queue, unless you provide a specific <a href="https://developer.apple.com/documentation/combine/scheduler">scheduler</a> to the <code>receiveOn</code> argument.</p>
+
+<p>When you use a <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#database-pools">database pool</a>, and your app executes some database updates followed by some slow fetches, you may profit from optimized scheduling with <a href="#databasewriterwritepublisherreceiveonupdatesthenread"><code>writePublisher(receiveOn:updates:thenRead:)</code></a>. See below.</p>
+<h4 id='code-databasewriter-writepublisher-receiveon-updates-thenread-code' class='heading'><code><a href="Extensions/DatabaseWriter.html#/s:4GRDB14DatabaseWriterP11GRDBCombineE14writePublisher9receiveOn7updates8thenRead7Combine03AnyF0Vyqd_1_s5Error_pGqd___qd_0_AA0B0CKcqd_1_AO_qd_0_tKctAI9SchedulerRd__r1_lF">DatabaseWriter.writePublisher(receiveOn:updates:thenRead:)</a></code></h4>
+
+<p>This method returns a publisher that completes after database updates have been succesfully executed inside a database transaction, and values have been subsequently fetched:</p>
+<pre class="highlight swift"><code><span class="c1">// AnyPublisher&lt;Int, Error&gt;</span>
+<span class="k">let</span> <span class="nv">newPlayerCount</span> <span class="o">=</span> <span class="n">dbQueue</span><span class="o">.</span><span class="nf">writePublisher</span><span class="p">(</span>
+    <span class="nv">updates</span><span class="p">:</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span> <span class="k">try</span> <span class="nf">Player</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="nf">insert</span><span class="p">(</span><span class="n">db</span><span class="p">)</span> <span class="p">}</span>
+    <span class="nv">thenRead</span><span class="p">:</span> <span class="p">{</span> <span class="n">db</span><span class="p">,</span> <span class="n">_</span> <span class="k">in</span> <span class="k">try</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">fetchCount</span><span class="p">(</span><span class="n">db</span><span class="p">)</span> <span class="p">})</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>It publishes exactly the same values as <a href="#databasewriterwritepublisherreceiveonupdates"><code>writePublisher(receiveOn:updates:)</code></a>:</p>
+<pre class="highlight swift"><code><span class="c1">// AnyPublisher&lt;Int, Error&gt;</span>
+<span class="k">let</span> <span class="nv">newPlayerCount</span> <span class="o">=</span> <span class="n">dbQueue</span><span class="o">.</span><span class="nf">writePublisher</span> <span class="p">{</span> <span class="n">db</span> <span class="o">-&gt;</span> <span class="kt">Int</span> <span class="k">in</span>
+    <span class="k">try</span> <span class="nf">Player</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="nf">insert</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">try</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">fetchCount</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>The difference is that the last fetches are performed in the <code>thenRead</code> function. This function accepts two arguments: a readonly database connection, and the result of the <code>updates</code> function. This allows you to pass information from a function to the other (it is ignored in the sample code above).</p>
+
+<p>When you use a <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#database-pools">database pool</a>, this method applies a scheduling optimization: the <code>thenRead</code> function sees the database in the state left by the <code>updates</code> function, and yet does not block any concurrent writes. This can reduce database write contention. See <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#advanced-databasepool">Advanced DatabasePool</a> for more information.</p>
+
+<p>When you use a <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#database-queues">database queue</a>, the results are guaranteed to be identical, but no scheduling optimization is applied.</p>
+
+<p>This publisher can be subscribed from any thread. A new database access starts on every subscription.</p>
+
+<p>It completes on the main queue, unless you provide a specific <a href="https://developer.apple.com/documentation/combine/scheduler">scheduler</a> to the <code>receiveOn</code> argument.</p>
+<h1 id='database-observation' class='heading'>Database Observation</h1>
+
+<p><strong>GRDBCombine notifies changes that have been committed in the database.</strong> No insertion, update, or deletion in tracked tables is missed. This includes indirect changes triggered by <a href="https://www.sqlite.org/foreignkeys.html#fk_actions">foreign keys</a> or <a href="https://www.sqlite.org/lang_createtrigger.html">SQL triggers</a>.</p>
+
+<p>To function correctly, GRDBCombine requires that a unique <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#database-connections">database connection</a> is kept open during the whole duration of the observation.</p>
+
+<blockquote>
+<p>:point_up: <strong>Note</strong>: some special changes are not notified: changes to SQLite system tables (such as <code>sqlite_master</code>), and changes to <a href="https://www.sqlite.org/withoutrowid.html"><code>WITHOUT ROWID</code></a> tables. See <a href="https://www.sqlite.org/c3ref/update_hook.html">Data Change Notification Callbacks</a> for more information.</p>
+</blockquote>
+
+<p>To define which part of the database should be observed, you provide database requests. Requests can be expressed with GRDB&rsquo;s <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#requests">query interface</a>, as in <code>Player.all()</code>, or with SQL, as in <code>SELECT * FROM player</code>. Both would observe the full <q>player</q> database table. Observed requests can involve several database tables, and generally be as complex as you need them to be.</p>
+
+<p>GRDBCombine publishers are based on GRDB&rsquo;s <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation">ValueObservation</a> and <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#databaseregionobservation">DatabaseRegionObservation</a>. If your application needs change notifications that are not built in GRDBCombine, check the general <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#database-changes-observation">Database Changes Observation</a> chapter.</p>
+
+<ul>
+<li><a href="#valueobservationpublisherin"><code><a href="Extensions/ValueObservation.html#/s:4GRDB16ValueObservationV11GRDBCombineAA0B7ReducerRzlE9publisher2inAD18DatabasePublishersO0B0Vy_AJQzGAA0H6Reader_p_tF">ValueObservation.publisher(in:)</a></code></a></li>
+<li><a href="#databaseregionobservationpublisherin"><code><a href="Extensions/DatabaseRegionObservation.html#/s:4GRDB25DatabaseRegionObservationV11GRDBCombineE9publisher2inAD0B10PublishersO0bC0VAA0B6Writer_p_tF">DatabaseRegionObservation.publisher(in:)</a></code></a></li>
+</ul>
+<h4 id='code-valueobservation-publisher-in-code' class='heading'><code><a href="Extensions/ValueObservation.html#/s:4GRDB16ValueObservationV11GRDBCombineAA0B7ReducerRzlE9publisher2inAD18DatabasePublishersO0B0Vy_AJQzGAA0H6Reader_p_tF">ValueObservation.publisher(in:)</a></code></h4>
+
+<p>GRDB&rsquo;s <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation">ValueObservation</a> notifies fresh values whenever the database changes. You can turn it into a Combine publisher:</p>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">observation</span> <span class="o">=</span> <span class="kt">ValueObservation</span><span class="o">.</span><span class="nf">tracking</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span>
+    <span class="k">try</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">fetchAll</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// A publisher with output [Player] and failure Error</span>
+<span class="k">let</span> <span class="nv">publisher</span> <span class="o">=</span> <span class="n">observation</span><span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+</code></pre>
+
+<p>This publisher always publishes an initial value, and waits for database changes before publishing updated values. It only completes when a database error happens.</p>
+
+<p>All values are published on the main queue. Future GRDBCombine versions may lift this limitation.</p>
+
+<p>By default, all values are published asynchronously:</p>
+<pre class="highlight swift"><code><span class="c1">// The default behavior</span>
+<span class="k">let</span> <span class="nv">cancellable</span> <span class="o">=</span> <span class="n">publisher</span><span class="o">.</span><span class="nf">sink</span><span class="p">(</span>
+    <span class="nv">receiveCompletion</span><span class="p">:</span> <span class="p">{</span> <span class="n">completion</span> <span class="k">in</span> <span class="o">...</span> <span class="p">},</span>
+    <span class="nv">receiveValue</span><span class="p">:</span> <span class="p">{</span> <span class="p">(</span><span class="nv">players</span><span class="p">:</span> <span class="p">[</span><span class="kt">Player</span><span class="p">])</span> <span class="k">in</span>
+        <span class="nf">print</span><span class="p">(</span><span class="s">"Fresh players: </span><span class="se">\(</span><span class="n">players</span><span class="se">)</span><span class="s">"</span><span class="p">)</span>
+    <span class="p">})</span>
+<span class="c1">// &lt;- here "Fresh players" is not printed yet.</span>
+</code></pre>
+
+<p>You can force a synchronous fetch of the initial value with the <code>fetchOnSubscription()</code> method. Subscription must then happen from the main queue, or you will get a fatal error:</p>
+<pre class="highlight swift"><code><span class="c1">// Synchronous initial fetch</span>
+<span class="k">let</span> <span class="nv">cancellable</span> <span class="o">=</span> <span class="n">publisher</span><span class="o">.</span><span class="nf">fetchOnSubscription</span><span class="p">()</span><span class="o">.</span><span class="nf">sink</span><span class="p">(</span>
+    <span class="nv">receiveCompletion</span><span class="p">:</span> <span class="p">{</span> <span class="n">completion</span> <span class="k">in</span> <span class="o">...</span> <span class="p">},</span>
+    <span class="nv">receiveValue</span><span class="p">:</span> <span class="p">{</span> <span class="p">(</span><span class="nv">players</span><span class="p">:</span> <span class="p">[</span><span class="kt">Player</span><span class="p">])</span> <span class="k">in</span>
+        <span class="nf">print</span><span class="p">(</span><span class="s">"Fresh players: </span><span class="se">\(</span><span class="n">players</span><span class="se">)</span><span class="s">"</span><span class="p">)</span>
+    <span class="p">})</span>
+<span class="c1">// &lt;- here "Fresh players" has been printed.</span>
+</code></pre>
+
+<p>:warning: <strong>ValueObservation and Data Consistency</strong></p>
+
+<p>When you compose ValueObservation publishers together with the <a href="https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest">combineLatest</a> operator, you lose all guarantees of <a href="https://en.wikipedia.org/wiki/Consistency_(database_systems)">data consistency</a>.</p>
+<pre class="highlight swift"><code><span class="c1">// CAUTION: DATA CONSISTENCY NOT GUARANTEED</span>
+<span class="k">let</span> <span class="nv">team</span> <span class="o">=</span> <span class="kt">ValueObservation</span>
+    <span class="o">.</span><span class="nf">tracking</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span> <span class="k">try</span> <span class="kt">Team</span><span class="o">.</span><span class="nf">fetchOne</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="nv">key</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span> <span class="p">}</span>
+    <span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+<span class="k">let</span> <span class="nv">players</span> <span class="o">=</span> <span class="kt">ValueObservation</span>
+    <span class="o">.</span><span class="nf">tracking</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span> <span class="k">try</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="nv">teamId</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="nf">fetchAll</span><span class="p">(</span><span class="n">db</span><span class="p">)</span> <span class="p">}</span>
+    <span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+<span class="k">let</span> <span class="nv">publisher</span> <span class="o">=</span> <span class="n">team</span><span class="o">.</span><span class="nf">combineLatest</span><span class="p">(</span><span class="n">players</span><span class="p">)</span>
+</code></pre>
+
+<p>Instead, compose requests or value observations together <strong>before</strong> building a <strong>single</strong> publisher.</p>
+
+<p>For example, fetch all requested values in a single observation:</p>
+<pre class="highlight swift"><code><span class="c1">// DATA CONSISTENCY GUARANTEED</span>
+<span class="c1">// A publisher with output (Team?, [Player]) and failure Error</span>
+<span class="k">let</span> <span class="nv">publisher</span> <span class="o">=</span> <span class="kt">ValueObservation</span>
+    <span class="o">.</span><span class="nf">tracking</span> <span class="p">{</span> <span class="n">db</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="kt">Team</span><span class="p">?,</span> <span class="p">[</span><span class="kt">Player</span><span class="p">])</span> <span class="k">in</span>
+        <span class="k">let</span> <span class="nv">team</span> <span class="o">=</span> <span class="k">try</span> <span class="kt">Team</span><span class="o">.</span><span class="nf">fetchOne</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="nv">key</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">let</span> <span class="nv">players</span> <span class="o">=</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="nv">teamId</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="nf">fetchAll</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+        <span class="nf">return</span> <span class="p">(</span><span class="n">team</span><span class="p">,</span> <span class="n">players</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+</code></pre>
+
+<p>Or use <a href="https://github.com/groue/GRDB.swift/blob/master/Documentation/AssociationsBasics.md">Associations</a>:</p>
+<pre class="highlight swift"><code><span class="c1">// DATA CONSISTENCY GUARANTEED</span>
+<span class="kd">struct</span> <span class="kt">TeamInfo</span><span class="p">:</span> <span class="kt">FetchableRecord</span><span class="p">,</span> <span class="nf">Decodable</span> <span class="p">{</span>
+    <span class="k">var</span> <span class="nv">team</span><span class="p">:</span> <span class="kt">Team</span>
+    <span class="k">var</span> <span class="nv">players</span><span class="p">:</span> <span class="p">[</span><span class="kt">Player</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="k">let</span> <span class="nv">request</span> <span class="o">=</span> <span class="kt">Team</span>
+    <span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="nv">key</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="o">.</span><span class="nf">including</span><span class="p">(</span><span class="nv">all</span><span class="p">:</span> <span class="kt">Team</span><span class="o">.</span><span class="n">players</span><span class="p">)</span>
+    <span class="o">.</span><span class="nf">asRequest</span><span class="p">(</span><span class="nv">of</span><span class="p">:</span> <span class="kt">TeamInfo</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
+
+<span class="c1">// A publisher with output TeamInfo? and failure Error</span>
+<span class="k">let</span> <span class="nv">publisher</span> <span class="o">=</span> <span class="kt">ValueObservation</span>
+    <span class="o">.</span><span class="nf">tracking</span><span class="p">(</span><span class="nv">value</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">fetchOne</span><span class="p">)</span>
+    <span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+</code></pre>
+
+<p>Or combine observations together:</p>
+<pre class="highlight swift"><code><span class="c1">// DATA CONSISTENCY GUARANTEED</span>
+<span class="k">let</span> <span class="nv">team</span> <span class="o">=</span> <span class="kt">ValueObservation</span>
+    <span class="o">.</span><span class="nf">tracking</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span> <span class="k">try</span> <span class="kt">Team</span><span class="o">.</span><span class="nf">fetchOne</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="nv">key</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span> <span class="p">}</span>
+<span class="k">let</span> <span class="nv">players</span> <span class="o">=</span> <span class="kt">ValueObservation</span>
+    <span class="o">.</span><span class="nf">tracking</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span> <span class="k">try</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="nv">teamId</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="nf">fetchAll</span><span class="p">(</span><span class="n">db</span><span class="p">)</span> <span class="p">}</span>
+<span class="k">let</span> <span class="nv">observation</span> <span class="o">=</span> <span class="kt">ValueObservation</span><span class="o">.</span><span class="nf">combine</span><span class="p">(</span><span class="n">team</span><span class="p">,</span> <span class="n">players</span><span class="p">)</span>
+
+<span class="c1">// A publisher with output (Team?, [Player]) and failure Error</span>
+<span class="k">let</span> <span class="nv">publisher</span> <span class="o">=</span> <span class="n">observation</span><span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+</code></pre>
+
+<p>See <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation">ValueObservation</a> and <a href="https://github.com/groue/GRDB.swift/blob/master/Documentation/AssociationsBasics.md">Associations</a> for more information.</p>
+<h4 id='code-databaseregionobservation-publisher-in-code' class='heading'><code><a href="Extensions/DatabaseRegionObservation.html#/s:4GRDB25DatabaseRegionObservationV11GRDBCombineE9publisher2inAD0B10PublishersO0bC0VAA0B6Writer_p_tF">DatabaseRegionObservation.publisher(in:)</a></code></h4>
+
+<p>GRDB&rsquo;s <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#databaseregionobservation">DatabaseRegionObservation</a> notifies all transactions that impact a tracked database region. You can turn it into a Combine publisher:</p>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">request</span> <span class="o">=</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">all</span><span class="p">()</span>
+<span class="k">let</span> <span class="nv">observation</span> <span class="o">=</span> <span class="kt">DatabaseRegionObservation</span><span class="o">.</span><span class="nf">tracking</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+<span class="c1">// A publisher with output Database and failure Error</span>
+<span class="k">let</span> <span class="nv">publisher</span> <span class="o">=</span> <span class="n">observation</span><span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+</code></pre>
+
+<p>This publisher can be created and subscribed from any thread. It delivers database connections in a <q>protected dispatch queue</q>, serialized with all database updates. It only completes when a database error happens.</p>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">request</span> <span class="o">=</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">all</span><span class="p">()</span>
+<span class="k">let</span> <span class="nv">cancellable</span> <span class="o">=</span> <span class="kt">DatabaseRegionObservation</span>
+    <span class="o">.</span><span class="nf">tracking</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    <span class="o">.</span><span class="nf">publisher</span><span class="p">(</span><span class="nv">in</span><span class="p">:</span> <span class="n">dbQueue</span><span class="p">)</span>
+    <span class="o">.</span><span class="nf">sink</span><span class="p">(</span>
+        <span class="nv">receiveCompletion</span><span class="p">:</span> <span class="p">{</span> <span class="n">completion</span> <span class="k">in</span> <span class="o">...</span> <span class="p">},</span>
+        <span class="nv">receiveValue</span><span class="p">:</span> <span class="p">{</span> <span class="p">(</span><span class="nv">db</span><span class="p">:</span> <span class="kt">Database</span><span class="p">)</span> <span class="k">in</span>
+            <span class="nf">print</span><span class="p">(</span><span class="s">"Players have changed."</span><span class="p">)</span>
+        <span class="p">})</span>
+
+<span class="k">try</span> <span class="n">dbQueue</span><span class="o">.</span><span class="nf">write</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span>
+    <span class="k">try</span> <span class="nf">Player</span><span class="p">(</span><span class="nv">name</span><span class="p">:</span> <span class="s">"Arthur"</span><span class="p">)</span><span class="o">.</span><span class="nf">insert</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+    <span class="k">try</span> <span class="nf">Player</span><span class="p">(</span><span class="nv">name</span><span class="p">:</span> <span class="s">"Barbara"</span><span class="p">)</span><span class="o">.</span><span class="nf">insert</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="p">}</span> 
+<span class="c1">// Prints "Players have changed."</span>
+
+<span class="k">try</span> <span class="n">dbQueue</span><span class="o">.</span><span class="nf">write</span> <span class="p">{</span> <span class="n">db</span> <span class="k">in</span>
+    <span class="k">try</span> <span class="kt">Player</span><span class="o">.</span><span class="nf">deleteAll</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="c1">// Prints "Players have changed."</span>
+</code></pre>
+
+<p>See <a href="https://github.com/groue/GRDB.swift/blob/master/README.md#databaseregionobservation">DatabaseRegionObservation</a> for more information.</p>
+
+          </section>
+        </section>
+        <section id="footer">
+          <p>&copy; 2019 <a class="link" href="https://github.com/groue" target="_blank" rel="external">Gwendal Roué</a>. All rights reserved. (Last updated: 2019-10-27)</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.11.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+        </section>
+      </article>
+    </div>
+  </body>
+</div>
+</html>
