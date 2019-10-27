@@ -267,48 +267,36 @@ let cancellable = publisher.fetchOnSubscription().sink(
 When you compose ValueObservation publishers together with the [combineLatest](https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest) operator, you lose all guarantees of [data consistency](https://en.wikipedia.org/wiki/Consistency_(database_systems)).
 
 ```swift
-// CAUTION: DATA CONSISTENCY NOT GUARANTEED
-let team = ValueObservation
-    .tracking { db in try Team.fetchOne(db, key: 1) }
-    .publisher(in: dbQueue)
-let players = ValueObservation
-    .tracking { db in try Player.filter(teamId: 1).fetchAll(db) }
-    .publisher(in: dbQueue)
-let publisher = team.combineLatest(players)
-```
-
-Instead, compose requests or value observations together **before** building a **single** publisher.
-
-For example, fetch all requested values in a single observation:
-
-```swift
-// DATA CONSISTENCY GUARANTEED
-// A publisher with output (Team?, [Player]) and failure Error
-let publisher = ValueObservation
-    .tracking { db -> (Team?, [Player]) in
-        let team = try Team.fetchOne(db, key: 1)
-        let players = Player.filter(teamId: 1).fetchAll(db)
-        return (team, players)
-    }
-    .publisher(in: dbQueue)
-```
-
-Or use [Associations]:
-
-```swift
-// DATA CONSISTENCY GUARANTEED
-struct TeamInfo: FetchableRecord, Decodable {
-    var team: Team
-    var players: [Player]
+// Let's observe the Hall of Fame
+struct HallOfFame {
+    var playerCount: Int      // Total number of players
+    var bestPlayers: [Player] // The best ones
 }
-let request = Team
-    .filter(key: 1)
-    .including(all: Team.players)
-    .asRequest(of: TeamInfo.self)
 
-// A publisher with output TeamInfo? and failure Error
-let publisher = ValueObservation
-    .tracking(value: request.fetchOne)
+// CAUTION: DATA CONSISTENCY NOT GUARANTEED
+let playerCountPublisher = ValueObservation
+    .tracking(value: Player.fetchCount)
+    .publisher(in: dbQueue)
+let bestPlayersPublisher = ValueObservation
+    .tracking(value: Player.limit(10).orderedByScore().fetchAll)
+    .publisher(in: dbQueue)
+let hallOfFamePublisher = playerCountPublisher
+    .combineLatest(bestPlayersPublisher)
+    .map(HallOfFame.init(playerCount:bestPlayers:)
+```
+
+Instead, compose requests or value observations together before building one **single** value publisher.
+
+For example, fetch all requested values in a single observation (this is the technique used in the [Demo Application]):
+
+```swift
+// DATA CONSISTENCY GUARANTEED
+let hallOfFamePublisher = ValueObservation
+    .tracking { db -> HallOfFame in
+        let playerCount = try Player.fetchCount(db)
+        let bestPlayers = try Player.limit(10).orderedByScore().fetchAll(db)
+        return HallOfFame(playerCount:playerCount, bestPlayers:bestPlayers)
+    }
     .publisher(in: dbQueue)
 ```
 
@@ -316,17 +304,18 @@ Or combine observations together:
 
 ```swift
 // DATA CONSISTENCY GUARANTEED
-let team = ValueObservation
-    .tracking { db in try Team.fetchOne(db, key: 1) }
-let players = ValueObservation
-    .tracking { db in try Player.filter(teamId: 1).fetchAll(db) }
-let observation = ValueObservation.combine(team, players)
-
-// A publisher with output (Team?, [Player]) and failure Error
-let publisher = observation.publisher(in: dbQueue)
+let playerCountObservation = ValueObservation
+    .tracking(value: Player.fetchCount)
+let bestPlayersObservation = ValueObservation
+    .tracking(value: Player.limit(10).orderedByScore().fetchAll)
+let hallOfFameObservation = ValueObservation.combine(
+    playerCountObservation,
+    bestPlayersObservation)
+    .map(HallOfFame.init(playerCount:bestPlayers:))
+let hallOfFamePublisher = hallOfFameObservation.publisher(in: dbQueue)
 ```
 
-See [ValueObservation] and [Associations] for more information.
+See [ValueObservation] for more information.
 
 
 #### `DatabaseRegionObservation.publisher(in:)`
