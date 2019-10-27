@@ -260,6 +260,8 @@ let cancellable = publisher.fetchOnSubscription().sink(
 // <- here "Fresh players" has been printed.
 ```
 
+> :point_up: **Note**: ValueObservation has a [scheduling](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservationscheduling) property that controls how fresh values are scheduled. This property is superseded by the Combine publisher.
+
 :warning: **ValueObservation and Data Consistency**
 
 When you compose ValueObservation publishers together with the [combineLatest](https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest) operator, you lose all guarantees of [data consistency](https://en.wikipedia.org/wiki/Consistency_(database_systems)).
