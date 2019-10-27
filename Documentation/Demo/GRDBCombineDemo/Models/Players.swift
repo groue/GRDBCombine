@@ -80,11 +80,4 @@ struct Players {
             })
             .publisher(in: database)
     }
-    
-    /// A publisher that tracks changes in the number of players
-    func playerCountPublisher() -> DatabasePublishers.Value<Int> {
-        ValueObservation
-            .tracking(value: Player.fetchCount)
-            .publisher(in: database)
-    }
 }
