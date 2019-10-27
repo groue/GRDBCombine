@@ -36,63 +36,71 @@ extension DatabasePublishers {
             let subscription = DatabaseRegionSubscription(
                 writer: writer,
                 observation: observation,
-                receiveCompletion: subscriber.receive(completion:),
-                receive: subscriber.receive(_:))
+                downstream: subscriber)
             subscriber.receive(subscription: subscription)
         }
     }
     
-    private class DatabaseRegionSubscription: Subscription {
+    private class DatabaseRegionSubscription<Downstream: Subscriber>: Subscription
+        where Downstream.Failure == Error, Downstream.Input == Database
+    {
+        private struct WaitingForDemand {
+            let downstream: Downstream
+            let writer: DatabaseWriter
+            let observation: DatabaseRegionObservation
+        }
+        
+        private struct Observing {
+            let downstream: Downstream
+            let observer: TransactionObserver
+            var remainingDemand: Subscribers.Demand
+        }
+        
         private enum State {
             // Waiting for demand, not observing the database.
-            case waitingForDemand
+            case waitingForDemand(WaitingForDemand)
             
-            // Observing the database. Self.observer is not nil.
-            // Demand is the remaining demand.
-            case observing(Subscribers.Demand)
+            // Observing the database.
+            case observing(Observing)
             
             // Completed or cancelled, not observing the database.
             case finished
         }
         
-        private let writer: DatabaseWriter
-        private let observation: DatabaseRegionObservation
-        private let _receiveCompletion: (Subscribers.Completion<Error>) -> Void
-        private let _receive: (Database) -> Subscribers.Demand
-        private var observer: TransactionObserver?
-        private var state: State = .waitingForDemand
+        private var state: State
         private var lock = NSRecursiveLock() // Allow re-entrancy
         
         init(
             writer: DatabaseWriter,
             observation: DatabaseRegionObservation,
-            receiveCompletion: @escaping (Subscribers.Completion<Error>) -> Void,
-            receive: @escaping (Database) -> Subscribers.Demand)
+            downstream: Downstream)
         {
-            self.writer = writer
-            self.observation = observation
-            self._receiveCompletion = receiveCompletion
-            self._receive = receive
+            self.state = .waitingForDemand(WaitingForDemand(
+                downstream: downstream,
+                writer: writer,
+                observation: observation))
         }
         
         func request(_ demand: Subscribers.Demand) {
             lock.synchronized {
                 switch state {
-                case .waitingForDemand:
+                case let .waitingForDemand(info):
                     guard demand > 0 else {
                         return
                     }
-                    state = .observing(demand)
                     do {
-                        observer = try observation.start(
-                            in: writer,
-                            onChange: { [unowned self] in self.receive($0) })
+                        let observer = try info.observation.start(
+                            in: info.writer,
+                            onChange: { [weak self] in self?.receive($0) })
+                        state = .observing(Observing(downstream: info.downstream, observer: observer, remainingDemand: demand))
                     } catch {
-                        receiveCompletion(.failure(error))
+                        state = .finished
+                        info.downstream.receive(completion: .failure(error))
                     }
                     
-                case let .observing(currentDemand):
-                    state = .observing(currentDemand + demand)
+                case var .observing(info):
+                    info.remainingDemand += demand
+                    state = .observing(info)
                     
                 case .finished:
                     break
@@ -102,40 +110,22 @@ extension DatabasePublishers {
         
         func cancel() {
             lock.synchronized {
-                observer = nil
                 state = .finished
             }
         }
         
         private func receive(_ value: Database) {
             lock.synchronized {
-                guard case .observing = state else {
-                    return
-                }
-                
-                let additionalDemand = _receive(value)
-                
-                if case let .observing(demand) = state {
-                    let newDemand = demand + additionalDemand - 1
-                    if newDemand == .none {
-                        observer = nil
-                        state = .waitingForDemand
-                    } else {
-                        state = .observing(newDemand)
+                if case let .observing(info) = state,
+                    info.remainingDemand > .none
+                {
+                    let additionalDemand = info.downstream.receive(value)
+                    if case var .observing(info) = state {
+                        info.remainingDemand += additionalDemand
+                        info.remainingDemand -= 1
+                        state = .observing(info)
                     }
                 }
-            }
-        }
-        
-        private func receiveCompletion(_ completion: Subscribers.Completion<Error>) {
-            lock.synchronized {
-                guard case .observing = state else {
-                    return
-                }
-                
-                observer = nil
-                state = .finished
-                _receiveCompletion(completion)
             }
         }
     }
