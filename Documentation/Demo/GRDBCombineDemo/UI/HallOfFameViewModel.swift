@@ -11,7 +11,7 @@ class HallOfFameViewModel {
             // Perform a synchronous initial fetch
             .fetchOnSubscription()
             // Ignore database errors
-            .replaceError(with: Players.HallOfFame.empty)
+            .catch { _ in Empty() }
             .sink { [unowned self] in self.hallOfFame = $0 }
             .store(in: &cancellables)
     }
