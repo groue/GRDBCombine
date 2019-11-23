@@ -15,7 +15,8 @@ let package = Package(
         .library(name: "GRDBCombine", targets: ["GRDBCombine"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/groue/GRDB.swift.git", .upToNextMajor(from: "4.1.0"))
+        .package(url: "https://github.com/groue/GRDB.swift.git", .upToNextMajor(from: "4.1.0")),
+        .package(url: "https://github.com/groue/CombineExpectations.git", .exact("0.1.0"))
     ],
     targets: [
         .target(
@@ -23,7 +24,7 @@ let package = Package(
             dependencies: ["GRDB"]),
         .testTarget(
             name: "GRDBCombineTests",
-            dependencies: ["GRDBCombine", "GRDB"])
+            dependencies: ["GRDBCombine", "GRDB", "CombineExpectations"])
     ],
     swiftLanguageVersions: [.v5]
 )
