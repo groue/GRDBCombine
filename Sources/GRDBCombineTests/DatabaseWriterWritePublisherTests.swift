@@ -1,5 +1,6 @@
-import GRDB
 import Combine
+import CombineExpectations
+import GRDB
 import GRDBCombine
 import XCTest
 
@@ -27,26 +28,13 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter) {
+        func test(writer: DatabaseWriter) throws {
             try XCTAssertEqual(writer.read(Player.fetchCount), 0)
-            let expectation = self.expectation(description: "")
-            expectation.expectedFulfillmentCount = 2 // value + completion
-            let testCancellable = writer
-                .writePublisher(updates: { db in
-                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-                })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                        expectation.fulfill()
-                },
-                    receiveValue: { _ in
-                        expectation.fulfill()
-                })
-            
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
-            
+            let publisher = writer.writePublisher(updates: { db in
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+            })
+            let recorder = publisher.record()
+            try wait(for: recorder.single, timeout: 1)
             try XCTAssertEqual(writer.read(Player.fetchCount), 1)
         }
         
@@ -64,26 +52,14 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter) {
-            var count: Int?
-            let expectation = self.expectation(description: "")
-            let testCancellable = writer
-                .writePublisher(updates: { db -> Int in
-                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
-                    return try Player.fetchCount(db)
-                })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                        expectation.fulfill()
-                },
-                    receiveValue: {
-                        count = $0
-                })
-            
-            waitForExpectations(timeout: 1, handler: nil)
+        func test(writer: DatabaseWriter) throws {
+            let publisher = writer.writePublisher(updates: { db -> Int in
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                return try Player.fetchCount(db)
+            })
+            let recorder = publisher.record()
+            let count = try wait(for: recorder.single, timeout: 1)
             XCTAssertEqual(count, 1)
-            testCancellable.cancel()
         }
         
         try Test(test)
@@ -95,24 +71,17 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     // MARK: -
     
     func testWritePublisherError() throws {
-        func test(writer: DatabaseWriter) {
-            let expectation = self.expectation(description: "")
-            let testCancellable = writer
-                .writePublisher(updates: { db in
-                    try db.execute(sql: "THIS IS NOT SQL")
-                })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertFailure(completion) { (error: DatabaseError) in
-                            XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
-                            XCTAssertEqual(error.sql, "THIS IS NOT SQL")
-                        }
-                        expectation.fulfill()
-                },
-                    receiveValue: { _ in })
-            
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+        func test(writer: DatabaseWriter) throws {
+            let publisher = writer.writePublisher(updates: { db in
+                try db.execute(sql: "THIS IS NOT SQL")
+            })
+            let recorder = publisher.record()
+            let recording = try wait(for: recorder.recording, timeout: 1)
+            XCTAssertTrue(recording.output.isEmpty)
+            assertFailure(recording.completion) { (error: DatabaseError) in
+                XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+            }
         }
         
         try Test(test)
@@ -202,25 +171,14 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             return writer
         }
         
-        func test(writer: DatabaseWriter) {
-            var count: Int?
-            let expectation = self.expectation(description: "")
-            let testCancellable = writer
+        func test(writer: DatabaseWriter) throws {
+            let publisher = writer
                 .writePublisher(
                     updates: { db in try Player(id: 1, name: "Arthur", score: 1000).insert(db) },
                     thenRead: { db, _ in try Player.fetchCount(db) })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                        expectation.fulfill()
-                },
-                    receiveValue: {
-                        count = $0
-                })
-            
-            waitForExpectations(timeout: 1, handler: nil)
+            let recorder = publisher.record()
+            let count = try wait(for: recorder.single, timeout: 1)
             XCTAssertEqual(count, 1)
-            testCancellable.cancel()
         }
         
         try Test(test)
@@ -232,24 +190,17 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     // MARK: -
     
     func testWriteThenReadPublisherWriteError() throws {
-        func test(writer: DatabaseWriter) {
-            let expectation = self.expectation(description: "")
-            let testCancellable = writer
-                .writePublisher(
-                    updates: { db in try db.execute(sql: "THIS IS NOT SQL") },
-                    thenRead: { _, _ in XCTFail("Should not read") })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertFailure(completion) { (error: DatabaseError) in
-                            XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
-                            XCTAssertEqual(error.sql, "THIS IS NOT SQL")
-                        }
-                        expectation.fulfill()
-                },
-                    receiveValue: { _ in })
-            
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+        func test(writer: DatabaseWriter) throws {
+            let publisher = writer.writePublisher(
+                updates: { db in try db.execute(sql: "THIS IS NOT SQL") },
+                thenRead: { _, _ in XCTFail("Should not read") })
+            let recorder = publisher.record()
+            let recording = try wait(for: recorder.recording, timeout: 1)
+            XCTAssertTrue(recording.output.isEmpty)
+            assertFailure(recording.completion) { (error: DatabaseError) in
+                XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+            }
         }
         
         try Test(test)
@@ -263,24 +214,17 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     // TODO: Fix flaky test with both pool and on-disk queue:
     // - Expectation timeout
     func testWriteThenReadPublisherReadError() throws {
-        func test(writer: DatabaseWriter) {
-            let expectation = self.expectation(description: "")
-            let testCancellable = writer
-                .writePublisher(
-                    updates: { _ in },
-                    thenRead: { db, _ in try Row.fetchAll(db, sql: "THIS IS NOT SQL") })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertFailure(completion) { (error: DatabaseError) in
-                            XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
-                            XCTAssertEqual(error.sql, "THIS IS NOT SQL")
-                        }
-                        expectation.fulfill()
-                },
-                    receiveValue: { _ in })
-            
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+        func test(writer: DatabaseWriter) throws {
+            let publisher = writer.writePublisher(
+                updates: { _ in },
+                thenRead: { db, _ in try Row.fetchAll(db, sql: "THIS IS NOT SQL") })
+            let recorder = publisher.record()
+            let recording = try wait(for: recorder.recording, timeout: 1)
+            XCTAssertTrue(recording.output.isEmpty)
+            assertFailure(recording.completion) { (error: DatabaseError) in
+                XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+            }
         }
         
         try Test(test)
