@@ -30,6 +30,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         func test(writer: DatabaseWriter) {
             try XCTAssertEqual(writer.read(Player.fetchCount), 0)
             let expectation = self.expectation(description: "")
+            expectation.expectedFulfillmentCount = 2 // value + completion
             let testCancellable = writer
                 .writePublisher(updates: { db in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -39,7 +40,9 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                         assertNoFailure(completion)
                         expectation.fulfill()
                 },
-                    receiveValue: { _ in })
+                    receiveValue: { _ in
+                        expectation.fulfill()
+                })
             
             waitForExpectations(timeout: 1, handler: nil)
             testCancellable.cancel()
@@ -128,6 +131,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) {
             let expectation = self.expectation(description: "")
+            expectation.expectedFulfillmentCount = 2 // value + completion
             let testCancellable = writer
                 .writePublisher(updates: { db in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -139,6 +143,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 },
                     receiveValue: { _ in
                         dispatchPrecondition(condition: .onQueue(.main))
+                        expectation.fulfill()
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
@@ -162,6 +167,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         func test(writer: DatabaseWriter) {
             let queue = DispatchQueue(label: "test")
             let expectation = self.expectation(description: "")
+            expectation.expectedFulfillmentCount = 2 // value + completion
             let testCancellable = writer
                 .writePublisher(receiveOn: queue, updates: { db in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -173,6 +179,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 },
                     receiveValue: { _ in
                         dispatchPrecondition(condition: .onQueue(queue))
+                        expectation.fulfill()
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
