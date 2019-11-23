@@ -1,5 +1,6 @@
-import GRDB
 import Combine
+import CombineExpectations
+import GRDB
 import GRDBCombine
 import XCTest
 
@@ -26,23 +27,10 @@ class ValueObservationPublisherTests : XCTestCase {
         }
         
         func test(writer: DatabaseWriter) throws {
-            let expectation = self.expectation(description: "")
-            let testSubject = PassthroughSubject<Int, Error>()
-            let testCancellable = testSubject
-                .collect(3)
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                },
-                    receiveValue: { value in
-                        XCTAssertEqual(value, [0, 1, 3])
-                        expectation.fulfill()
-                })
-            
-            let observationCancellable = Player
+            let publisher = Player
                 .observationForCount()
                 .publisher(in: writer as DatabaseReader)
-                .subscribe(testSubject)
+            let recorder = publisher.record()
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -54,9 +42,8 @@ class ValueObservationPublisherTests : XCTestCase {
                 }
             }
             
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
-            observationCancellable.cancel()
+            let elements = try wait(for: recorder.prefix(3), timeout: 1)
+            XCTAssertEqual(elements, [0, 1, 3])
         }
         
         try Test(test)
@@ -154,24 +141,11 @@ class ValueObservationPublisherTests : XCTestCase {
         }
         
         func test(writer: DatabaseWriter) throws {
-            let expectation = self.expectation(description: "")
-            let testSubject = PassthroughSubject<Int, Error>()
-            let testCancellable = testSubject
-                .collect(3)
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                },
-                    receiveValue: { value in
-                        XCTAssertEqual(value, [0, 1, 3])
-                        expectation.fulfill()
-                })
-            
-            let observationCancellable = Player
+            let publisher = Player
                 .observationForCount()
                 .publisher(in: writer as DatabaseReader)
                 .fetchOnSubscription()
-                .subscribe(testSubject)
+            let recorder = publisher.record()
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -183,9 +157,8 @@ class ValueObservationPublisherTests : XCTestCase {
                 }
             }
             
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
-            observationCancellable.cancel()
+            let elements = try wait(for: recorder.prefix(3), timeout: 1)
+            XCTAssertEqual(elements, [0, 1, 3])
         }
         
         try Test(test)

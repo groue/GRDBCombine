@@ -1,3 +1,5 @@
+import Combine
+import CombineExpectations
 import GRDB
 import GRDBCombine
 import XCTest
@@ -26,25 +28,13 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
             return writer
         }
         
-        func test(reader: DatabaseReader) {
-            var value: Int?
-            let expectation = self.expectation(description: "")
-            let testCancellable = reader
-                .readPublisher(value: { db in
-                    try Player.fetchCount(db)
-                })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                        expectation.fulfill()
-                },
-                    receiveValue: {
-                        value = $0
-                })
-            
-            waitForExpectations(timeout: 1, handler: nil)
+        func test(reader: DatabaseReader) throws {
+            let publisher = reader.readPublisher(value: { db in
+                try Player.fetchCount(db)
+            })
+            let recorder = publisher.record()
+            let value = try wait(for: recorder.single, timeout: 1)
             XCTAssertEqual(value, 0)
-            testCancellable.cancel()
         }
         
         try Test(test)
@@ -58,23 +48,16 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     
     func testReadPublisherError() throws {
         func test(reader: DatabaseReader) throws {
-            let expectation = self.expectation(description: "")
-            let testCancellable = reader
-                .readPublisher(value: { db in
-                    try Row.fetchAll(db, sql: "THIS IS NOT SQL")
-                })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertFailure(completion) { (error: DatabaseError) in
-                            XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
-                            XCTAssertEqual(error.sql, "THIS IS NOT SQL")
-                        }
-                        expectation.fulfill()
-                },
-                    receiveValue: { _ in })
-            
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+            let publisher = reader.readPublisher(value: { db in
+                try Row.fetchAll(db, sql: "THIS IS NOT SQL")
+            })
+            let recorder = publisher.record()
+            let recording = try wait(for: recorder.recording, timeout: 1)
+            XCTAssertTrue(recording.output.isEmpty)
+            assertFailure(recording.completion) { (error: DatabaseError) in
+                XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+            }
         }
         
         try Test(test)
@@ -157,22 +140,15 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     
     func testReadPublisherIsReadonly() throws {
         func test(reader: DatabaseReader) throws {
-            let expectation = self.expectation(description: "")
-            let testCancellable = reader
-                .readPublisher(value: { db in
-                    try Player.createTable(db)
-                })
-                .sink(
-                    receiveCompletion: { completion in
-                        assertFailure(completion) { (error: DatabaseError) in
-                            XCTAssertEqual(error.resultCode, .SQLITE_READONLY)
-                        }
-                        expectation.fulfill()
-                },
-                    receiveValue: { _ in })
-            
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+            let publisher = reader.readPublisher(value: { db in
+                try Player.createTable(db)
+            })
+            let recorder = publisher.record()
+            let recording = try wait(for: recorder.recording, timeout: 1)
+            XCTAssertTrue(recording.output.isEmpty)
+            assertFailure(recording.completion) { (error: DatabaseError) in
+                XCTAssertEqual(error.resultCode, .SQLITE_READONLY)
+            }
         }
         
         try Test(test)

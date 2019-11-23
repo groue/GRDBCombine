@@ -1,5 +1,6 @@
-import GRDB
 import Combine
+import CombineExpectations
+import GRDB
 import GRDBCombine
 import XCTest
 
@@ -26,24 +27,10 @@ class DatabaseRegionObservationPublisherTests : XCTestCase {
         }
         
         func test(writer: DatabaseWriter) throws {
-            let expectation = self.expectation(description: "")
-            let testSubject = PassthroughSubject<Database, Error>()
-            let testCancellable = testSubject
-                .tryMap(Player.fetchCount)
-                .collect(2)
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                },
-                    receiveValue: { value in
-                        XCTAssertEqual(value, [1, 3])
-                        expectation.fulfill()
-                })
-            
-            
-            let observationCancellable = DatabaseRegionObservation(tracking: Player.all())
+            let publisher = DatabaseRegionObservation(tracking: Player.all())
                 .publisher(in: writer)
-                .subscribe(testSubject)
+                .tryMap(Player.fetchCount)
+            let recorder = publisher.record()
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -55,9 +42,8 @@ class DatabaseRegionObservationPublisherTests : XCTestCase {
                 }
             }
             
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
-            observationCancellable.cancel()
+            let elements = try wait(for: recorder.prefix(2), timeout: 1)
+            XCTAssertEqual(elements, [1, 3])
         }
         
         try Test(test)
