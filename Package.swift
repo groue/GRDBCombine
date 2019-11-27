@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", .upToNextMajor(from: "4.1.0")),
-        .package(url: "https://github.com/groue/CombineExpectations.git", from: "0.2.0")
+        .package(url: "https://github.com/groue/CombineExpectations.git", from: "0.3.0")
     ],
     targets: [
         .target(

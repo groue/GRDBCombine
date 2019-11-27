@@ -42,7 +42,7 @@ class DatabaseRegionObservationPublisherTests : XCTestCase {
                 }
             }
             
-            let elements = try wait(for: recorder.prefix(2), timeout: 1)
+            let elements = try wait(for: recorder.next(2), timeout: 1)
             XCTAssertEqual(elements, [1, 3])
         }
         

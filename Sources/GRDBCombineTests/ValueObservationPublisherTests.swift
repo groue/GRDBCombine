@@ -42,7 +42,7 @@ class ValueObservationPublisherTests : XCTestCase {
                 }
             }
             
-            let elements = try wait(for: recorder.prefix(3), timeout: 1)
+            let elements = try wait(for: recorder.next(3), timeout: 1)
             XCTAssertEqual(elements, [0, 1, 3])
         }
         
@@ -157,7 +157,7 @@ class ValueObservationPublisherTests : XCTestCase {
                 }
             }
             
-            let elements = try wait(for: recorder.prefix(3), timeout: 1)
+            let elements = try wait(for: recorder.next(3), timeout: 1)
             XCTAssertEqual(elements, [0, 1, 3])
         }
         
