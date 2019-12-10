@@ -90,6 +90,34 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
     }
     
+    func testWritePublisherErrorRollbacksTransaction() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter) throws {
+            let publisher = writer.writePublisher(updates: { db in
+                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                try db.execute(sql: "THIS IS NOT SQL")
+            })
+            let recorder = publisher.record()
+            let recording = try wait(for: recorder.recording, timeout: 1)
+            XCTAssertTrue(recording.output.isEmpty)
+            assertFailure(recording.completion) { (error: DatabaseError) in
+                XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+            }
+            let count = try writer.read(Player.fetchCount)
+            XCTAssertEqual(count, 0)
+        }
+        
+        try Test(test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+
     // MARK: -
     
     func testWritePublisherDefaultScheduler() throws {
@@ -207,6 +235,36 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             .run { DatabaseQueue() }
             .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
             .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
+    }
+    
+    func testWriteThenReadPublisherWriteErrorRollbacksTransaction() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter) throws {
+            let publisher = writer.writePublisher(
+                updates: { db in
+                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                    try db.execute(sql: "THIS IS NOT SQL")
+            },
+                thenRead: { _, _ in XCTFail("Should not read") })
+            let recorder = publisher.record()
+            let recording = try wait(for: recorder.recording, timeout: 1)
+            XCTAssertTrue(recording.output.isEmpty)
+            assertFailure(recording.completion) { (error: DatabaseError) in
+                XCTAssertEqual(error.resultCode, .SQLITE_ERROR)
+                XCTAssertEqual(error.sql, "THIS IS NOT SQL")
+            }
+            let count = try writer.read(Player.fetchCount)
+            XCTAssertEqual(count, 0)
+        }
+        
+        try Test(test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
     // MARK: -
