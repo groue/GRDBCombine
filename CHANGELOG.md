@@ -15,6 +15,10 @@ All notable changes to this project will be documented in this file.
 - [0.1.0](#010)
 
 
+## Next Release
+
+- [#27](https://github.com/groue/GRDBCombine/pull/27) by [@groue](http://github.com/groue): Fix error handling of asynchronous writes
+
 ## 0.7.0
 
 Released October 27, 2019
