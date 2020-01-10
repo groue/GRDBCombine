@@ -148,7 +148,7 @@ The fetched value is published on the main queue, unless you provide a specific 
 
 #### `DatabaseWriter.writePublisher(receiveOn:updates:)`
 
-This method returns a publisher that completes after database updates have been succesfully executed inside a database transaction.
+This method returns a publisher that completes after database updates have been successfully executed inside a database transaction.
 
 ```swift
 // AnyPublisher<Void, Error>
@@ -172,7 +172,7 @@ When you use a [database pool], and your app executes some database updates foll
 
 #### `DatabaseWriter.writePublisher(receiveOn:updates:thenRead:)`
 
-This method returns a publisher that completes after database updates have been succesfully executed inside a database transaction, and values have been subsequently fetched:
+This method returns a publisher that completes after database updates have been successfully executed inside a database transaction, and values have been subsequently fetched:
 
 ```swift
 // AnyPublisher<Int, Error>
