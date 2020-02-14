@@ -104,7 +104,7 @@ Documentation
 
 ## Installation
 
-The [Swift Package Manager] automates the distribution of Swift code. To use GRDBCombine with SPM, add a dependency to your `Package.swift` file:
+To use GRDBCombine with the [Swift Package Manager], add a dependency to your `Package.swift` file:
 
 ```swift
 let package = Package(
@@ -112,6 +112,12 @@ let package = Package(
         .package(url: "https://github.com/groue/GRDBCombine.git", ...)
     ]
 )
+```
+
+To use GRDBCombine with [CocoaPods](http://cocoapods.org/), specify in your `Podfile`:
+
+```ruby
+pod 'GRDBCombine'
 ```
 
 
