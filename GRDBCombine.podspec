@@ -1,12 +1,12 @@
 Pod::Spec.new do |s|
   s.name     = 'GRDBCombine'
-  s.version  = '0.7.1'
+  s.version  = '0.8.0'
   
   s.license  = { :type => 'MIT', :file => 'LICENSE' }
   s.summary  = 'A set of extensions for SQLite, GRDB.swift, and Combine'
   s.homepage = 'https://github.com/groue/GRDBCombine'
   s.author   = { 'Gwendal Roué' => 'gr@pierlis.com' }
-  s.source   = { :git => 'https://github.com/groue/GRDBCombine', :tag => "v#{s.version}" }
+  s.source   = { :git => 'https://github.com/groue/GRDBCombine.git', :tag => "v#{s.version}" }
   s.module_name = 'GRDBCombine'
   
   s.swift_versions = ['5.0']

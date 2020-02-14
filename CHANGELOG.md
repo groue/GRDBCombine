@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 #### 0.x Releases
 
+- [0.8.0](#080)
 - [0.7.1](#071)
 - [0.7.0](#070)
 - [0.6.0](#060)
@@ -15,6 +16,12 @@ All notable changes to this project will be documented in this file.
 - [0.1.1](#011)
 - [0.1.0](#010)
 
+
+## 0.8.0
+
+Released February 14, 2020
+
+- [#31](https://github.com/groue/GRDBCombine/pull/31) by [@pocketpixels](http://github.com/pocketpixels): Support for CocoaPods
 
 ## 0.7.1
 
