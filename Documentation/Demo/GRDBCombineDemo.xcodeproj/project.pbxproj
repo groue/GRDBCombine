@@ -559,8 +559,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/CombineExpectations.git";
 			requirement = {
-				kind = versionRange;
-				maximumVersion = 0.4.0;
+				kind = upToNextMajorVersion;
 				minimumVersion = 0.3.0;
 			};
 		};
