@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 #### 0.x Releases
 
+- [0.8.1](#081)
 - [0.8.0](#080)
 - [0.7.1](#071)
 - [0.7.0](#070)
@@ -16,6 +17,12 @@ All notable changes to this project will be documented in this file.
 - [0.1.1](#011)
 - [0.1.0](#010)
 
+
+## 0.8.1
+
+Released March 14, 2020
+
+- [#33](https://github.com/groue/GRDBCombine/pull/33) by [@haikusw](http://github.com/haikusw): Fix package dependency error
 
 ## 0.8.0
 

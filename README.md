@@ -5,7 +5,7 @@ GRDBCombine
 
 ---
 
-**Latest release**: [version 0.8.0](https://github.com/groue/GRDBCombine/tree/v0.8.0) (February 14, 2020) • [Release Notes]
+**Latest release**: [version 0.8.1](https://github.com/groue/GRDBCombine/tree/v0.8.1) (February 14, 2020) • [Release Notes]
 
 **Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.1+ / Xcode 11.0+
 
