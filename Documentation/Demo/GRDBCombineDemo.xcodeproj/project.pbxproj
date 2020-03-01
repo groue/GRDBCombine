@@ -559,8 +559,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/CombineExpectations.git";
 			requirement = {
-				kind = exactVersion;
-				version = 0.2.0;
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.0;
 			};
 		};
 		56B28CF922BA0D8900E65640 /* XCRemoteSwiftPackageReference "GRDB" */ = {

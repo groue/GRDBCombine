@@ -56,7 +56,7 @@ struct Players {
     
     // MARK: - Access Players
     
-    /// A Hole of Fame
+    /// A Hall of Fame
     struct HallOfFame {
         /// Total number of players
         var playerCount: Int
