@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ## 0.8.1
 
-Released March 14, 2020
+Released March 1, 2020
 
 - [#33](https://github.com/groue/GRDBCombine/pull/33) by [@haikusw](http://github.com/haikusw): Fix package dependency error
 
