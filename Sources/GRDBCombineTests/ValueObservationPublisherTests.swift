@@ -27,8 +27,8 @@ class ValueObservationPublisherTests : XCTestCase {
         }
         
         func test(writer: DatabaseWriter) throws {
-            let publisher = Player
-                .observationForCount()
+            let publisher = ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
             let recorder = publisher.record()
             
@@ -77,8 +77,8 @@ class ValueObservationPublisherTests : XCTestCase {
                         expectation.fulfill()
                 })
             
-            let observationCancellable = Player
-                .observationForCount()
+            let observationCancellable = ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(testSubject)
             
@@ -115,8 +115,8 @@ class ValueObservationPublisherTests : XCTestCase {
                         expectation.fulfill()
                 })
             
-            let observationCancellable = Player
-                .observationForCount()
+            let observationCancellable = ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(testSubject)
             
@@ -141,8 +141,8 @@ class ValueObservationPublisherTests : XCTestCase {
         }
         
         func test(writer: DatabaseWriter) throws {
-            let publisher = Player
-                .observationForCount()
+            let publisher = ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .fetchOnSubscription()
             let recorder = publisher.record()
@@ -192,8 +192,8 @@ class ValueObservationPublisherTests : XCTestCase {
                         expectation.fulfill()
                 })
             
-            let observationCancellable = Player
-                .observationForCount()
+            let observationCancellable = ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .fetchOnSubscription()
                 .subscribe(testSubject)
@@ -230,8 +230,8 @@ class ValueObservationPublisherTests : XCTestCase {
                         semaphore.signal()
                 })
             
-            let observationCancellable = Player
-                .observationForCount()
+            let observationCancellable = ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .fetchOnSubscription()
                 .subscribe(testSubject)
@@ -286,8 +286,8 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            Player
-                .observationForCount()
+            ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(subscriber)
             
@@ -317,8 +317,8 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            Player
-                .observationForCount()
+            ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(subscriber)
             
@@ -351,8 +351,8 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            Player
-                .observationForCount()
+            ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(subscriber)
             
@@ -389,8 +389,8 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            Player
-                .observationForCount()
+            ValueObservation
+                .tracking(Player.fetchCount)
                 .publisher(in: writer as DatabaseReader)
                 .subscribe(subscriber)
             
