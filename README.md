@@ -213,11 +213,11 @@ It completes on the main queue, unless you provide a specific [scheduler] to the
 
 Database Observation publishers are based on GRDB's [ValueObservation] and [DatabaseRegionObservation]. Please refer to their documentation for more information. If your application needs change notifications that are not built in GRDBCombine, check the general [Database Changes Observation] chapter.
 
-- [`ValueObservation.publisher(in:scheduler:)`]
+- [`ValueObservation.publisher(in:)`]
 - [`DatabaseRegionObservation.publisher(in:)`]
 
 
-#### `ValueObservation.publisher(in:scheduler:)`
+#### `ValueObservation.publisher(in:)`
 
 GRDB's [ValueObservation] tracks changes in database values. You can turn it into a Combine publisher:
 
@@ -233,19 +233,22 @@ let publisher = observation.publisher(in: dbQueue)
 This publisher has the same behavior as ValueObservation:
 
 - It notifies an initial value before the eventual changes.
-- By default, it notifies the initial value, as well as eventual changes and errors, on the main thread, asynchronously. This can be configured (see below).
 - It may coalesce subsequent changes into a single notification.
 - It may notify consecutive identical values. You can filter out the undesired duplicates with the `removeDuplicates()` Combine operator, but we suggest you have a look at the [removeDuplicates()](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservationremoveduplicates) GRDB operator also.
-
-The ValueObservation publisher stops emitting any value after the database connection is closed. But it never completes.
-
-The `scheduler` argument lets you control how values and errors are dispatched. It does not accept a Combine scheduler, but a [GRDB scheduler](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation-scheduling). In particular, `.immediate` makes sure the initial value is notified immediately when the publisher is subcribed. It can help your application update the user interface without having to wait for any asynchronous notifications:
-
-```swift
-let publisher = observation.publisher(in: dbQueue, scheduler: .immediate)
-```
-
-Note that the `.immediate` scheduler requires that the publisher is subscribed from the main thread. It raises a fatal error otherwise.
+- It stops emitting any value after the database connection is closed. But it never completes.
+- By default, it notifies the initial value, as well as eventual changes and errors, on the main thread, asynchronously.
+    
+    This can be configured with the `scheduling(_:)` method. It does not accept a Combine scheduler, but a [GRDB scheduler](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation-scheduling).
+    
+    For example, the `.immediate` scheduler makes sure the initial value is notified immediately when the publisher is subcribed. It can help your application update the user interface without having to wait for any asynchronous notifications:
+    
+    ```swift
+    let publisher = observation
+        .publisher(in: dbQueue)
+        .scheduling(.immediate)
+    ```
+    
+    Note that the `.immediate` scheduler requires that the publisher is subscribed from the main thread. It raises a fatal error otherwise.
 
 See [ValueObservation Scheduling](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation-scheduling) for more information.
 
@@ -345,7 +348,7 @@ See [DatabaseRegionObservation] for more information.
 [Swift Package Manager]: https://swift.org/package-manager/
 [ValueObservation]: https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation
 [`DatabaseRegionObservation.publisher(in:)`]: #databaseregionobservationpublisherin
-[`ValueObservation.publisher(in:scheduler:)`]: #valueobservationpublisherinscheduler
+[`ValueObservation.publisher(in:)`]: #valueobservationpublisherin
 [`readPublisher(receiveOn:value:)`]: #databasereaderreadpublisherreceiveonvalue
 [`writePublisher(receiveOn:updates:)`]: #databasewriterwritepublisherreceiveonupdates
 [`writePublisher(receiveOn:updates:thenRead:)`]: #databasewriterwritepublisherreceiveonupdatesthenread

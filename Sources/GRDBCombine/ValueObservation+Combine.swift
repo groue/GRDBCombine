@@ -4,28 +4,51 @@ import GRDB
 
 /// Combine extensions on [ValueObservation](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation).
 extension ValueObservation {
-    /// Returns a publisher that tracks changes in the database.
+    /// Creates a publisher which tracks changes in database values.
     ///
-    /// It emits all fresh values, and its eventual error completion, on the
-    /// main queue.
+    /// For example:
     ///
-    /// By default, the publisher can be subscribed from any dispatch
-    /// queue, and emits a first value asynchronously.
+    ///     let observation = ValueObservation.tracking { db in
+    ///         try Player.fetchAll(db)
+    ///     }
+    ///     let cancellable = observation
+    ///         .publisher(in: dbQueue)
+    ///         .sink(
+    ///             receiveCompletion: { completion in ... },
+    ///             receiveValue: { players: [Player] in
+    ///                 print("fresh players: \(players)")
+    ///             })
     ///
-    /// You can force the publisher to start synchronously with the
-    /// `fetchOnSubscription()` method. Subscription must then happen from the
-    /// main queue, or you will get a fatal error.
+    /// By default, fresh values are dispatched asynchronously on the
+    /// main queue. You can change this behavior by calling the `scheduling(_:)`
+    /// method on the returned publisher.
+    ///
+    /// For example, `scheduling(.immediate)` notifies all values on the main
+    /// queue as well, and the first one is immediately notified when the
+    /// publisher is subscribed:
+    ///
+    ///     let cancellable = observation
+    ///         .publisher(in: dbQueue)
+    ///         .scheduling(.immediate) // <-
+    ///         .sink(
+    ///             receiveCompletion: { completion in ... },
+    ///             receiveValue: { players: [Player] in
+    ///                 print("fresh players: \(players)")
+    ///             })
+    ///     // <- here "fresh players" is already printed.
+    ///
+    /// - parameter reader: A DatabaseReader.
+    /// - returns: A Combine publisher
     public func publisher(
-        in reader: DatabaseReader,
-        scheduler: ValueObservationScheduler = .async(onQueue: .main))
+        in reader: DatabaseReader)
         -> DatabasePublishers.Value<Reducer.Value>
     {
-        return DatabasePublishers.Value(self, in: reader, scheduler: scheduler)
+        return DatabasePublishers.Value(self, in: reader)
     }
 }
 
 extension DatabasePublishers {
-    typealias Start<T> = (@escaping (Error) -> Void, @escaping (T) -> Void) -> DatabaseCancellable
+    typealias Start<T> = (ValueObservationScheduler, @escaping (Error) -> Void, @escaping (T) -> Void) -> DatabaseCancellable
     
     /// A publisher that tracks changes in the database.
     ///
@@ -34,14 +57,14 @@ extension DatabasePublishers {
         
         public typealias Failure = Error
         private let start: Start<Output>
+        private var scheduler: ValueObservationScheduler = .async(onQueue: .main)
         
         init<Reducer>(
             _ observation: ValueObservation<Reducer>,
-            in reader: DatabaseReader,
-            scheduler: ValueObservationScheduler)
+            in reader: DatabaseReader)
             where Reducer.Value == Output
         {
-            self.start = { [weak reader] (onError, onChange) in
+            self.start = { [weak reader] (scheduler, onError, onChange) in
                 guard let reader = reader else {
                     return AnyDatabaseCancellable(cancel: { })
                 }
@@ -49,10 +72,33 @@ extension DatabasePublishers {
             }
         }
         
+        /// Returns a publisher which starts the observation with the given
+        /// ValueObservation scheduler.
+        ///
+        /// For example, `scheduling(.immediate)` notifies all values on the
+        /// main queue, and the first one is immediately notified when the
+        /// publisher is subscribed:
+        ///
+        ///     let cancellable = observation
+        ///         .publisher(in: dbQueue)
+        ///         .scheduling(.immediate) // <-
+        ///         .sink(
+        ///             receiveCompletion: { completion in ... },
+        ///             receiveValue: { players: [Player] in
+        ///                 print("fresh players: \(players)")
+        ///             })
+        ///     // <- here "fresh players" is already printed.
+        public func scheduling(_ scheduler: ValueObservationScheduler) -> Self {
+            var publisher = self
+            publisher.scheduler = scheduler
+            return publisher
+        }
+        
         /// :nodoc:
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
             let subscription = ValueSubscription(
                 start: start,
+                scheduler: scheduler,
                 downstream: subscriber)
             subscriber.receive(subscription: subscription)
         }
@@ -64,6 +110,7 @@ extension DatabasePublishers {
         private struct WaitingForDemand {
             let downstream: Downstream
             let start: Start<Downstream.Input>
+            let scheduler: ValueObservationScheduler
         }
         
         private struct Observing {
@@ -90,11 +137,13 @@ extension DatabasePublishers {
         
         init(
             start: @escaping Start<Downstream.Input>,
+            scheduler: ValueObservationScheduler,
             downstream: Downstream)
         {
             state = .waitingForDemand(WaitingForDemand(
                 downstream: downstream,
-                start: start))
+                start: start,
+                scheduler: scheduler))
         }
         
         func request(_ demand: Subscribers.Demand) {
@@ -108,6 +157,7 @@ extension DatabasePublishers {
                         downstream: info.downstream,
                         remainingDemand: demand))
                     cancellable = info.start(
+                        info.scheduler,
                         { [weak self] error in self?.receiveCompletion(.failure(error)) },
                         { [weak self] value in self?.receive(value) })
                     

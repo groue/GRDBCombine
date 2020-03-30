@@ -106,7 +106,8 @@ class ValueObservationPublisherTests : XCTestCase {
         func test(writer: DatabaseWriter) throws {
             let publisher = ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader, scheduler: .immediate)
+                .publisher(in: writer as DatabaseReader)
+                .scheduling(.immediate)
             let recorder = publisher.record()
             
             try writer.writeWithoutTransaction { db in
@@ -154,7 +155,8 @@ class ValueObservationPublisherTests : XCTestCase {
             
             let observationCancellable = ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader, scheduler: .immediate)
+                .publisher(in: writer as DatabaseReader)
+                .scheduling(.immediate)
                 .subscribe(testSubject)
             
             semaphore.wait()
