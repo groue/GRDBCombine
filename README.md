@@ -211,23 +211,15 @@ It completes on the main queue, unless you provide a specific [scheduler] to the
 
 # Database Observation
 
-**GRDBCombine notifies changes that have been committed in the database.** No insertion, update, or deletion in tracked tables is missed. This includes indirect changes triggered by [foreign keys](https://www.sqlite.org/foreignkeys.html#fk_actions) or [SQL triggers](https://www.sqlite.org/lang_createtrigger.html).
+Database Observation publishers are based on GRDB's [ValueObservation] and [DatabaseRegionObservation]. Please refer to their documentation for more information. If your application needs change notifications that are not built in GRDBCombine, check the general [Database Changes Observation] chapter.
 
-To function correctly, GRDBCombine requires that a unique [database connection] is kept open during the whole duration of the observation.
-
-> :point_up: **Note**: some special changes are not notified: changes to SQLite system tables (such as `sqlite_master`), and changes to [`WITHOUT ROWID`](https://www.sqlite.org/withoutrowid.html) tables. See [Data Change Notification Callbacks](https://www.sqlite.org/c3ref/update_hook.html) for more information.
-
-To define which part of the database should be observed, you provide database requests. Requests can be expressed with GRDB's [query interface], as in `Player.all()`, or with SQL, as in `SELECT * FROM player`. Both would observe the full "player" database table. Observed requests can involve several database tables, and generally be as complex as you need them to be.
-
-GRDBCombine publishers are based on GRDB's [ValueObservation] and [DatabaseRegionObservation]. If your application needs change notifications that are not built in GRDBCombine, check the general [Database Changes Observation] chapter.
-
-- [`ValueObservation.publisher(in:)`]
+- [`ValueObservation.publisher(in:scheduler:)`]
 - [`DatabaseRegionObservation.publisher(in:)`]
 
 
-#### `ValueObservation.publisher(in:)`
+#### `ValueObservation.publisher(in:scheduler:)`
 
-GRDB's [ValueObservation] notifies fresh values whenever the database changes. You can turn it into a Combine publisher:
+GRDB's [ValueObservation] tracks changes in database values. You can turn it into a Combine publisher:
 
 ```swift
 let observation = ValueObservation.tracking { db in
@@ -238,58 +230,28 @@ let observation = ValueObservation.tracking { db in
 let publisher = observation.publisher(in: dbQueue)
 ```
 
-This publisher always publishes an initial value, and waits for database changes before publishing updated values. It only completes when a database error happens.
+This publisher has the same behavior as ValueObservation:
 
-All values are published on the main queue. Future GRDBCombine versions may lift this limitation.
+- It notifies an initial value before the eventual changes.
+- By default, it notifies the initial value, as well as eventual changes and errors, on the main thread, asynchronously. This can be configured (see below).
+- It may coalesce subsequent changes into a single notification.
+- It may notify consecutive identical values. You can filter out the undesired duplicates with the `removeDuplicates()` Combine operator, but we suggest you have a look at the [removeDuplicates()](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservationremoveduplicates) GRDB operator also.
 
-By default, all values are published asynchronously:
+The ValueObservation publisher stops emitting any value after the database connection is closed. But it never completes.
 
-```swift
-// The default behavior
-let cancellable = publisher.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (players: [Player]) in
-        print("Fresh players: \(players)")
-    })
-// <- here "Fresh players" is not printed yet.
-```
-
-You can force a synchronous fetch of the initial value with the `fetchOnSubscription()` method. Subscription must then happen from the main queue, or you will get a fatal error:
+The `scheduler` argument lets you control how values and errors are dispatched. It does not accept a Combine scheduler, but a [GRDB scheduler](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation-scheduling). In particular, `.immediate` makes sure the initial value is notified immediately when the publisher is subcribed. It can help your application update the user interface without having to wait for any asynchronous notifications:
 
 ```swift
-// Synchronous initial fetch
-let cancellable = publisher.fetchOnSubscription().sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (players: [Player]) in
-        print("Fresh players: \(players)")
-    })
-// <- here "Fresh players" has been printed.
+let publisher = observation.publisher(in: dbQueue, scheduler: .immediate)
 ```
 
-> :point_up: **Note**: ValueObservation has a [scheduling](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservationscheduling) property that controls how fresh values are scheduled. This property is superseded by the Combine publisher.
+Note that the `.immediate` scheduler requires that the publisher is subscribed from the main thread. It raises a fatal error otherwise.
+
+See [ValueObservation Scheduling](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation-scheduling) for more information.
 
 :warning: **ValueObservation and Data Consistency**
 
 When you compose ValueObservation publishers together with the [combineLatest](https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest) operator, you lose all guarantees of [data consistency](https://en.wikipedia.org/wiki/Consistency_(database_systems)).
-
-```swift
-// Let's observe the Hall of Fame
-struct HallOfFame {
-    var playerCount: Int      // Total number of players
-    var bestPlayers: [Player] // The best ones
-}
-
-// CAUTION: DATA CONSISTENCY NOT GUARANTEED
-let playerCountPublisher = ValueObservation
-    .tracking(value: Player.fetchCount)
-    .publisher(in: dbQueue)
-let bestPlayersPublisher = ValueObservation
-    .tracking(value: Player.limit(10).orderedByScore().fetchAll)
-    .publisher(in: dbQueue)
-let hallOfFamePublisher = playerCountPublisher
-    .combineLatest(bestPlayersPublisher)
-    .map(HallOfFame.init(playerCount:bestPlayers:)
-```
 
 Instead, compose requests or value observations together before building one **single** value publisher.
 
@@ -312,12 +274,15 @@ Or combine observations together:
 // DATA CONSISTENCY GUARANTEED
 let playerCountObservation = ValueObservation
     .tracking(value: Player.fetchCount)
+
 let bestPlayersObservation = ValueObservation
     .tracking(value: Player.limit(10).orderedByScore().fetchAll)
+
 let hallOfFameObservation = ValueObservation.combine(
     playerCountObservation,
     bestPlayersObservation)
     .map(HallOfFame.init(playerCount:bestPlayers:))
+
 let hallOfFamePublisher = hallOfFameObservation.publisher(in: dbQueue)
 ```
 
@@ -380,7 +345,7 @@ See [DatabaseRegionObservation] for more information.
 [Swift Package Manager]: https://swift.org/package-manager/
 [ValueObservation]: https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation
 [`DatabaseRegionObservation.publisher(in:)`]: #databaseregionobservationpublisherin
-[`ValueObservation.publisher(in:)`]: #valueobservationpublisherin
+[`ValueObservation.publisher(in:scheduler:)`]: #valueobservationpublisherinscheduler
 [`readPublisher(receiveOn:value:)`]: #databasereaderreadpublisherreceiveonvalue
 [`writePublisher(receiveOn:updates:)`]: #databasewriterwritepublisherreceiveonupdates
 [`writePublisher(receiveOn:updates:thenRead:)`]: #databasewriterwritepublisherreceiveonupdatesthenread
