@@ -567,8 +567,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.1.0;
+				branch = GRDB5;
+				kind = branch;
 			};
 		};
 		56DF378C22A9964900166718 /* XCRemoteSwiftPackageReference "GRDBCombine" */ = {
