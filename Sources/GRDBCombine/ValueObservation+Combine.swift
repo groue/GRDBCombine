@@ -68,7 +68,7 @@ extension DatabasePublishers {
                 guard let reader = reader else {
                     return AnyDatabaseCancellable(cancel: { })
                 }
-                return observation.start(in: reader, scheduler: scheduler, onError: onError, onChange: onChange)
+                return observation.start(in: reader, scheduling: scheduler, onError: onError, onChange: onChange)
             }
         }
         
@@ -98,7 +98,7 @@ extension DatabasePublishers {
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
             let subscription = ValueSubscription(
                 start: start,
-                scheduler: scheduler,
+                scheduling: scheduler,
                 downstream: subscriber)
             subscriber.receive(subscription: subscription)
         }
@@ -137,7 +137,7 @@ extension DatabasePublishers {
         
         init(
             start: @escaping Start<Downstream.Input>,
-            scheduler: ValueObservationScheduler,
+            scheduling scheduler: ValueObservationScheduler,
             downstream: Downstream)
         {
             state = .waitingForDemand(WaitingForDemand(
