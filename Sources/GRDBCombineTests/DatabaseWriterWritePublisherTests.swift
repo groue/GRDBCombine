@@ -117,7 +117,40 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
-
+    
+    // MARK: -
+    
+    func testWritePublisherIsAsynchronous() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter) throws {
+            let expectation = self.expectation(description: "")
+            let semaphore = DispatchSemaphore(value: 0)
+            let cancellable = writer
+                .writePublisher(updates: { db in
+                    try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+                })
+                .sink(
+                    receiveCompletion: { _ in },
+                    receiveValue: { _ in
+                        semaphore.wait()
+                        expectation.fulfill()
+                })
+            
+            semaphore.signal()
+            waitForExpectations(timeout: 1, handler: nil)
+            cancellable.cancel()
+        }
+        
+        try Test(test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+    
     // MARK: -
     
     func testWritePublisherDefaultScheduler() throws {
@@ -129,7 +162,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
         func test(writer: DatabaseWriter) {
             let expectation = self.expectation(description: "")
             expectation.expectedFulfillmentCount = 2 // value + completion
-            let testCancellable = writer
+            let cancellable = writer
                 .writePublisher(updates: { db in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
                 })
@@ -144,7 +177,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+            cancellable.cancel()
         }
         
         try Test(test)
@@ -165,7 +198,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             let queue = DispatchQueue(label: "test")
             let expectation = self.expectation(description: "")
             expectation.expectedFulfillmentCount = 2 // value + completion
-            let testCancellable = writer
+            let cancellable = writer
                 .writePublisher(receiveOn: queue, updates: { db in
                     try Player(id: 1, name: "Arthur", score: 1000).insert(db)
                 })
@@ -180,7 +213,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+            cancellable.cancel()
         }
         
         try Test(test)

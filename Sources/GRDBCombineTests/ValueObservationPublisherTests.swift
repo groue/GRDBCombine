@@ -70,8 +70,9 @@ class ValueObservationPublisherTests : XCTestCase {
         func test(writer: DatabaseWriter) throws {
             let expectation = self.expectation(description: "")
             let semaphore = DispatchSemaphore(value: 0)
-            let testSubject = PassthroughSubject<Int, Error>()
-            let testCancellable = testSubject
+            let cancellable = ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer as DatabaseReader)
                 .sink(
                     receiveCompletion: { _ in },
                     receiveValue: { _ in
@@ -79,15 +80,9 @@ class ValueObservationPublisherTests : XCTestCase {
                         expectation.fulfill()
                 })
             
-            let observationCancellable = ValueObservation
-                .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
-                .subscribe(testSubject)
-            
             semaphore.signal()
             waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
-            observationCancellable.cancel()
+            cancellable.cancel()
         }
         
         try Test(test)

@@ -69,6 +69,40 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
     
     // MARK: -
     
+    func testReadPublisherIsAsynchronous() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(reader: DatabaseReader) throws {
+            let expectation = self.expectation(description: "")
+            let semaphore = DispatchSemaphore(value: 0)
+            let cancellable = reader
+                .readPublisher(value: { db in
+                    try Player.fetchCount(db)
+                })
+                .sink(
+                    receiveCompletion: { _ in },
+                    receiveValue: { _ in
+                        semaphore.wait()
+                        expectation.fulfill()
+                })
+            
+            semaphore.signal()
+            waitForExpectations(timeout: 1, handler: nil)
+            cancellable.cancel()
+        }
+        
+        try Test(test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)).makeSnapshot() }
+    }
+    
+    // MARK: -
+    
     func testReadPublisherDefaultScheduler() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write(Player.createTable)
@@ -77,7 +111,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         
         func test(reader: DatabaseReader) {
             let expectation = self.expectation(description: "")
-            let testCancellable = reader
+            let cancellable = reader
                 .readPublisher(value: { db in
                     try Player.fetchCount(db)
                 })
@@ -91,7 +125,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+            cancellable.cancel()
         }
         
         try Test(test)
@@ -112,7 +146,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
         func test(reader: DatabaseReader) {
             let queue = DispatchQueue(label: "test")
             let expectation = self.expectation(description: "")
-            let testCancellable = reader
+            let cancellable = reader
                 .readPublisher(receiveOn: queue, value: { db in
                     try Player.fetchCount(db)
                 })
@@ -126,7 +160,7 @@ class DatabaseReaderReadPublisherTests : XCTestCase {
                 })
             
             waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
+            cancellable.cancel()
         }
         
         try Test(test)
