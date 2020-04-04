@@ -27,6 +27,11 @@ This publisher reads a single value and delivers it.
 let players = dbQueue.readPublisher { db in
     try Player.fetchAll(db)
 }
+let cancellable = players.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { (players: [Player]) in
+        print("Players: \(players)")
+    })
 ```
 
 </details>
@@ -41,12 +46,22 @@ This publisher delivers a single value, after the database has been updated.
 let write = dbQueue.writePublisher { db in
     try Player(...).insert(db)
 }
+let cancellable = players.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { _ in
+        print("Updates completed")
+    })
 
 // AnyPublisher<Int, Error>
 let newPlayerCount = dbQueue.writePublisher { db -> Int in
     try Player(...).insert(db)
     return try Player.fetchCount(db)
 }
+let cancellable = players.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { (playerCount: Int) in
+        print("New players count: \(playerCount)")
+    })
 ```
 
 </details>
@@ -58,16 +73,24 @@ This publisher delivers fresh values whenever the database changes:
 
 ```swift
 // A publisher with output [Player] and failure Error
-let playersRequest = Player.all()
-let cancellable = ValueObservation
-    .tracking(value: playersRequest.fetchAll)
+let publisher = ValueObservation
+    .tracking { db in try Player.fetchAll(db) }
     .publisher(in: dbQueue)
+let cancellable = players.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { (players: [Player]) in
+        print("Fresh players: \(players)")
+    })
 
 // A publisher with output Int? and failure Error
-let maxScoreRequest = SQLRequest<Int>(sql: "SELECT MAX(score) FROM player")
-let maxScorePublisher = ValueObservation
-    .tracking(value: maxScoreRequest.fetchOne)
+let publisher = ValueObservation
+    .tracking { db in try Int.fetchOne(db, sql: "SELECT MAX(score) FROM player") }
     .publisher(in: dbQueue)
+let cancellable = players.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { (maxScore: Int?) in
+        print("Fresh maximum score: \(maxScore)")
+    })
 ```
 
 </details>
@@ -79,16 +102,24 @@ This publisher delivers database connections whenever a database transaction has
 
 ```swift
 // A publisher with output Database and failure Error
-let playersRequest = Player.all()
-let playersChangePublisher = DatabaseRegionObservation
-    .tracking(playersRequest)
+let publisher = DatabaseRegionObservation
+    .tracking(Player.all())
     .publisher(in: dbQueue)
+let cancellable = players.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { (db: Database) in
+        print("Exclusive write access to the database after players have been impacted")
+    })
 
 // A publisher with output Database and failure Error
-let maxScoreRequest = SQLRequest<Int>(sql: "SELECT MAX(score) FROM player")
-let maxScoreChangePublisher = DatabaseRegionObservation
-    .tracking(maxScoreRequest)
+let publisher = DatabaseRegionObservation
+    .tracking(SQLRequest<Int>(sql: "SELECT MAX(score) FROM player"))
     .publisher(in: dbQueue)
+let cancellable = players.sink(
+    receiveCompletion: { completion in ... },
+    receiveValue: { (db: Database) in
+        print("Exclusive write access to the database after maximum score has been impacted")
+    })
 ```
 
 </details>
