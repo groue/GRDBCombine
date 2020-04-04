@@ -47,8 +47,9 @@ class ValueObservationPublisherTests : XCTestCase {
             let expectedElements = [0, 1, 3]
             if writer is DatabaseQueue {
                 let elements = try wait(for: recorder.next(expectedElements.count), timeout: 1)
-                XCTAssertEqual(elements, [0, 1, 3])
+                XCTAssertEqual(elements, expectedElements)
             } else {
+                // TODO: prefix(until:)
                 let elements = try wait(for: recorder.prefix(expectedElements.count + 2).inverted, timeout: 1)
                 assertValueObservationRecordingMatch(recorded: elements, expected: expectedElements)
             }
@@ -123,8 +124,9 @@ class ValueObservationPublisherTests : XCTestCase {
             let expectedElements = [0, 1, 3]
             if writer is DatabaseQueue {
                 let elements = try wait(for: recorder.next(expectedElements.count), timeout: 1)
-                XCTAssertEqual(elements, [0, 1, 3])
+                XCTAssertEqual(elements, expectedElements)
             } else {
+                // TODO: prefix(until:)
                 let elements = try wait(for: recorder.prefix(expectedElements.count + 2).inverted, timeout: 1)
                 assertValueObservationRecordingMatch(recorded: elements, expected: expectedElements)
             }

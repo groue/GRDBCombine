@@ -217,6 +217,28 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     
     // MARK: -
     
+    func testWriteThenReadPublisherIsReadonly() throws {
+        func test(writer: DatabaseWriter) throws {
+            let publisher = writer
+                .writePublisher(
+                    updates: { _ in },
+                    thenRead: { db, _ in try Player.createTable(db) })
+            let recorder = publisher.record()
+            let recording = try wait(for: recorder.recording, timeout: 1)
+            XCTAssertTrue(recording.output.isEmpty)
+            assertFailure(recording.completion) { (error: DatabaseError) in
+                XCTAssertEqual(error.resultCode, .SQLITE_READONLY)
+            }
+        }
+        
+        try Test(test)
+            .run { DatabaseQueue() }
+            .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
+    }
+    
+    // MARK: -
+    
     func testWriteThenReadPublisherWriteError() throws {
         func test(writer: DatabaseWriter) throws {
             let publisher = writer.writePublisher(
