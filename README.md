@@ -46,7 +46,7 @@ This publisher delivers a single value, after the database has been updated.
 let write = dbQueue.writePublisher { db in
     try Player(...).insert(db)
 }
-let cancellable = players.sink(
+let cancellable = write.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { _ in
         print("Updates completed")
@@ -57,7 +57,7 @@ let newPlayerCount = dbQueue.writePublisher { db -> Int in
     try Player(...).insert(db)
     return try Player.fetchCount(db)
 }
-let cancellable = players.sink(
+let cancellable = newPlayerCount.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (playerCount: Int) in
         print("New players count: \(playerCount)")
@@ -76,7 +76,7 @@ This publisher delivers fresh values whenever the database changes:
 let publisher = ValueObservation
     .tracking { db in try Player.fetchAll(db) }
     .publisher(in: dbQueue)
-let cancellable = players.sink(
+let cancellable = publisher.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (players: [Player]) in
         print("Fresh players: \(players)")
@@ -86,7 +86,7 @@ let cancellable = players.sink(
 let publisher = ValueObservation
     .tracking { db in try Int.fetchOne(db, sql: "SELECT MAX(score) FROM player") }
     .publisher(in: dbQueue)
-let cancellable = players.sink(
+let cancellable = publisher.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (maxScore: Int?) in
         print("Fresh maximum score: \(maxScore)")
@@ -105,7 +105,7 @@ This publisher delivers database connections whenever a database transaction has
 let publisher = DatabaseRegionObservation
     .tracking(Player.all())
     .publisher(in: dbQueue)
-let cancellable = players.sink(
+let cancellable = publisher.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (db: Database) in
         print("Exclusive write access to the database after players have been impacted")
@@ -115,7 +115,7 @@ let cancellable = players.sink(
 let publisher = DatabaseRegionObservation
     .tracking(SQLRequest<Int>(sql: "SELECT MAX(score) FROM player"))
     .publisher(in: dbQueue)
-let cancellable = players.sink(
+let cancellable = publisher.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (db: Database) in
         print("Exclusive write access to the database after maximum score has been impacted")
