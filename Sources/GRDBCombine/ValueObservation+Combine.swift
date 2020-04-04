@@ -39,16 +39,16 @@ extension ValueObservation {
     ///
     /// - parameter reader: A DatabaseReader.
     /// - returns: A Combine publisher
-    public func publisher(
-        in reader: DatabaseReader)
-        -> DatabasePublishers.Value<Reducer.Value>
-    {
+    public func publisher(in reader: DatabaseReader) -> DatabasePublishers.Value<Reducer.Value> {
         return DatabasePublishers.Value(self, in: reader)
     }
 }
 
 extension DatabasePublishers {
-    typealias Start<T> = (ValueObservationScheduler, @escaping (Error) -> Void, @escaping (T) -> Void) -> DatabaseCancellable
+    typealias Start<T> = (
+        _ scheduler: ValueObservationScheduler,
+        _ onError: @escaping (Error) -> Void,
+        _ onChange: @escaping (T) -> Void) -> DatabaseCancellable
     
     /// A publisher that tracks changes in the database.
     ///
@@ -57,19 +57,37 @@ extension DatabasePublishers {
         
         public typealias Failure = Error
         private let start: Start<Output>
-        private var scheduler: ValueObservationScheduler = .async(onQueue: .main)
+        private var scheduler = ValueObservationScheduler.async(onQueue: .main)
         
         init<Reducer>(
             _ observation: ValueObservation<Reducer>,
             in reader: DatabaseReader)
             where Reducer.Value == Output
         {
-            self.start = { [weak reader] (scheduler, onError, onChange) in
+            start = { [weak reader] (scheduler, onError, onChange) in
                 guard let reader = reader else {
                     return AnyDatabaseCancellable(cancel: { })
                 }
                 return observation.start(in: reader, scheduling: scheduler, onError: onError, onChange: onChange)
             }
+        }
+        
+        /// Returns a publisher which notifies all values on the main queue.
+        /// The first one is immediately notified when the publisher
+        /// is subscribed:
+        ///
+        ///     let cancellable = observation
+        ///         .publisher(in: dbQueue)
+        ///         .fetchOnSubscription() // <-
+        ///         .sink(
+        ///             receiveCompletion: { completion in ... },
+        ///             receiveValue: { players: [Player] in
+        ///                 print("fresh players: \(players)")
+        ///             })
+        ///     // <- here "fresh players" is already printed.
+        @available(*, deprecated, message: "Use scheduling(.immediate) instead")
+        public func fetchOnSubscription() -> Self {
+            scheduling(.immediate)
         }
         
         /// Returns a publisher which starts the observation with the given
