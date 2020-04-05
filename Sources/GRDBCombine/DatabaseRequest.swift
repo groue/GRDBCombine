@@ -5,7 +5,11 @@ import GRDB
 /// An observable object that observes a database request and updates its `result` value with any changes
 public class DatabaseRequest<Data>: ObservableObject {
 	/// The result of the request. This is updated automatically with any changes.
-	@Published public var result: Data
+	public var result: Data {
+		willSet {
+			objectWillChange.send()
+		}
+	}
 	
 	private var subscription: AnyCancellable?
 	private let publisher: AnyPublisher<Data, Never>
@@ -59,8 +63,8 @@ public class DatabaseRequest<Data>: ObservableObject {
 	}
 	
 	private func subscribe() {
-		subscription = publisher.sink { [unowned self] result in
-			self.result = result
+		subscription = publisher.sink { [weak self] result in
+			self?.result = result
 		}
 	}
 }
