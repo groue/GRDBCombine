@@ -4,7 +4,7 @@ import Combine
 /// An observable object that holds a `MutablePersistableRecord` and allows mutation + updating the database row
 @dynamicMemberLookup
 public class DatabaseEditable<Value: MutablePersistableRecord>: ObservableObject {
-	let database: DatabaseWriter
+	let database: DatabaseWriter?
 	var autoSave: Bool
 	var value: Value {
 		didSet {
@@ -16,17 +16,16 @@ public class DatabaseEditable<Value: MutablePersistableRecord>: ObservableObject
 	
 	/// Call this function to manually save any changes to the record to the database
 	public func commitChanges() throws {
-		try database.write {
+		try database?.write {
 			try value.update($0)
 		}
 	}
 	
-	
 	/// Call this function to manually save any changes to the record to the database
-	/// - parameter database: The database to save any changes to
+	/// - parameter database: The database to save any changes to. If this is nil, changes to the value will not be saved.
 	/// - parameter value: The initial value
 	/// - parameter autoSave: Whether to automatically commit any changes to the database. Default = true
-	public init(database: DatabaseWriter, value: Value, autoSave: Bool = true) {
+	public init(database: DatabaseWriter?, value: Value, autoSave: Bool = true) {
 		self.database = database
 		self.autoSave = autoSave
 		self.value = value
