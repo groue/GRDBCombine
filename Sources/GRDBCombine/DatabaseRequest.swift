@@ -62,6 +62,18 @@ public class DatabaseRequest<Data>: ObservableObject {
 		subscribe()
 	}
 	
+	/// Fake database request returning placeholder data (useful for testing / working on UI)
+	public static func placeholder(data: Data) -> DatabaseRequest<Data> {
+		DatabaseRequest(placeholderData: data)
+	}
+	
+	private init(placeholderData: Data) {
+		self.result = placeholderData
+		self.publisher = Just(placeholderData)
+			.eraseToAnyPublisher()
+		subscribe()
+	}
+	
 	private func subscribe() {
 		subscription = publisher.sink { [weak self] result in
 			self?.result = result
