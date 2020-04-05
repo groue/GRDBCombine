@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "CombineExpectations",
+        "repositoryURL": "https://github.com/groue/CombineExpectations.git",
+        "state": {
+          "branch": null,
+          "revision": "3250715d3f1b12754c84e7952c7bbb716f4a4dc4",
+          "version": "0.4.0"
+        }
+      },
+      {
+        "package": "GRDB",
+        "repositoryURL": "https://github.com/groue/GRDB.swift",
+        "state": {
+          "branch": null,
+          "revision": "f4c763dc3122ce9695f2cb6d7c163b379ecd4129",
+          "version": "4.12.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
