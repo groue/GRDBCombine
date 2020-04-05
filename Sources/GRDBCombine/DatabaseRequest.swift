@@ -11,10 +11,10 @@ public class DatabaseRequest<Data>: ObservableObject {
 	private let publisher: AnyPublisher<Data, Never>
 	
 	/// Database request returning an array of records using a simple QueryInterfaceRequest
-	public init<Database: DatabaseReader, DataElement: FetchableRecord>(db: Database, fetchRequest: QueryInterfaceRequest<DataElement>) where Data == [DataElement] {
+	public init<Database: DatabaseReader, DataElement: FetchableRecord>(db: Database, fetchRequest: Request<DataElement>) where Data == [DataElement] {
 		self.result = []
 		self.publisher = ValueObservation
-			.tracking(value: { db in
+			.tracking({ db in
 				try DataElement.fetchAll(db, fetchRequest)
 			})
 			.publisher(in: db)
@@ -29,7 +29,7 @@ public class DatabaseRequest<Data>: ObservableObject {
 	public init<Database: DatabaseReader, DataElement>(db: Database, request: @escaping RequestClosure) where Data == [DataElement] {
 		self.result = []
 		self.publisher = ValueObservation
-			.tracking(value: request)
+			.tracking(request)
 			.publisher(in: db)
 			.replaceError(with: [])
 			.eraseToAnyPublisher()
@@ -40,7 +40,7 @@ public class DatabaseRequest<Data>: ObservableObject {
 	public init<Database: DatabaseReader>(db: Database, defaultValue: Data, request: @escaping RequestClosure) {
 		self.result = defaultValue
 		self.publisher = ValueObservation
-			.tracking(value: request)
+			.tracking(request)
 			.publisher(in: db)
 			.replaceError(with: defaultValue)
 			.eraseToAnyPublisher()
@@ -51,7 +51,7 @@ public class DatabaseRequest<Data>: ObservableObject {
 	public init<Database: DatabaseReader, DataElement>(db: Database, request: @escaping RequestClosure) where Data == Optional<DataElement> {
 		self.result = nil
 		self.publisher = ValueObservation
-			.tracking(value: request)
+			.tracking(request)
 			.publisher(in: db)
 			.replaceError(with: nil)
 			.eraseToAnyPublisher()
