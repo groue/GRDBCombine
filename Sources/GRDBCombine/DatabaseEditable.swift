@@ -7,6 +7,9 @@ public class DatabaseEditable<Value: MutablePersistableRecord>: ObservableObject
 	let database: DatabaseWriter?
 	var autoSave: Bool
 	public var value: Value {
+		willSet {
+			objectWillChange.send()
+		}
 		didSet {
 			if autoSave {
 				try? commitChanges()
