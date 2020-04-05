@@ -6,7 +6,7 @@ import Combine
 public class DatabaseEditable<Value: MutablePersistableRecord>: ObservableObject {
 	let database: DatabaseWriter?
 	var autoSave: Bool
-	var value: Value {
+	public var value: Value {
 		didSet {
 			if autoSave {
 				try? commitChanges()
