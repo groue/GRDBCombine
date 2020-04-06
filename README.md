@@ -27,6 +27,7 @@ This publisher reads a single value and delivers it.
 let players = dbQueue.readPublisher { db in
     try Player.fetchAll(db)
 }
+
 let cancellable = players.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (players: [Player]) in
@@ -46,6 +47,7 @@ This publisher delivers a single value, after the database has been updated.
 let write = dbQueue.writePublisher { db in
     try Player(...).insert(db)
 }
+
 let cancellable = write.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { _ in
@@ -57,6 +59,7 @@ let newPlayerCount = dbQueue.writePublisher { db -> Int in
     try Player(...).insert(db)
     return try Player.fetchCount(db)
 }
+
 let cancellable = newPlayerCount.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (playerCount: Int) in
@@ -76,6 +79,7 @@ This publisher delivers fresh values whenever the database changes:
 let publisher = ValueObservation
     .tracking { db in try Player.fetchAll(db) }
     .publisher(in: dbQueue)
+
 let cancellable = publisher.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (players: [Player]) in
@@ -86,6 +90,7 @@ let cancellable = publisher.sink(
 let publisher = ValueObservation
     .tracking { db in try Int.fetchOne(db, sql: "SELECT MAX(score) FROM player") }
     .publisher(in: dbQueue)
+
 let cancellable = publisher.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (maxScore: Int?) in
@@ -105,6 +110,7 @@ This publisher delivers database connections whenever a database transaction has
 let publisher = DatabaseRegionObservation
     .tracking(Player.all())
     .publisher(in: dbQueue)
+
 let cancellable = publisher.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (db: Database) in
@@ -115,6 +121,7 @@ let cancellable = publisher.sink(
 let publisher = DatabaseRegionObservation
     .tracking(SQLRequest<Int>(sql: "SELECT MAX(score) FROM player"))
     .publisher(in: dbQueue)
+
 let cancellable = publisher.sink(
     receiveCompletion: { completion in ... },
     receiveValue: { (db: Database) in
