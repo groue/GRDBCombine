@@ -294,9 +294,7 @@ See [ValueObservation Scheduling](https://github.com/groue/GRDB.swift/blob/GRDB5
 
 When you compose ValueObservation publishers together with the [combineLatest](https://developer.apple.com/documentation/combine/publisher/3333677-combinelatest) operator, you lose all guarantees of [data consistency](https://en.wikipedia.org/wiki/Consistency_(database_systems)).
 
-Instead, compose requests or value observations together before building one **single** value publisher.
-
-For example, fetch all requested values in a single observation (this is the technique used in the [Demo Application]):
+Instead, compose requests together into **one single** ValueObservation, as below (this is the technique used in the [Demo Application]):
 
 ```swift
 // DATA CONSISTENCY GUARANTEED
@@ -307,24 +305,6 @@ let hallOfFamePublisher = ValueObservation
         return HallOfFame(playerCount:playerCount, bestPlayers:bestPlayers)
     }
     .publisher(in: dbQueue)
-```
-
-Or combine observations together:
-
-```swift
-// DATA CONSISTENCY GUARANTEED
-let playerCountObservation = ValueObservation
-    .tracking(value: Player.fetchCount)
-
-let bestPlayersObservation = ValueObservation
-    .tracking(value: Player.limit(10).orderedByScore().fetchAll)
-
-let hallOfFameObservation = ValueObservation.combine(
-    playerCountObservation,
-    bestPlayersObservation)
-    .map(HallOfFame.init(playerCount:bestPlayers:))
-
-let hallOfFamePublisher = hallOfFameObservation.publisher(in: dbQueue)
 ```
 
 See [ValueObservation] for more information.
