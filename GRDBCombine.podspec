@@ -16,7 +16,19 @@ Pod::Spec.new do |s|
   s.tvos.deployment_target = '13.0'
   
   s.framework = 'Combine'
-  s.source_files = 'Sources/GRDBCombine/*.swift'
-  s.dependency 'GRDB.swift', '~> 4.1'
+  s.default_subspec = 'default'
   
+  s.subspec 'default' do |ss|
+    ss.source_files = 'Sources/GRDBCombine/*.swift'
+    ss.dependency 'GRDB.swift', '~> 5.0'
+  end
+  
+  s.subspec 'SQLCipher' do |ss|
+    ss.source_files = 'Sources/GRDBCombine/*.swift'
+    ss.dependency "GRDB.swift/SQLCipher", "~> 5.0"
+    ss.xcconfig = {
+      'OTHER_SWIFT_FLAGS' => '$(inherited) -DSQLITE_HAS_CODEC -DUSING_SQLCIPHER',
+      'OTHER_CFLAGS' => '$(inherited) -DSQLITE_HAS_CODEC -DUSING_SQLCIPHER',
+    }
+  end
 end
