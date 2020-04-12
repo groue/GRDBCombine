@@ -72,24 +72,6 @@ extension DatabasePublishers {
             }
         }
         
-        /// Returns a publisher which notifies all values on the main queue.
-        /// The first one is immediately notified when the publisher
-        /// is subscribed:
-        ///
-        ///     let cancellable = observation
-        ///         .publisher(in: dbQueue)
-        ///         .fetchOnSubscription() // <-
-        ///         .sink(
-        ///             receiveCompletion: { completion in ... },
-        ///             receiveValue: { players: [Player] in
-        ///                 print("fresh players: \(players)")
-        ///             })
-        ///     // <- here "fresh players" is already printed.
-        @available(*, deprecated, message: "Use scheduling(.immediate) instead")
-        public func fetchOnSubscription() -> Self {
-            scheduling(.immediate)
-        }
-        
         /// Returns a publisher which starts the observation with the given
         /// ValueObservation scheduler.
         ///
