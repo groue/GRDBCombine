@@ -3,6 +3,8 @@ Migrating From GRDBCombine 0.x to GRDBCombine 1.0
 
 **This guide aims at helping you upgrading your applications.**
 
+GRDBCombine 1.0 comes with breaking changes. Those changes have the vanilla [GRDB], [GRDBCombine], and [RxGRDB], offer a common API, and a common behavior. This greatly helps choosing or switching your preferred database observation technique. In previous versions, the three companion libraries used to have subtle differences that were just opportunities for bugs.
+
 1. GRDBCombine 1.0 requires GRDB 5, which comes with changes in the runtime behavior of [ValueObservation], and directly impacts its derived GRDBCombine publisher. So please check [Migrating From GRDB 4 to GRDB 5] first.
 
 2. GRDBCombine requirements have been bumped:
@@ -31,5 +33,8 @@ Migrating From GRDBCombine 0.x to GRDBCombine 1.0
         .scheduling(.immediate)
     ```
 
+[GRDB]: https://github.com/groue/GRDB.swift
+[GRDBCombine]: https://github.com/groue/GRDBCombine
+[RxGRDB]: https://github.com/RxSwiftCommunity/RxGRDB
 [ValueObservation]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation
 [Migrating From GRDB 4 to GRDB 5]: https://github.com/groue/GRDB.swift/blob/GRDB5/Documentation/GRDB5MigrationGuide.md
