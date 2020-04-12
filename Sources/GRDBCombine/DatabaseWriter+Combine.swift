@@ -42,9 +42,13 @@ extension DatabaseWriter {
         -> AnyPublisher<Output, Error>
         where S : Scheduler
     {
-        flatMapWritePublisher(receiveOn: scheduler) { db in
-            try Just(updates(db)).setFailureType(to: Error.self)
-        }
+        OnDemandFuture({ fulfill in
+            self.asyncWrite(updates, completion: { _, result in
+                fulfill(result)
+            })
+        })
+            .receiveValues(on: scheduler)
+            .eraseToAnyPublisher()
     }
     
     /// Returns a Publisher that asynchronously writes into the database.
@@ -87,51 +91,24 @@ extension DatabaseWriter {
         -> AnyPublisher<Output, Error>
         where S : Scheduler
     {
-        flatMapWritePublisher(receiveOn: scheduler) { db -> AnyPublisher<Output, Error> in
-            try self.concurrentReadPublisher(input: updates(db), value: value)
-        }
-    }
-    
-    // MARK: - Implementation
-    
-    private func flatMapWritePublisher<S, P>(
-        receiveOn scheduler: S,
-        updates: @escaping (Database) throws -> P)
-        -> AnyPublisher<P.Output, Error>
-        where S : Scheduler, P : Publisher, P.Failure == Error
-    {
-        OnDemandFuture<P, Error> { fulfill in
+        OnDemandFuture({ fulfill in
             self.asyncWriteWithoutTransaction { db in
+                var updatesValue: T?
                 do {
-                    var publisher: P? = nil
                     try db.inTransaction {
-                        publisher = try updates(db)
+                        updatesValue = try updates(db)
                         return .commit
                     }
-                    // Support for writePublisher(updates:thenRead:):
-                    // fulfill after transaction, but still in the database
-                    // writer queue.
-                    fulfill(.success(publisher!))
                 } catch {
                     fulfill(.failure(error))
+                    return
+                }
+                self.spawnConcurrentRead { dbResult in
+                    fulfill(dbResult.flatMap { db in Result { try value(db, updatesValue!) } })
                 }
             }
-        }
-        .flatMap(maxPublishers: .unlimited, { $0 })
-        .receiveValues(on: scheduler)
-        .eraseToAnyPublisher()
-    }
-    
-    private func concurrentReadPublisher<T, Output>(
-        input: T,
-        value: @escaping (Database, T) throws -> Output)
-        -> AnyPublisher<Output, Error>
-    {
-        OnDemandFuture { fulfill in
-            self.spawnConcurrentRead { dbResult in
-                fulfill(dbResult.flatMap { db in Result { try value(db, input) } })
-            }
-        }
-        .eraseToAnyPublisher()
+        })
+            .receiveValues(on: scheduler)
+            .eraseToAnyPublisher()
     }
 }
