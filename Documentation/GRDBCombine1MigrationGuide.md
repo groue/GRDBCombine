@@ -8,7 +8,7 @@ Migrating From GRDBCombine 0.x to GRDBCombine 1.0
 2. GRDBCombine requirements have been bumped:
     
     - **Swift 5.2+** (was Swift 5.0+)
-    - **Xcode 11.4+** (was Xcode 10.0+)
+    - **Xcode 11.4+** (was Xcode 11.0+)
     - iOS 13.0+ (unchanged)
     - macOS 10.15+ (unchanged)
     - tvOS 13.0+ (unchanged)
