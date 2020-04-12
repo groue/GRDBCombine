@@ -5,7 +5,17 @@ Migrating From GRDBCombine 0.x to GRDBCombine 1.0
 
 1. GRDBCombine 1.0 requires GRDB 5, which comes with changes in the runtime behavior of [ValueObservation], and directly impacts its derived GRDBCombine publisher. So please check [Migrating From GRDB 4 to GRDB 5] first.
 
-2. The `fetchOnSubscription()` method of the ValueObservation subscriber has been removed. Replace it with `scheduling(.immediate)` for the same effect (an initial value is notified immediately, synchronously, when the publisher is subscribed):
+2. GRDBCombine requirements have been bumped:
+    
+    - **Swift 5.2+** (was Swift 5.0+)
+    - **Xcode 11.4+** (was Xcode 10.0+)
+    - iOS 13.0+ (unchanged)
+    - macOS 10.15+ (unchanged)
+    - tvOS 13.0+ (unchanged)
+    - watchOS 6.0+ (unchanged)
+    
+
+3. The `fetchOnSubscription()` method of the ValueObservation subscriber has been removed. Replace it with `scheduling(.immediate)` for the same effect (an initial value is notified immediately, synchronously, when the publisher is subscribed):
     
     ```swift
     // BEFORE: GRDBCombine 0.x
