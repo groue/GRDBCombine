@@ -47,6 +47,8 @@ extension DatabaseWriter {
                 fulfill(result)
             })
         })
+            // We don't want users to process emitted values on a
+            // database dispatch queue.
             .receiveValues(on: scheduler)
             .eraseToAnyPublisher()
     }
@@ -108,6 +110,8 @@ extension DatabaseWriter {
                 }
             }
         })
+            // We don't want users to process emitted values on a
+            // database dispatch queue.
             .receiveValues(on: scheduler)
             .eraseToAnyPublisher()
     }
