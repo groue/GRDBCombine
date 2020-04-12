@@ -13,7 +13,7 @@ GRDBCombine 1.0 comes with breaking changes. Those changes have the vanilla [GRD
     - macOS 10.15+ (unchanged)
     - tvOS 13.0+ (unchanged)
     - watchOS 6.0+ (unchanged)
-    - GRDB 5.0+ (was GRDB 4.1+)
+    - **GRDB 5.0+** (was GRDB 4.1+)
 
 2. GRDBCombine 1.0 requires GRDB 5, which has changed the runtime behavior of [ValueObservation]. This directly impacts GRDBCombine publishers. Please check [Migrating From GRDB 4 to GRDB 5] for a detailed description of the changes.
 
