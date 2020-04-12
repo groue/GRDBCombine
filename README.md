@@ -11,7 +11,7 @@ GRDBCombine
 
 **Latest release**: [GRDB5 branch](https://github.com/groue/GRDBCombine/tree/GRDB5) • [Release Notes] • [Migrating From GRDBCombine 0.x to GRDBCombine 1.0](Documentation/GRDBCombine1MigrationGuide.md)
 
-**Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.2+ / Xcode 11.4+
+**Requirements**: iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+ &bull; Swift 5.2+ / Xcode 11.4+
 
 **Contact**: Report bugs and ask questions in [Github issues](https://github.com/groue/GRDBCombine/issues).
 
