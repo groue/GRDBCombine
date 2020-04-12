@@ -15,7 +15,7 @@ GRDBCombine 1.0 comes with breaking changes. Those changes have the vanilla [GRD
     - watchOS 6.0+ (unchanged)
     - GRDB 5.0+ (was GRDB 4.1+)
 
-2. GRDBCombine 1.0 requires GRDB 5, which has changed the runtime behavior of [ValueObservation]. This directly impacts GRDBCombine publishers. So please check [Migrating From GRDB 4 to GRDB 5] first.
+2. GRDBCombine 1.0 requires GRDB 5, which has changed the runtime behavior of [ValueObservation]. This directly impacts GRDBCombine publishers. Please check [Migrating From GRDB 4 to GRDB 5] for a detailed description of the changes.
 
 3. The `fetchOnSubscription()` method of the ValueObservation subscriber has been removed. Replace it with `scheduling(.immediate)` for the same effect (an initial value is notified immediately, synchronously, when the publisher is subscribed):
     
