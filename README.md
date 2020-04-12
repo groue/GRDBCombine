@@ -5,7 +5,7 @@ GRDBCombine
 
 ---
 
-**Latest release**: [GRDB5 branch](https://github.com/groue/GRDBCombine/tree/GRDB5) • [Release Notes]
+**Latest release**: [GRDB5 branch](https://github.com/groue/GRDBCombine/tree/GRDB5) • [Release Notes] • [Migrating From GRDBCombine 0.x to GRDBCombine 1.0](Documentation/GRDBCombine1MigrationGuide.md)
 
 **Requirements**: iOS 13.0+ / macOS 10.15+ / watchOS 6.0+ &bull; Swift 5.2+ / Xcode 11.4+
 
@@ -278,7 +278,7 @@ This publisher has the same behavior as ValueObservation:
     
     This can be configured with the `scheduling(_:)` method. It does not accept a Combine scheduler, but a [GRDB scheduler](https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation-scheduling).
     
-    For example, the `.immediate` scheduler makes sure the initial value is notified immediately when the publisher is subcribed. It can help your application update the user interface without having to wait for any asynchronous notifications:
+    For example, the `.immediate` scheduler makes sure the initial value is notified immediately when the publisher is subscribed. It can help your application update the user interface without having to wait for any asynchronous notifications:
     
     ```swift
     let publisher = observation
