@@ -130,7 +130,8 @@ extension DatabasePublishers {
         }
         
         // Cancellable is not stored in self.state because we must enter the
-        // .observing state *before* the observation starts.
+        // .observing state *before* the observation starts, so that the user
+        // can change the state even before the cancellable is known.
         private var cancellable: DatabaseCancellable?
         private var state: State
         private var lock = NSRecursiveLock() // Allow re-entrancy
@@ -156,10 +157,20 @@ extension DatabasePublishers {
                     state = .observing(Observing(
                         downstream: info.downstream,
                         remainingDemand: demand))
-                    cancellable = info.start(
+                    let cancellable = info.start(
                         info.scheduler,
                         { [weak self] error in self?.receiveCompletion(.failure(error)) },
                         { [weak self] value in self?.receive(value) })
+                    
+                    // State may have been altered (error or cancellation)
+                    switch state {
+                    case .waitingForDemand:
+                        preconditionFailure()
+                    case .observing:
+                        self.cancellable = cancellable
+                    case .finished:
+                        cancellable.cancel()
+                    }
                     
                 case var .observing(info):
                     info.remainingDemand += demand
