@@ -31,7 +31,7 @@ class ValueObservationPublisherTests : XCTestCase {
         func test(writer: DatabaseWriter) throws {
             let publisher = ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
+                .publisher(in: writer)
             let recorder = publisher.record()
             
             try writer.writeWithoutTransaction { db in
@@ -72,7 +72,7 @@ class ValueObservationPublisherTests : XCTestCase {
             let semaphore = DispatchSemaphore(value: 0)
             let cancellable = ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
+                .publisher(in: writer)
                 .sink(
                     receiveCompletion: { _ in },
                     receiveValue: { _ in
@@ -91,6 +91,27 @@ class ValueObservationPublisherTests : XCTestCase {
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
+    func testDefaultSchedulerError() throws {
+        func test(writer: DatabaseWriter) throws {
+            let publisher = ValueObservation
+                .tracking { try $0.execute(sql: "THIS IS NOT SQL") }
+                .publisher(in: writer)
+            let recorder = publisher.record()
+            let completion = try wait(for: recorder.completion, timeout: 1)
+            switch completion {
+            case let .failure(error):
+                XCTAssertNotNil(error as? DatabaseError)
+            case .finished:
+                XCTFail("Expected error")
+            }
+        }
+        
+        try Test(test)
+            .run { try DatabaseQueue() }
+            .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
+    }
+    
     // MARK: - Immediate Scheduler
     
     func testImmediateSchedulerChangesNotifications() throws {
@@ -102,7 +123,7 @@ class ValueObservationPublisherTests : XCTestCase {
         func test(writer: DatabaseWriter) throws {
             let publisher = ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
+                .publisher(in: writer)
                 .scheduling(.immediate)
             let recorder = publisher.record()
             
@@ -152,7 +173,7 @@ class ValueObservationPublisherTests : XCTestCase {
             
             let observationCancellable = ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
+                .publisher(in: writer)
                 .scheduling(.immediate)
                 .subscribe(testSubject)
             
@@ -165,6 +186,28 @@ class ValueObservationPublisherTests : XCTestCase {
             .run { try setUp(DatabaseQueue()) }
             .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+    
+    func testImmediateSchedulerError() throws {
+        func test(writer: DatabaseWriter) throws {
+            let publisher = ValueObservation
+                .tracking { try $0.execute(sql: "THIS IS NOT SQL") }
+                .publisher(in: writer)
+                .scheduling(.immediate)
+            let recorder = publisher.record()
+            let completion = try recorder.completion.get()
+            switch completion {
+            case let .failure(error):
+                XCTAssertNotNil(error as? DatabaseError)
+            case .finished:
+                XCTFail("Expected error")
+            }
+        }
+        
+        try Test(test)
+            .run { DatabaseQueue() }
+            .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
     }
     
     // MARK: - Demand
@@ -208,7 +251,7 @@ class ValueObservationPublisherTests : XCTestCase {
             let subscriber = DemandSubscriber<Int, Error>()
             ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
+                .publisher(in: writer)
                 .subscribe(subscriber)
             
             let expectation = self.expectation(description: "")
@@ -239,7 +282,7 @@ class ValueObservationPublisherTests : XCTestCase {
             let subscriber = DemandSubscriber<Int, Error>()
             ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
+                .publisher(in: writer)
                 .subscribe(subscriber)
             
             subscriber.request(.max(1))
@@ -273,7 +316,7 @@ class ValueObservationPublisherTests : XCTestCase {
             let subscriber = DemandSubscriber<Int, Error>()
             ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
+                .publisher(in: writer)
                 .subscribe(subscriber)
             
             subscriber.request(.max(1))
@@ -311,7 +354,7 @@ class ValueObservationPublisherTests : XCTestCase {
             let subscriber = DemandSubscriber<Int, Error>()
             ValueObservation
                 .tracking(Player.fetchCount)
-                .publisher(in: writer as DatabaseReader)
+                .publisher(in: writer)
                 .subscribe(subscriber)
             
             subscriber.request(.max(2))
