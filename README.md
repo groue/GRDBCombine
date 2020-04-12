@@ -162,6 +162,12 @@ To use GRDBCombine with [CocoaPods](http://cocoapods.org/), specify in your `Pod
 pod 'GRDBCombine'
 ```
 
+To use GRDBCombine with [SQLCipher](https://www.zetetic.net/sqlcipher/), use [CocoaPods](http://cocoapods.org/), and specify in your `Podfile`:
+
+```ruby
+pod 'GRDBCombine/SQLCipher'
+```
+
 
 # Asynchronous Database Access
 
