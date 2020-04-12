@@ -1,6 +1,10 @@
 GRDBCombine
 ===========
 
+<a href="https://developer.apple.com/swift/"><img alt="Swift 5.2" src="https://img.shields.io/badge/swift-5.2-orange.svg?style=flat"></a>
+<a href="https://developer.apple.com/swift/"><img alt="Platforms" src="https://img.shields.io/cocoapods/p/GRDBCombine.svg"></a>
+<a href="https://github.com/groue/GRDBCombine/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/groue/GRDBCombine.svg?maxAge=2592000"></a>
+
 ### A set of extensions for [SQLite], [GRDB.swift], and [Combine]
 
 ---
