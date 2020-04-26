@@ -107,7 +107,7 @@ class ValueObservationPublisherTests : XCTestCase {
         }
         
         try Test(test)
-            .run { try DatabaseQueue() }
+            .run { DatabaseQueue() }
             .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
             .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
     }
