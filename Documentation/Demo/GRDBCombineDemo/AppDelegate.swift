@@ -6,7 +6,7 @@ import GRDB
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Setup the Current worldd
+        // Setup the Current world
         let dbPool = try! setupDatabase(application)
         Current = World(database: { dbPool })
         return true
