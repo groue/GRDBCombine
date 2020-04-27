@@ -180,7 +180,6 @@
 			packageReferences = (
 				56DF378C22A9964900166718 /* XCRemoteSwiftPackageReference "GRDBCombine" */,
 				56B28CF922BA0D8900E65640 /* XCRemoteSwiftPackageReference "GRDB" */,
-				5686F937238AD2D500FEF9D9 /* XCRemoteSwiftPackageReference "CombineExpectations" */,
 			);
 			productRefGroup = 56DF376622A992DB00166718 /* Products */;
 			projectDirPath = "";
@@ -421,14 +420,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		5686F937238AD2D500FEF9D9 /* XCRemoteSwiftPackageReference "CombineExpectations" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/groue/CombineExpectations.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.3.0;
-			};
-		};
 		56B28CF922BA0D8900E65640 /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
