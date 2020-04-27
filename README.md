@@ -291,9 +291,14 @@ This publisher has the same behavior as ValueObservation:
     For example, the `.immediate` scheduler makes sure the initial value is notified immediately when the publisher is subscribed. It can help your application update the user interface without having to wait for any asynchronous notifications:
     
     ```swift
-    let publisher = observation
+    // Immediate notification of the initial value
+    let cancellable = observation
         .publisher(in: dbQueue)
-        .scheduling(.immediate)
+        .scheduling(.immediate) // <-
+        .sink(
+            receiveCompletion: { completion in ... },
+            receiveValue: { (players: [Player]) in print("Fresh players: \(players)") })
+    // <- here "fresh players" is already printed.
     ```
     
     Note that the `.immediate` scheduler requires that the publisher is subscribed from the main thread. It raises a fatal error otherwise.
