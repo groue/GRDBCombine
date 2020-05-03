@@ -1,4 +1,4 @@
-// swift-tools-version:5.0
+// swift-tools-version:5.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "GRDBCombine", targets: ["GRDBCombine"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/groue/GRDB.swift.git", .upToNextMajor(from: "4.1.0")),
+        .package(name: "GRDB", url: "https://github.com/groue/GRDB.swift.git", .upToNextMajor(from: "5.0.0-beta")),
         .package(url: "https://github.com/groue/CombineExpectations.git", .upToNextMajor(from: "0.3.0"))
     ],
     targets: [

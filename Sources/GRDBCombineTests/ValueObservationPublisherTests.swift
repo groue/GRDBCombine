@@ -20,16 +20,18 @@ private struct Player: Codable, FetchableRecord, PersistableRecord {
 
 class ValueObservationPublisherTests : XCTestCase {
     
-    func testChangesNotifications() throws {
+    // MARK: - Default Scheduler
+    
+    func testDefaultSchedulerChangesNotifications() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write(Player.createTable)
             return writer
         }
         
         func test(writer: DatabaseWriter) throws {
-            let publisher = Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
+            let publisher = ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
             let recorder = publisher.record()
             
             try writer.writeWithoutTransaction { db in
@@ -42,53 +44,15 @@ class ValueObservationPublisherTests : XCTestCase {
                 }
             }
             
-            let elements = try wait(for: recorder.next(3), timeout: 1)
-            XCTAssertEqual(elements, [0, 1, 3])
-        }
-        
-        try Test(test)
-            .run { try setUp(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
-    }
-    
-    func testDefaultScheduler() throws {
-        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write(Player.createTable)
-            return writer
-        }
-        
-        func test(writer: DatabaseWriter) throws {
-            let expectation = self.expectation(description: "")
-            let testSubject = PassthroughSubject<Int, Error>()
-            let testCancellable = testSubject
-                .handleEvents(receiveOutput: { _ in
-                    dispatchPrecondition(condition: .onQueue(.main))
-                })
-                .collect(2)
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                        dispatchPrecondition(condition: .onQueue(.main))
-                },
-                    receiveValue: { value in
-                        // 2 = test for initial value + changed value
-                        XCTAssertEqual(value.count, 2)
-                        expectation.fulfill()
-                })
-            
-            let observationCancellable = Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
-                .subscribe(testSubject)
-            
-            try writer.writeWithoutTransaction { db in
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+            let expectedElements = [0, 1, 3]
+            if writer is DatabaseQueue {
+                let elements = try wait(for: recorder.next(expectedElements.count), timeout: 1)
+                XCTAssertEqual(elements, expectedElements)
+            } else {
+                // TODO: prefix(until:)
+                let elements = try wait(for: recorder.prefix(expectedElements.count + 2).inverted, timeout: 1)
+                assertValueObservationRecordingMatch(recorded: elements, expected: expectedElements)
             }
-            
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
-            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -97,7 +61,7 @@ class ValueObservationPublisherTests : XCTestCase {
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
-    func testFirstValueIsEmittedAsynchronously() throws {
+    func testDefaultSchedulerFirstValueIsEmittedAsynchronously() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write(Player.createTable)
             return writer
@@ -106,8 +70,9 @@ class ValueObservationPublisherTests : XCTestCase {
         func test(writer: DatabaseWriter) throws {
             let expectation = self.expectation(description: "")
             let semaphore = DispatchSemaphore(value: 0)
-            let testSubject = PassthroughSubject<Int, Error>()
-            let testCancellable = testSubject
+            let cancellable = ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
                 .sink(
                     receiveCompletion: { _ in },
                     receiveValue: { _ in
@@ -115,15 +80,9 @@ class ValueObservationPublisherTests : XCTestCase {
                         expectation.fulfill()
                 })
             
-            let observationCancellable = Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
-                .subscribe(testSubject)
-            
             semaphore.signal()
             waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
-            observationCancellable.cancel()
+            cancellable.cancel()
         }
         
         try Test(test)
@@ -132,19 +91,40 @@ class ValueObservationPublisherTests : XCTestCase {
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
-    // MARK: - FetchOnSubscription
+    func testDefaultSchedulerError() throws {
+        func test(writer: DatabaseWriter) throws {
+            let publisher = ValueObservation
+                .tracking { try $0.execute(sql: "THIS IS NOT SQL") }
+                .publisher(in: writer)
+            let recorder = publisher.record()
+            let completion = try wait(for: recorder.completion, timeout: 1)
+            switch completion {
+            case let .failure(error):
+                XCTAssertNotNil(error as? DatabaseError)
+            case .finished:
+                XCTFail("Expected error")
+            }
+        }
+        
+        try Test(test)
+            .run { DatabaseQueue() }
+            .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
+    }
     
-    func testFetchOnSubscriptionChangesNotifications() throws {
+    // MARK: - Immediate Scheduler
+    
+    func testImmediateSchedulerChangesNotifications() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write(Player.createTable)
             return writer
         }
         
         func test(writer: DatabaseWriter) throws {
-            let publisher = Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
-                .fetchOnSubscription()
+            let publisher = ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
+                .scheduling(.immediate)
             let recorder = publisher.record()
             
             try writer.writeWithoutTransaction { db in
@@ -157,54 +137,15 @@ class ValueObservationPublisherTests : XCTestCase {
                 }
             }
             
-            let elements = try wait(for: recorder.next(3), timeout: 1)
-            XCTAssertEqual(elements, [0, 1, 3])
-        }
-        
-        try Test(test)
-            .run { try setUp(DatabaseQueue()) }
-            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
-            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
-    }
-    
-    func testFetchOnSubscriptionDefaultScheduler() throws {
-        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
-            try writer.write(Player.createTable)
-            return writer
-        }
-        
-        func test(writer: DatabaseWriter) throws {
-            let expectation = self.expectation(description: "")
-            let testSubject = PassthroughSubject<Int, Error>()
-            let testCancellable = testSubject
-                .handleEvents(receiveOutput: { _ in
-                    dispatchPrecondition(condition: .onQueue(.main))
-                })
-                .collect(2)
-                .sink(
-                    receiveCompletion: { completion in
-                        assertNoFailure(completion)
-                        dispatchPrecondition(condition: .onQueue(.main))
-                },
-                    receiveValue: { value in
-                        // 2 = test for initial value + changed value
-                        XCTAssertEqual(value.count, 2)
-                        expectation.fulfill()
-                })
-            
-            let observationCancellable = Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
-                .fetchOnSubscription()
-                .subscribe(testSubject)
-            
-            try writer.writeWithoutTransaction { db in
-                try Player(id: 1, name: "Arthur", score: 1000).insert(db)
+            let expectedElements = [0, 1, 3]
+            if writer is DatabaseQueue {
+                let elements = try wait(for: recorder.next(expectedElements.count), timeout: 1)
+                XCTAssertEqual(elements, expectedElements)
+            } else {
+                // TODO: prefix(until:)
+                let elements = try wait(for: recorder.prefix(expectedElements.count + 2).inverted, timeout: 1)
+                assertValueObservationRecordingMatch(recorded: elements, expected: expectedElements)
             }
-            
-            waitForExpectations(timeout: 1, handler: nil)
-            testCancellable.cancel()
-            observationCancellable.cancel()
         }
         
         try Test(test)
@@ -213,7 +154,7 @@ class ValueObservationPublisherTests : XCTestCase {
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
     }
     
-    func testFetchOnSubscriptionEmitsFirstValueSynchronously() throws {
+    func testImmediateSchedulerEmitsFirstValueSynchronously() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write(Player.createTable)
             return writer
@@ -230,10 +171,10 @@ class ValueObservationPublisherTests : XCTestCase {
                         semaphore.signal()
                 })
             
-            let observationCancellable = Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
-                .fetchOnSubscription()
+            let observationCancellable = ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
+                .scheduling(.immediate)
                 .subscribe(testSubject)
             
             semaphore.wait()
@@ -245,6 +186,28 @@ class ValueObservationPublisherTests : XCTestCase {
             .run { try setUp(DatabaseQueue()) }
             .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+    
+    func testImmediateSchedulerError() throws {
+        func test(writer: DatabaseWriter) throws {
+            let publisher = ValueObservation
+                .tracking { try $0.execute(sql: "THIS IS NOT SQL") }
+                .publisher(in: writer)
+                .scheduling(.immediate)
+            let recorder = publisher.record()
+            let completion = try recorder.completion.get()
+            switch completion {
+            case let .failure(error):
+                XCTAssertNotNil(error as? DatabaseError)
+            case .finished:
+                XCTFail("Expected error")
+            }
+        }
+        
+        try Test(test)
+            .run { DatabaseQueue() }
+            .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
+            .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
     }
     
     // MARK: - Demand
@@ -286,9 +249,9 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
+            ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
                 .subscribe(subscriber)
             
             let expectation = self.expectation(description: "")
@@ -317,9 +280,9 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
+            ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
                 .subscribe(subscriber)
             
             subscriber.request(.max(1))
@@ -351,9 +314,9 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
+            ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
                 .subscribe(subscriber)
             
             subscriber.request(.max(1))
@@ -389,9 +352,9 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            Player
-                .observationForCount()
-                .publisher(in: writer as DatabaseReader)
+            ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
                 .subscribe(subscriber)
             
             subscriber.request(.max(2))
@@ -402,7 +365,6 @@ class ValueObservationPublisherTests : XCTestCase {
                 .sink(
                     receiveCompletion: { _ in XCTFail("Unexpected completion") },
                     receiveValue: { values in
-                        XCTAssertEqual(values, [0,1])
                         expectation.fulfill()
                 })
             
@@ -419,5 +381,88 @@ class ValueObservationPublisherTests : XCTestCase {
             .run { try setUp(DatabaseQueue()) }
             .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
+    
+    // MARK: - Utils
+    
+    /// This test checks the fundamental promise of ValueObservation by
+    /// comparing recorded values with expected values.
+    ///
+    /// Recorded values match the expected values if and only if:
+    ///
+    /// - The last recorded value is the last expected value
+    /// - Recorded values are in the same order as expected values
+    ///
+    /// However, both missing and repeated values are allowed - with the only
+    /// exception of the last expected value which can not be missed.
+    ///
+    /// For example, if the expected values are [0, 1], then the following
+    /// recorded values match:
+    ///
+    /// - `[0, 1]` (identical values)
+    /// - `[1]` (missing value but the last one)
+    /// - `[0, 0, 1, 1]` (repeated value)
+    ///
+    /// However the following recorded values don't match, and fail the test:
+    ///
+    /// - `[1, 0]` (wrong order)
+    /// - `[0]` (missing last value)
+    /// - `[]` (missing last value)
+    /// - `[0, 1, 2]` (unexpected value)
+    /// - `[1, 0, 1]` (unexpected value)
+    func assertValueObservationRecordingMatch<Value>(
+        recorded recordedValues: [Value],
+        expected expectedValues: [Value],
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #file,
+        line: UInt = #line)
+        where Value: Equatable
+    {
+        _assertValueObservationRecordingMatch(
+            recorded: recordedValues,
+            expected: expectedValues,
+            // Last value can't be missed
+            allowMissingLastValue: false,
+            message(), file: file, line: line)
+    }
+    
+    private func _assertValueObservationRecordingMatch<R, E>(
+        recorded recordedValues: R,
+        expected expectedValues: E,
+        allowMissingLastValue: Bool,
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #file,
+        line: UInt = #line)
+        where
+        R: BidirectionalCollection,
+        E: BidirectionalCollection,
+        R.Element == E.Element,
+        R.Element: Equatable
+    {
+        guard let value = expectedValues.last else {
+            if !recordedValues.isEmpty {
+                XCTFail("unexpected recorded prefix \(Array(recordedValues)) - \(message())", file: file, line: line)
+            }
+            return
+        }
+        
+        let recordedSuffix = recordedValues.reversed().prefix(while: { $0 == value })
+        let expectedSuffix = expectedValues.reversed().prefix(while: { $0 == value })
+        if !allowMissingLastValue {
+            // Both missing and repeated values are allowed in the recorded values.
+            // This is because of asynchronous DatabasePool observations.
+            if recordedSuffix.isEmpty {
+                XCTFail("missing expected value \(value) - \(message())", file: file, line: line)
+            }
+        }
+        
+        let remainingRecordedValues = recordedValues.prefix(recordedValues.count - recordedSuffix.count)
+        let remainingExpectedValues = expectedValues.prefix(expectedValues.count - expectedSuffix.count)
+        _assertValueObservationRecordingMatch(
+            recorded: remainingRecordedValues,
+            expected: remainingExpectedValues,
+            // Other values can be missed
+            allowMissingLastValue: true,
+            message(), file: file, line: line)
     }
 }

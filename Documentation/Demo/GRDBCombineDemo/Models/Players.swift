@@ -70,7 +70,7 @@ struct Players {
     /// A publisher that tracks changes in the Hall of Fame
     func hallOfFamePublisher(maxPlayerCount: Int) -> DatabasePublishers.Value<HallOfFame> {
         ValueObservation
-            .tracking(value: { db in
+            .tracking({ db in
                 let playerCount = try Player.fetchCount(db)
                 let bestPlayers = try Player
                     .limit(maxPlayerCount)

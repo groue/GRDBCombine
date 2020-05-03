@@ -1,7 +1,43 @@
 GIT := $(shell command -v git)
 JAZZY := $(shell command -v jazzy)
+POD := $(shell command -v pod)
 SOURCEKITTEN := $(shell command -v sourcekitten)
 SWIFT := $(shell command -v xcrun swift)
+
+XCPRETTY = 
+XCPRETTY_PATH := $(shell command -v xcpretty 2> /dev/null)
+ifdef XCPRETTY_PATH
+  XCPRETTY = | xcpretty -c
+  ifeq ($(TRAVIS),true)
+    XCPRETTY += -f `xcpretty-travis-formatter`
+  endif
+endif
+
+# Avoid the "No output has been received in the last 10m0s" error on Travis:
+COCOAPODS_EXTRA_TIME =
+ifeq ($(TRAVIS),true)
+  COCOAPODS_EXTRA_TIME = --verbose
+endif
+
+# ------------------------------------------------------------------------------
+
+test: test_SPM test_install
+test_install: test_CocoaPodsLint
+
+test_SPM:
+	$(SWIFT) package clean
+	$(SWIFT) build
+	$(SWIFT) build -c release
+	set -o pipefail && $(SWIFT) test $(XCPRETTY)
+
+test_CocoaPodsLint:
+ifdef POD
+	$(POD) repo update
+	$(POD) lib lint --allow-warnings $(COCOAPODS_EXTRA_TIME)
+else
+	@echo CocoaPods must be installed for test_CocoaPodsLint
+	@exit 1
+endif
 
 doc:
 ifdef JAZZY
@@ -14,11 +50,11 @@ ifdef SOURCEKITTEN
 	  --author 'Gwendal Roué' \
 	  --author_url https://github.com/groue \
 	  --github_url https://github.com/groue/GRDBCombine \
-	  --github-file-prefix https://github.com/groue/GRDBCombine/tree/v0.7.0 \
-	  --module-version 0.7 \
+	  --github-file-prefix https://github.com/groue/GRDBCombine/tree/v1.0.0-beta \
+	  --module-version 1.0.0-beta \
 	  --module GRDBCombine \
-	  --root-url https://groue.github.io/GRDBCombine/docs/0.7/ \
-	  --output Documentation/0.7
+	  --root-url https://groue.github.io/GRDBCombine/docs/1.0.0-beta/ \
+	  --output Documentation/1.0.0-beta
 else
 	@echo SourceKitten must be installed for doc: brew install sourcekitten
 	@exit 1
@@ -32,4 +68,4 @@ distclean:
 	$(GIT) reset --hard
 	$(GIT) clean -dffx .
 
-.PHONY: distclean doc
+.PHONY: distclean doc test
