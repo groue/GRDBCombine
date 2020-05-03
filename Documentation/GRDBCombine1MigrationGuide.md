@@ -36,5 +36,5 @@ GRDBCombine 1.0 comes with breaking changes. Those changes have the vanilla [GRD
 [GRDB]: https://github.com/groue/GRDB.swift
 [GRDBCombine]: https://github.com/groue/GRDBCombine
 [RxGRDB]: https://github.com/RxSwiftCommunity/RxGRDB
-[ValueObservation]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation
-[Migrating From GRDB 4 to GRDB 5]: https://github.com/groue/GRDB.swift/blob/GRDB5/Documentation/GRDB5MigrationGuide.md
+[ValueObservation]: https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation
+[Migrating From GRDB 4 to GRDB 5]: https://github.com/groue/GRDB.swift/blob/master/Documentation/GRDB5MigrationGuide.md

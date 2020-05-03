@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name     = 'GRDBCombine'
-  s.version  = '0.8.1'
+  s.version  = '1.0.0-beta'
   
   s.license  = { :type => 'MIT', :file => 'LICENSE' }
   s.summary  = 'A set of extensions for SQLite, GRDB.swift, and Combine'
@@ -20,12 +20,12 @@ Pod::Spec.new do |s|
   
   s.subspec 'default' do |ss|
     ss.source_files = 'Sources/GRDBCombine/*.swift'
-    ss.dependency 'GRDB.swift', '~> 5.0'
+    ss.dependency 'GRDB.swift', '~> 5.0-beta'
   end
   
   s.subspec 'SQLCipher' do |ss|
     ss.source_files = 'Sources/GRDBCombine/*.swift'
-    ss.dependency "GRDB.swift/SQLCipher", "~> 5.0"
+    ss.dependency 'GRDB.swift/SQLCipher', '~> 5.0-beta'
     ss.xcconfig = {
       'OTHER_SWIFT_FLAGS' => '$(inherited) -DSQLITE_HAS_CODEC -DUSING_SQLCIPHER',
       'OTHER_CFLAGS' => '$(inherited) -DSQLITE_HAS_CODEC -DUSING_SQLCIPHER',

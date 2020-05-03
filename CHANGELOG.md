@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 #### 0.x Releases
 
+- [1.0.0-beta](#100-beta)
 - [0.8.1](#081)
 - [0.8.0](#080)
 - [0.7.1](#071)
@@ -17,6 +18,14 @@ All notable changes to this project will be documented in this file.
 - [0.1.1](#011)
 - [0.1.0](#010)
 
+
+## 1.0.0-beta
+
+Released May 3, 2029
+
+Check out the [Migration Guide](Documentation/GRDBCombine1MigrationGuide.md).
+
+- [#34](https://github.com/groue/GRDBCombine/pull/34) by [@groue](http://github.com/groue): GRDBCombine 1.0
 
 ## 0.8.1
 
