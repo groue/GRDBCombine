@@ -13,7 +13,7 @@ GRDBCombine
 
 **Requirements**: iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+ &bull; Swift 5.2+ / Xcode 11.4+
 
-| Swift version | RxGRDB version                                             |
+| Swift version | GRDBCombine version                                        |
 | ------------- | ---------------------------------------------------------- |
 | **Swift 5.2** | **v1.0.0-beta**, [v0.8.1](https://github.com/groue/GRDBCombine/tree/v0.8.1) |
 | Swift 5.1     | [v0.8.1](https://github.com/groue/GRDBCombine/tree/v0.8.1) |
