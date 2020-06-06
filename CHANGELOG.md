@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 #### 0.x Releases
 
+- [1.0.0-beta.2](#100-beta2)
 - [1.0.0-beta](#100-beta)
 - [0.8.1](#081)
 - [0.8.0](#080)
@@ -19,13 +20,19 @@ All notable changes to this project will be documented in this file.
 - [0.1.0](#010)
 
 
+## 1.0.0-beta.2
+
+Released June 6, 2020
+
+- **Breaking**: The ValueObservation scheduler is now an argument of the `publisher(in:scheduler:)` method.
+
 ## 1.0.0-beta
 
-Released May 3, 2029
+Released May 3, 2020
 
 Check out the [Migration Guide](Documentation/GRDBCombine1MigrationGuide.md).
 
-- [#34](https://github.com/groue/GRDBCombine/pull/34) by [@groue](http://github.com/groue): GRDBCombine 1.0
+- **Breaking** [#34](https://github.com/groue/GRDBCombine/pull/34) by [@groue](http://github.com/groue): GRDBCombine 1.0
 
 ## 0.8.1
 

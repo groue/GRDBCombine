@@ -9,13 +9,13 @@ GRDBCombine
 
 ---
 
-**Latest release**: May 3, 2020 • version 1.0.0-beta • [Release Notes] • [Migrating From GRDBCombine 0.x to GRDBCombine 1.0](Documentation/GRDBCombine1MigrationGuide.md)
+**Latest release**: June 6, 2020 • version 1.0.0-beta.2 • [Release Notes] • [Migrating From GRDBCombine 0.x to GRDBCombine 1.0](Documentation/GRDBCombine1MigrationGuide.md)
 
 **Requirements**: iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+ &bull; Swift 5.2+ / Xcode 11.4+
 
 | Swift version | GRDBCombine version                                        |
 | ------------- | ---------------------------------------------------------- |
-| **Swift 5.2** | **v1.0.0-beta**, [v0.8.1](https://github.com/groue/GRDBCombine/tree/v0.8.1) |
+| **Swift 5.2** | **v1.0.0-beta.2**, [v0.8.1](https://github.com/groue/GRDBCombine/tree/v0.8.1) |
 | Swift 5.1     | [v0.8.1](https://github.com/groue/GRDBCombine/tree/v0.8.1) |
 
 **Contact**: Report bugs and ask questions in [Github issues](https://github.com/groue/GRDBCombine/issues).
@@ -379,7 +379,7 @@ See [DatabaseRegionObservation] for more information.
 [Demo Application]: Documentation/Demo/README.md
 [GRDB.swift]: https://github.com/groue/GRDB.swift
 [Installation]: #installation
-[Reference]: https://groue.github.io/GRDBCombine/docs/1.0.0-beta/index.html
+[Reference]: https://groue.github.io/GRDBCombine/docs/1.0.0-beta.2/index.html
 [Release Notes]: CHANGELOG.md
 [SQLite]: http://sqlite.org
 [Swift Package Manager]: https://swift.org/package-manager/
