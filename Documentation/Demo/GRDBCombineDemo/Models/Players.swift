@@ -78,6 +78,6 @@ struct Players {
                     .fetchAll(db)
                 return HallOfFame(playerCount: playerCount, bestPlayers: bestPlayers)
             })
-            .publisher(in: database)
+            .publisher(in: database, scheduling: .immediate)
     }
 }

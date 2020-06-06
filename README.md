@@ -266,11 +266,11 @@ It completes on the main queue, unless you provide a specific [scheduler] to the
 
 Database Observation publishers are based on GRDB's [ValueObservation] and [DatabaseRegionObservation]. Please refer to their documentation for more information. If your application needs change notifications that are not built in GRDBCombine, check the general [Database Changes Observation] chapter.
 
-- [`ValueObservation.publisher(in:)`]
+- [`ValueObservation.publisher(in:scheduling:)`]
 - [`DatabaseRegionObservation.publisher(in:)`]
 
 
-#### `ValueObservation.publisher(in:)`
+#### `ValueObservation.publisher(in:scheduling:)`
 
 GRDB's [ValueObservation] tracks changes in database values. You can turn it into a Combine publisher:
 
@@ -291,15 +291,16 @@ This publisher has the same behavior as ValueObservation:
 - It stops emitting any value after the database connection is closed. But it never completes.
 - By default, it notifies the initial value, as well as eventual changes and errors, on the main thread, asynchronously.
     
-    This can be configured with the `scheduling(_:)` method. It does not accept a Combine scheduler, but a [GRDB scheduler](https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation-scheduling).
+    This can be configured with the `scheduling` argument. It does not accept a Combine scheduler, but a [GRDB scheduler](https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation-scheduling).
     
     For example, the `.immediate` scheduler makes sure the initial value is notified immediately when the publisher is subscribed. It can help your application update the user interface without having to wait for any asynchronous notifications:
     
     ```swift
     // Immediate notification of the initial value
     let cancellable = observation
-        .publisher(in: dbQueue)
-        .scheduling(.immediate) // <-
+        .publisher(
+            in: dbQueue,
+            scheduling: .immediate) // <-
         .sink(
             receiveCompletion: { completion in ... },
             receiveValue: { (players: [Player]) in print("Fresh players: \(players)") })
@@ -384,7 +385,7 @@ See [DatabaseRegionObservation] for more information.
 [Swift Package Manager]: https://swift.org/package-manager/
 [ValueObservation]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation
 [`DatabaseRegionObservation.publisher(in:)`]: #databaseregionobservationpublisherin
-[`ValueObservation.publisher(in:)`]: #valueobservationpublisherin
+[`ValueObservation.publisher(in:scheduling:)`]: #valueobservationpublisherinscheduling
 [`readPublisher(receiveOn:value:)`]: #databasereaderreadpublisherreceiveonvalue
 [`writePublisher(receiveOn:updates:)`]: #databasewriterwritepublisherreceiveonupdates
 [`writePublisher(receiveOn:updates:thenRead:)`]: #databasewriterwritepublisherreceiveonupdatesthenread

@@ -8,8 +8,6 @@ class HallOfFameViewModel {
     init() {
         Current.players()
             .hallOfFamePublisher(maxPlayerCount: 10)
-            // Perform a synchronous initial fetch
-            .scheduling(.immediate)
             // Ignore database errors
             .catch { _ in Empty() }
             .sink { [unowned self] in self.hallOfFame = $0 }

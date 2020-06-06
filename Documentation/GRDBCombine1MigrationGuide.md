@@ -17,7 +17,7 @@ GRDBCombine 1.0 comes with breaking changes. Those changes have the vanilla [GRD
 
 2. GRDBCombine 1.0 requires GRDB 5, which has changed the runtime behavior of [ValueObservation]. This directly impacts GRDBCombine publishers. Please check [Migrating From GRDB 4 to GRDB 5] for a detailed description of the changes.
 
-3. The `fetchOnSubscription()` method of the ValueObservation subscriber has been removed. Replace it with `scheduling(.immediate)` for the same effect (an initial value is notified immediately, synchronously, when the publisher is subscribed):
+3. The `fetchOnSubscription()` method of the ValueObservation subscriber has been removed. Replace it with `scheduling: .immediate` for the same effect (an initial value is notified immediately, synchronously, when the publisher is subscribed):
     
     ```swift
     // BEFORE: GRDBCombine 0.x
@@ -29,8 +29,7 @@ GRDBCombine 1.0 comes with breaking changes. Those changes have the vanilla [GRD
     // NEW: GRDBCombine 1.0
     let observation = ValueObservation.tracking { db in ... }
     let publisher = observation
-        .publisher(in: dbQueue)
-        .scheduling(.immediate)
+        .publisher(in: dbQueue, scheduling: .immediate)
     ```
 
 [GRDB]: https://github.com/groue/GRDB.swift
