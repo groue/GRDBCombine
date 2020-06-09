@@ -253,7 +253,7 @@ let newPlayerCount = dbQueue.writePublisher { db -> Int in
 
 The difference is that the last fetches are performed in the `thenRead` function. This function accepts two arguments: a readonly database connection, and the result of the `updates` function. This allows you to pass information from a function to the other (it is ignored in the sample code above).
 
-When you use a [database pool], this method applies a scheduling optimization: the `thenRead` function sees the database in the state left by the `updates` function, and yet does not block any concurrent writes. This can reduce database write contention. See [Advanced DatabasePool](https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#advanced-databasepool) for more information.
+When you use a [database pool], this method applies a scheduling optimization: the `thenRead` function sees the database in the state left by the `updates` function, and yet does not block any concurrent writes. This can reduce database write contention. See [Advanced DatabasePool](https://github.com/groue/GRDB.swift/blob/master/README.md#advanced-databasepool) for more information.
 
 When you use a [database queue], the results are guaranteed to be identical, but no scheduling optimization is applied.
 
@@ -287,11 +287,11 @@ This publisher has the same behavior as ValueObservation:
 
 - It notifies an initial value before the eventual changes.
 - It may coalesce subsequent changes into a single notification.
-- It may notify consecutive identical values. You can filter out the undesired duplicates with the `removeDuplicates()` Combine operator, but we suggest you have a look at the [removeDuplicates()](https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservationremoveduplicates) GRDB operator also.
+- It may notify consecutive identical values. You can filter out the undesired duplicates with the `removeDuplicates()` Combine operator, but we suggest you have a look at the [removeDuplicates()](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservationremoveduplicates) GRDB operator also.
 - It stops emitting any value after the database connection is closed. But it never completes.
 - By default, it notifies the initial value, as well as eventual changes and errors, on the main thread, asynchronously.
     
-    This can be configured with the `scheduling` argument. It does not accept a Combine scheduler, but a [GRDB scheduler](https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation-scheduling).
+    This can be configured with the `scheduling` argument. It does not accept a Combine scheduler, but a [GRDB scheduler](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation-scheduling).
     
     For example, the `.immediate` scheduler makes sure the initial value is notified immediately when the publisher is subscribed. It can help your application update the user interface without having to wait for any asynchronous notifications:
     
@@ -309,7 +309,7 @@ This publisher has the same behavior as ValueObservation:
     
     Note that the `.immediate` scheduler requires that the publisher is subscribed from the main thread. It raises a fatal error otherwise.
 
-See [ValueObservation Scheduling](https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation-scheduling) for more information.
+See [ValueObservation Scheduling](https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation-scheduling) for more information.
 
 :warning: **ValueObservation and Data Consistency**
 
@@ -373,9 +373,9 @@ See [DatabaseRegionObservation] for more information.
 
 [Asynchronous Database Access]: #asynchronous-database-access
 [Combine]: https://developer.apple.com/documentation/combine
-[Database Changes Observation]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#database-changes-observation
+[Database Changes Observation]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-changes-observation
 [Database Observation]: #database-observation
-[DatabaseRegionObservation]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#databaseregionobservation
+[DatabaseRegionObservation]: https://github.com/groue/GRDB.swift/blob/master/README.md#databaseregionobservation
 [Demo Application]: Documentation/Demo/README.md
 [GRDB.swift]: https://github.com/groue/GRDB.swift
 [Installation]: #installation
@@ -383,14 +383,14 @@ See [DatabaseRegionObservation] for more information.
 [Release Notes]: CHANGELOG.md
 [SQLite]: http://sqlite.org
 [Swift Package Manager]: https://swift.org/package-manager/
-[ValueObservation]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#valueobservation
+[ValueObservation]: https://github.com/groue/GRDB.swift/blob/master/README.md#valueobservation
 [`DatabaseRegionObservation.publisher(in:)`]: #databaseregionobservationpublisherin
 [`ValueObservation.publisher(in:scheduling:)`]: #valueobservationpublisherinscheduling
 [`readPublisher(receiveOn:value:)`]: #databasereaderreadpublisherreceiveonvalue
 [`writePublisher(receiveOn:updates:)`]: #databasewriterwritepublisherreceiveonupdates
 [`writePublisher(receiveOn:updates:thenRead:)`]: #databasewriterwritepublisherreceiveonupdatesthenread
-[configured]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#databasepool-configuration
-[database pool]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#database-pools
-[database queue]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#database-queues
-[database snapshot]: https://github.com/groue/GRDB.swift/blob/GRDB5/README.md#database-snapshots
+[configured]: https://github.com/groue/GRDB.swift/blob/master/README.md#databasepool-configuration
+[database pool]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-pools
+[database queue]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-queues
+[database snapshot]: https://github.com/groue/GRDB.swift/blob/master/README.md#database-snapshots
 [scheduler]: https://developer.apple.com/documentation/combine/scheduler
