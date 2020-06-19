@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "GRDBCombine", targets: ["GRDBCombine"]),
     ],
     dependencies: [
-        .package(name: "GRDB", url: "https://github.com/groue/GRDB.swift.git", .upToNextMajor(from: "5.0.0-beta.4")),
+        .package(name: "GRDB", url: "https://github.com/groue/GRDB.swift.git", .upToNextMajor(from: "5.0.0-beta.5")),
         .package(url: "https://github.com/groue/CombineExpectations.git", .upToNextMajor(from: "0.3.0"))
     ],
     targets: [
