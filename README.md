@@ -32,16 +32,10 @@ To connect to the database, please refer to [GRDB](https://github.com/groue/GRDB
 This publisher reads a single value and delivers it.
 
 ```swift
-// AnyPublisher<[Player], Error>
+// DatabasePublishers.Read<[Player]>
 let players = dbQueue.readPublisher { db in
     try Player.fetchAll(db)
 }
-
-let cancellable = players.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (players: [Player]) in
-        print("Players: \(players)")
-    })
 ```
 
 </details>
@@ -49,31 +43,19 @@ let cancellable = players.sink(
 <details>
   <summary><strong>Asynchronously write in the database</strong></summary>
   
-This publisher delivers a single value, after the database has been updated.
+This publisher updates the database and delivers a single value.
 
 ```swift
-// AnyPublisher<Void, Error>
+// DatabasePublishers.Write<Void>
 let write = dbQueue.writePublisher { db in
     try Player(...).insert(db)
 }
 
-let cancellable = write.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { _ in
-        print("Updates completed")
-    })
-
-// AnyPublisher<Int, Error>
+// DatabasePublishers.Write<Int>
 let newPlayerCount = dbQueue.writePublisher { db -> Int in
     try Player(...).insert(db)
     return try Player.fetchCount(db)
 }
-
-let cancellable = newPlayerCount.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (playerCount: Int) in
-        print("New players count: \(playerCount)")
-    })
 ```
 
 </details>
@@ -89,22 +71,10 @@ let publisher = ValueObservation
     .tracking { db in try Player.fetchAll(db) }
     .publisher(in: dbQueue)
 
-let cancellable = publisher.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (players: [Player]) in
-        print("Fresh players: \(players)")
-    })
-
 // A publisher with output Int? and failure Error
 let publisher = ValueObservation
     .tracking { db in try Int.fetchOne(db, sql: "SELECT MAX(score) FROM player") }
     .publisher(in: dbQueue)
-
-let cancellable = publisher.sink(
-    receiveCompletion: { completion in ... },
-    receiveValue: { (maxScore: Int?) in
-        print("Fresh maximum score: \(maxScore)")
-    })
 ```
 
 </details>
@@ -188,7 +158,7 @@ GRDBCombine provide publishers that perform asynchronous database accesses.
 This methods returns a publisher that completes after database values have been asynchronously fetched.
 
 ```swift
-// AnyPublisher<[Player], Error>
+// DatabasePublishers.Read<[Player]>
 let players = dbQueue.readPublisher { db in
     try Player.fetchAll(db)
 }
@@ -210,12 +180,12 @@ The fetched value is published on the main queue, unless you provide a specific 
 This method returns a publisher that completes after database updates have been successfully executed inside a database transaction.
 
 ```swift
-// AnyPublisher<Void, Error>
+// DatabasePublishers.Write<Void>
 let write = dbQueue.writePublisher { db in
     try Player(...).insert(db)
 }
 
-// AnyPublisher<Int, Error>
+// DatabasePublishers.Write<Int>
 let newPlayerCount = dbQueue.writePublisher { db -> Int in
     try Player(...).insert(db)
     return try Player.fetchCount(db)
@@ -234,7 +204,7 @@ When you use a [database pool], and your app executes some database updates foll
 This method returns a publisher that completes after database updates have been successfully executed inside a database transaction, and values have been subsequently fetched:
 
 ```swift
-// AnyPublisher<Int, Error>
+// DatabasePublishers.Write<Int>
 let newPlayerCount = dbQueue.writePublisher(
     updates: { db in try Player(...).insert(db) }
     thenRead: { db, _ in try Player.fetchCount(db) })
@@ -244,7 +214,7 @@ let newPlayerCount = dbQueue.writePublisher(
 It publishes exactly the same values as [`writePublisher(receiveOn:updates:)`]:
 
 ```swift
-// AnyPublisher<Int, Error>
+// DatabasePublishers.Write<Int>
 let newPlayerCount = dbQueue.writePublisher { db -> Int in
     try Player(...).insert(db)
     return try Player.fetchCount(db)

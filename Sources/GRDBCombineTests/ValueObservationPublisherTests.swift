@@ -246,10 +246,6 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            ValueObservation
-                .tracking(Player.fetchCount)
-                .publisher(in: writer)
-                .subscribe(subscriber)
             
             let expectation = self.expectation(description: "")
             expectation.isInverted = true
@@ -257,6 +253,11 @@ class ValueObservationPublisherTests : XCTestCase {
                 .sink(
                     receiveCompletion: { _ in XCTFail("Unexpected completion") },
                     receiveValue: { _ in expectation.fulfill() })
+            
+            ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
+                .subscribe(subscriber)
             
             waitForExpectations(timeout: 1, handler: nil)
             testCancellable.cancel()
@@ -277,20 +278,21 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            ValueObservation
-                .tracking(Player.fetchCount)
-                .publisher(in: writer)
-                .subscribe(subscriber)
-            
-            subscriber.request(.max(1))
-            
             let expectation = self.expectation(description: "")
+            
             let testCancellable = subscriber.subject.sink(
                 receiveCompletion: { _ in XCTFail("Unexpected completion") },
                 receiveValue: { value in
                     XCTAssertEqual(value, 0)
                     expectation.fulfill()
             })
+            
+            ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer)
+                .subscribe(subscriber)
+            
+            subscriber.request(.max(1))
             
             waitForExpectations(timeout: 1, handler: nil)
             testCancellable.cancel()
@@ -311,20 +313,21 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            ValueObservation
-                .tracking(Player.fetchCount)
-                .publisher(in: writer)
-                .subscribe(subscriber)
-            
-            subscriber.request(.max(1))
-            
             let expectation = self.expectation(description: "")
             expectation.isInverted = true
+            
             let testCancellable = subscriber.subject
                 .collect(2)
                 .sink(
                     receiveCompletion: { _ in XCTFail("Unexpected completion") },
                     receiveValue: { _ in expectation.fulfill() })
+            
+            ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer, scheduling: .immediate /* make sure we get the initial db state */)
+                .subscribe(subscriber)
+            
+            subscriber.request(.max(1))
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
@@ -349,14 +352,8 @@ class ValueObservationPublisherTests : XCTestCase {
         
         func test(writer: DatabaseWriter) throws {
             let subscriber = DemandSubscriber<Int, Error>()
-            ValueObservation
-                .tracking(Player.fetchCount)
-                .publisher(in: writer)
-                .subscribe(subscriber)
-            
-            subscriber.request(.max(2))
-            
             let expectation = self.expectation(description: "")
+            
             let testCancellable = subscriber.subject
                 .collect(2)
                 .sink(
@@ -364,6 +361,14 @@ class ValueObservationPublisherTests : XCTestCase {
                     receiveValue: { values in
                         expectation.fulfill()
                 })
+            
+            ValueObservation
+                .tracking(Player.fetchCount)
+                .publisher(in: writer, scheduling: .immediate /* make sure we get two db states */)
+                .print()
+                .subscribe(subscriber)
+            
+            subscriber.request(.max(2))
             
             try writer.writeWithoutTransaction { db in
                 try Player(id: 1, name: "Arthur", score: 1000).insert(db)
