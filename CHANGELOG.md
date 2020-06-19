@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 #### 0.x Releases
 
+- [1.0.0-beta.3](#100-beta3)
 - [1.0.0-beta.2](#100-beta2)
 - [1.0.0-beta](#100-beta)
 - [0.8.1](#081)
@@ -19,6 +20,12 @@ All notable changes to this project will be documented in this file.
 - [0.1.1](#011)
 - [0.1.0](#010)
 
+
+## 1.0.0-beta.3
+
+Released June 19, 2020
+
+- **Breaking**: The types of the reading and writer publishers have changed, and are no longer `AnyPublisher`.
 
 ## 1.0.0-beta.2
 

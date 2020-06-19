@@ -32,6 +32,8 @@ GRDBCombine 1.0 comes with breaking changes. Those changes have the vanilla [GRD
         .publisher(in: dbQueue, scheduling: .immediate)
     ```
 
+4. The type of the reading and writer publishers are no longer `AnyPublisher`. Depending on your use of those publishers, you may need to append `.eraseToAnyPublisher()`.
+
 [GRDB]: https://github.com/groue/GRDB.swift
 [GRDBCombine]: https://github.com/groue/GRDBCombine
 [RxGRDB]: https://github.com/RxSwiftCommunity/RxGRDB
