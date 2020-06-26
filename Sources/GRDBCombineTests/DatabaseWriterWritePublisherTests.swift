@@ -348,14 +348,16 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
     
     // MARK: - Regression tests
     
-    // Make sure this does not deadlock
+    // Regression test against deadlocks created by concurrent completion
+    // and cancellations trigerred by .switchToLatest().prefix(1)
     func testDeadlockPrevention() throws {
         func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
             try writer.write(Player.createTable)
             return writer
         }
         
-        func test(writer: DatabaseWriter) throws {
+        func test(writer: DatabaseWriter, iteration: Int) throws {
+//            print(iteration)
             let scoreSubject = PassthroughSubject<Int, Error>()
             let publisher = scoreSubject
                 .map({ score in
@@ -372,7 +374,7 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             XCTAssertEqual(count, 1)
         }
         
-        try Test(repeatCount: 1000, test)
+        try Test(repeatCount: 100, test)
             .run { try setUp(DatabaseQueue()) }
             .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
             .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }

@@ -166,10 +166,13 @@ extension DatabasePublishers {
         }
         
         func cancel() {
-            lock.synchronized {
-                cancellable?.cancel()
-                cancellable = nil
-                state = .finished
+            lock.synchronizedWithSideEffect {
+                let cancellable = self.cancellable
+                self.cancellable = nil
+                self.state = .finished
+                return {
+                    cancellable?.cancel()
+                }
             }
         }
         
@@ -189,11 +192,15 @@ extension DatabasePublishers {
         }
         
         private func receiveCompletion(_ completion: Subscribers.Completion<Error>) {
-            lock.synchronized {
+            lock.synchronizedWithSideEffect {
                 if case let .observing(info) = state {
                     cancellable = nil
                     state = .finished
-                    info.downstream.receive(completion: completion)
+                    return {
+                        info.downstream.receive(completion: completion)
+                    }
+                } else {
+                    return noSideEffect
                 }
             }
         }

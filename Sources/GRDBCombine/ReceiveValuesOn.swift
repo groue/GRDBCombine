@@ -60,48 +60,58 @@ private class ReceiveValuesOnSubscription<Upstream: Publisher, Context: Schedule
     // MARK: Subscription
     
     func request(_ demand: Subscribers.Demand) {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case let .waitingForRequest(upstream, target):
                 state = .waitingForSubscription(target, demand)
-                upstream.receive(subscriber: self)
+                return {
+                    upstream.receive(subscriber: self)
+                }
                 
             case let .waitingForSubscription(target, currentDemand):
                 state = .waitingForSubscription(target, demand + currentDemand)
+                return noSideEffect
                 
             case let .subscribed(_, subcription):
-                subcription.request(demand)
+                return {
+                    subcription.request(demand)
+                }
                 
             case .finished:
-                break
+                return noSideEffect
             }
         }
     }
     
     func cancel() {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case .waitingForRequest, .waitingForSubscription:
                 state = .finished
+                return noSideEffect
                 
             case let .subscribed(_, subcription):
-                subcription.cancel()
                 state = .finished
+                return {
+                    subcription.cancel()
+                }
                 
             case .finished:
-                break
+                return noSideEffect
             }
         }
     }
-
+    
     // MARK: Subscriber
     
     func receive(subscription: Subscription) {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case let .waitingForSubscription(target, currentDemand):
                 state = .subscribed(target, subscription)
-                subscription.request(currentDemand)
+                return {
+                    subscription.request(currentDemand)
+                }
                 
             case .waitingForRequest, .subscribed, .finished:
                 preconditionFailure()
@@ -110,14 +120,16 @@ private class ReceiveValuesOnSubscription<Upstream: Publisher, Context: Schedule
     }
     
     func receive(_ input: Upstream.Output) -> Subscribers.Demand {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case let .subscribed(target, _):
-                target.context.schedule(options: target.options) {
-                    self._receive(input)
+                return {
+                    target.context.schedule(options: target.options) {
+                        self._receive(input)
+                    }
                 }
             case .waitingForRequest, .waitingForSubscription, .finished:
-                break
+                return noSideEffect
             }
         }
         
@@ -130,44 +142,50 @@ private class ReceiveValuesOnSubscription<Upstream: Publisher, Context: Schedule
     }
     
     func receive(completion: Subscribers.Completion<Upstream.Failure>) {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case .waitingForRequest, .waitingForSubscription:
-                break
+                return noSideEffect
             case let .subscribed(target, _):
-                target.context.schedule(options: target.options) {
-                    self._receive(completion: completion)
+                return {
+                    target.context.schedule(options: target.options) {
+                        self._receive(completion: completion)
+                    }
                 }
             case .finished:
-                break
+                return noSideEffect
             }
         }
     }
     
     private func _receive(_ input: Upstream.Output) {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case .waitingForRequest, .waitingForSubscription:
-                break
+                return noSideEffect
             case let .subscribed(target, _):
                 // TODO: don't ignore demand
-                _ = target.downstream.receive(input)
+                return {
+                    _ = target.downstream.receive(input)
+                }
             case .finished:
-                break
+                return noSideEffect
             }
         }
     }
     
     private func _receive(completion: Subscribers.Completion<Upstream.Failure>) {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case .waitingForRequest, .waitingForSubscription:
-                break
+                return noSideEffect
             case let .subscribed(target, _):
-                target.downstream.receive(completion: completion)
                 state = .finished
+                return {
+                    target.downstream.receive(completion: completion)
+                }
             case .finished:
-                break
+                return noSideEffect
             }
         }
     }
