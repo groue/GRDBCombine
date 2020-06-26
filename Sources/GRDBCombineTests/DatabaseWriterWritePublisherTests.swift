@@ -345,4 +345,36 @@ class DatabaseWriterWritePublisherTests : XCTestCase {
             .runAtTemporaryDatabasePath { try DatabaseQueue(path: $0) }
             .runAtTemporaryDatabasePath { try DatabasePool(path: $0) }
     }
+    
+    // MARK: - Regression tests
+    
+    // Make sure this does not deadlock
+    func testDeadlockPrevention() throws {
+        func setUp<Writer: DatabaseWriter>(_ writer: Writer) throws -> Writer {
+            try writer.write(Player.createTable)
+            return writer
+        }
+        
+        func test(writer: DatabaseWriter) throws {
+            let scoreSubject = PassthroughSubject<Int, Error>()
+            let publisher = scoreSubject
+                .map({ score in
+                    writer.writePublisher { db -> Int in
+                        try Player(id: 1, name: "Arthur", score: score).insert(db)
+                        return try Player.fetchCount(db)
+                    }
+                })
+                .switchToLatest()
+                .prefix(1)
+            let recorder = publisher.record()
+            scoreSubject.send(0)
+            let count = try wait(for: recorder.single, timeout: 1)
+            XCTAssertEqual(count, 1)
+        }
+        
+        try Test(repeatCount: 1000, test)
+            .run { try setUp(DatabaseQueue()) }
+            .runAtTemporaryDatabasePath { try setUp(DatabaseQueue(path: $0)) }
+            .runAtTemporaryDatabasePath { try setUp(DatabasePool(path: $0)) }
+    }
 }

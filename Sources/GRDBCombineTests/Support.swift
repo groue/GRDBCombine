@@ -4,10 +4,11 @@ import XCTest
 
 final class Test<Context> {
     // Raise the repeatCount in order to help spotting flaky tests.
-    private let repeatCount = 1
+    private let repeatCount: Int
     private let test: (Context) throws -> ()
     
-    init(_ test: @escaping (Context) throws -> ()) {
+    init(repeatCount: Int = 1, _ test: @escaping (Context) throws -> ()) {
+        self.repeatCount = repeatCount
         self.test = test
     }
     
