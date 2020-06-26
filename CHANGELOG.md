@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 #### 0.x Releases
 
+- [1.0.0-beta.4](#100-beta4)
 - [1.0.0-beta.3](#100-beta3)
 - [1.0.0-beta.2](#100-beta2)
 - [1.0.0-beta](#100-beta)
@@ -20,6 +21,12 @@ All notable changes to this project will be documented in this file.
 - [0.1.1](#011)
 - [0.1.0](#010)
 
+
+## 1.0.0-beta.4
+
+Released June 26, 2020
+
+- **Fixed** [#42](https://github.com/groue/GRDBCombine/pull/42) by [@groue](http://github.com/groue): Fix a deadlock
 
 ## 1.0.0-beta.3
 

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name     = 'GRDBCombine'
-  s.version  = '1.0.0-beta.3'
+  s.version  = '1.0.0-beta.4'
   
   s.license  = { :type => 'MIT', :file => 'LICENSE' }
   s.summary  = 'A set of extensions for SQLite, GRDB.swift, and Combine'

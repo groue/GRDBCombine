@@ -50,11 +50,11 @@ ifdef SOURCEKITTEN
 	  --author 'Gwendal Roué' \
 	  --author_url https://github.com/groue \
 	  --github_url https://github.com/groue/GRDBCombine \
-	  --github-file-prefix https://github.com/groue/GRDBCombine/tree/v1.0.0-beta.3 \
-	  --module-version 1.0.0-beta.3 \
+	  --github-file-prefix https://github.com/groue/GRDBCombine/tree/v1.0.0-beta.4 \
+	  --module-version 1.0.0-beta.4 \
 	  --module GRDBCombine \
-	  --root-url https://groue.github.io/GRDBCombine/docs/1.0.0-beta.3/ \
-	  --output Documentation/1.0.0-beta.3
+	  --root-url https://groue.github.io/GRDBCombine/docs/1.0.0-beta.4/ \
+	  --output Documentation/1.0.0-beta.4
 else
 	@echo SourceKitten must be installed for doc: brew install sourcekitten
 	@exit 1
