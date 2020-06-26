@@ -81,28 +81,32 @@ private class OnDemandFutureSubscription<Downstream: Subscriber>: Subscription {
     }
     
     private func receive(_ value: Downstream.Input) {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case let .waitingForFulfillment(downstream: downstream):
                 state = .finished
-                _ = downstream.receive(value)
-                downstream.receive(completion: .finished)
+                return {
+                    _ = downstream.receive(value)
+                    downstream.receive(completion: .finished)
+                }
                 
             case .waitingForDemand, .finished:
-                break
+                return noSideEffect
             }
         }
     }
     
     private func receive(completion: Subscribers.Completion<Downstream.Failure>) {
-        lock.synchronized {
+        lock.synchronizedWithSideEffect {
             switch state {
             case let .waitingForFulfillment(downstream: downstream):
                 state = .finished
-                downstream.receive(completion: completion)
+                return {
+                    downstream.receive(completion: completion)
+                }
 
             case .waitingForDemand, .finished:
-                break
+                return noSideEffect
             }
         }
     }
