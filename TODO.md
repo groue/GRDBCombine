@@ -1,2 +1,0 @@
-- [ ] DatabaseMigrator.publisher(in:)
-- [ ] Look at [@FetchRequest](https://developer.apple.com/documentation/swiftui/fetchrequest): managed object context is stored in the environment, and error processing happens somewhere else (where?).
